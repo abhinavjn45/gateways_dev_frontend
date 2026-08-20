@@ -9,8 +9,7 @@
     "build:preprod": "dotenv -e .env.preproduction.local -- next build",
     "start": "next start",
     "start:preprod": "dotenv -e .env.preproduction.local -- next start",
-    "lint": "eslint",
-    "db:check": "node --env-file-if-exists=.env.local --conditions=react-server --import tsx scripts/db-check.ts"
+    "lint": "eslint"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.3",
