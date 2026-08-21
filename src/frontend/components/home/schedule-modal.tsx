@@ -1,21 +1,25 @@
 "use client";
 
-import { useMemo, useState } from "react";
 import Link from "next/link";
-import { blockButton, BlockModal, BlockPanel, LoadingBlocks } from "@/frontend/components/mc";
-import { useAsync } from "@/frontend/hooks/use-async";
-import { repo } from "@/lib/data";
+import { blockButton, BlockModal } from "@/frontend/components/mc";
+import { ScheduleList } from "@/frontend/components/schedule/schedule-list";
 import { cn } from "@/frontend/lib/utils";
-import type { ScheduleSlot } from "@/lib/data/types";
 
 /**
- * The running order, in a modal, split into day tabs.
+ * The running order, in a modal.
  *
- * Days are derived from the slots themselves rather than hardcoded to two:
- * the seed generates dates relative to now, and a fest that grows to three days
- * should not need this component edited. Slots are grouped by `dayLabel` when
- * one is set (that is what it is for) and otherwise by calendar date, so the
- * grouping survives either shape of data.
+ * One scrolling list with a section per date, not day tabs. Tabs made sense
+ * when a day was a dense hour-by-hour column worth isolating; with two dates
+ * and thirteen events the whole schedule is shorter than the tab strip made it
+ * look, and hiding half of it behind a control meant a visitor could read the
+ * modal and never learn the hackathon runs on a different date. Sections show
+ * the shape of the fest in one pass. `BlockModal` is already
+ * `max-h-[85vh] overflow-y-auto`, so the scroll is free.
+ *
+ * This now renders `<ScheduleList>` rather than its own markup. The two used to
+ * differ deliberately — this one presented the same data as day tabs, which was
+ * a genuinely different view — but with tabs gone they are the same list, and
+ * keeping two copies of it only creates drift.
  */
 export function ScheduleModal({
   open,
@@ -24,24 +28,12 @@ export function ScheduleModal({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const { data: slots, loading } = useAsync(
-    () => (open ? repo.events.schedule() : Promise.resolve([])),
-    [open],
-  );
-
-  const days = useMemo(() => groupByDay(slots ?? []), [slots]);
-  const [activeDay, setActiveDay] = useState(0);
-  // The tab index can outlive the data it indexed (open → close → reopen with
-  // fewer days). Clamping on render is cheaper and safer than a reset effect.
-  const dayIndex = Math.min(activeDay, Math.max(days.length - 1, 0));
-  const active = days[dayIndex];
-
   return (
     <BlockModal
       open={open}
       onOpenChange={onOpenChange}
       title="Schedule"
-      description="The running order for each day of the fest."
+      description="Every event at the fest, grouped by date."
       variant="panel"
       className="max-w-2xl"
       footer={
@@ -54,123 +46,7 @@ export function ScheduleModal({
         </Link>
       }
     >
-      {loading ? (
-        <LoadingBlocks label="Loading schedule…" />
-      ) : days.length === 0 ? (
-        <p className="text-mc-text-dim">The schedule has not been published yet.</p>
-      ) : (
-        <>
-          <div
-            role="tablist"
-            aria-label="Fest days"
-            className="mb-[calc(var(--mc-unit)*1.5)] flex flex-wrap gap-[calc(var(--mc-unit)*0.5)]"
-          >
-            {days.map((day, i) => (
-              <button
-                key={day.label}
-                type="button"
-                role="tab"
-                id={`schedule-tab-${i}`}
-                aria-selected={i === dayIndex}
-                aria-controls={`schedule-panel-${i}`}
-                onClick={() => setActiveDay(i)}
-                className={cn(
-                  "border-[length:var(--mc-bevel)] px-[calc(var(--mc-unit)*1.5)] py-[calc(var(--mc-unit)*0.75)]",
-                  "font-pixel text-[9px] uppercase tracking-[0.12em] transition-colors md:text-[10px]",
-                  i === dayIndex
-                    ? "border-mc-gold bg-mc-panel-light text-mc-accent"
-                    : "border-mc-border bg-mc-slot text-mc-text-dim hover:text-mc-text",
-                )}
-              >
-                {day.label}
-              </button>
-            ))}
-          </div>
-
-          <div
-            role="tabpanel"
-            id={`schedule-panel-${dayIndex}`}
-            aria-labelledby={`schedule-tab-${dayIndex}`}
-          >
-            <p className="mb-[var(--mc-unit)] font-pixel text-[8px] uppercase tracking-[0.14em] text-mc-text-dim">
-              {active?.dateLabel}
-            </p>
-            <ol className="flex flex-col gap-[calc(var(--mc-unit)*0.5)]">
-              {active?.slots.map((slot) => (
-                <li key={slot.id}>
-                  <BlockPanel
-                    variant="slot"
-                    padded="md"
-                    className={cn(
-                      "flex flex-wrap items-baseline gap-x-[calc(var(--mc-unit)*1.5)] gap-y-[calc(var(--mc-unit)*0.25)]",
-                      slot.isBreak && "opacity-70",
-                    )}
-                  >
-                    <time
-                      dateTime={slot.startsAt}
-                      className="font-pixel text-[8px] uppercase tracking-[0.08em] text-mc-info md:text-[9px]"
-                    >
-                      {timeRange(slot)}
-                    </time>
-                    <span className="text-[20px] text-mc-text">{slot.title}</span>
-                    {slot.venue ? (
-                      <span className="text-[18px] text-mc-text-dim/80">
-                        {slot.venue}
-                      </span>
-                    ) : null}
-                  </BlockPanel>
-                </li>
-              ))}
-            </ol>
-          </div>
-        </>
-      )}
+      <ScheduleList />
     </BlockModal>
   );
-}
-
-interface Day {
-  label: string;
-  dateLabel: string;
-  slots: ScheduleSlot[];
-}
-
-function groupByDay(slots: ScheduleSlot[]): Day[] {
-  const buckets = new Map<string, ScheduleSlot[]>();
-
-  for (const slot of slots) {
-    // Key on the calendar date, not dayLabel: two slots labelled "Day 1" from
-    // different dates must not merge, and slots with no label still group.
-    const key = slot.startsAt.slice(0, 10);
-    const list = buckets.get(key);
-    if (list) list.push(slot);
-    else buckets.set(key, [slot]);
-  }
-
-  return [...buckets.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([date, daySlots], i) => {
-      const sorted = [...daySlots].sort((a, b) =>
-        a.startsAt.localeCompare(b.startsAt),
-      );
-      return {
-        label: sorted[0].dayLabel || `Day ${String(i + 1).padStart(2, "0")}`,
-        dateLabel: new Date(date).toLocaleDateString(undefined, {
-          weekday: "long",
-          day: "numeric",
-          month: "long",
-          year: "numeric",
-        }),
-        slots: sorted,
-      };
-    });
-}
-
-function timeRange(slot: ScheduleSlot): string {
-  const fmt = (iso: string) =>
-    new Date(iso).toLocaleTimeString(undefined, {
-      hour: "numeric",
-      minute: "2-digit",
-    });
-  return `${fmt(slot.startsAt)} – ${fmt(slot.endsAt)}`;
 }

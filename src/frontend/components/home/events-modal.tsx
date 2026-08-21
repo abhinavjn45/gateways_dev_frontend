@@ -2,23 +2,57 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { blockButton, BlockModal, BlockPanel, LoadingBlocks } from "@/frontend/components/mc";
-import { useAsync } from "@/frontend/hooks/use-async";
-import { repo } from "@/lib/data";
+import { blockButton, BlockButton, BlockModal, BlockPanel } from "@/frontend/components/mc";
+import {
+  EVENT_TRACKS,
+  eventsForTrack,
+  eventTime,
+  FEST_EVENTS,
+  type EventTrack,
+  type FestEvent,
+} from "@/frontend/lib/events";
 import { cn } from "@/frontend/lib/utils";
 
 /**
  * The full event list, in a modal.
  *
- * Deliberately not an inline homepage section: the fest has ~13 events across 7
- * categories, and dropping that table into the middle of the pitch pushes the
- * registration call-to-action far below the fold. A visitor who wants the list
- * asks for it; everyone else keeps scrolling the story.
+ * Deliberately not an inline homepage section: the fest has 13 events, and
+ * dropping that table into the middle of the pitch pushes the registration
+ * call-to-action far below the fold. A visitor who wants the list asks for it;
+ * everyone else keeps scrolling the story.
  *
- * Data comes through `repo` like every other screen — the modal never knows
- * where events are stored. `useAsync` only fires while the modal is open, so
- * closed modals cost nothing.
+ * TWO LEVELS, one modal. The list is a browse surface — name and kind only,
+ * enough to decide what to open — and picking one swaps the same modal over to
+ * that event's full detail. Detail lives here rather than at `/events/<slug>`
+ * because the visitor opened this from the homepage: sending them to a route
+ * costs the modal, the scroll position, and the pitch they were reading, to
+ * show information that fits in the panel already on screen.
+ *
+ * Data is `FEST_EVENTS`, not `repo` — see the note at the top of
+ * `frontend/lib/events.ts` for why, and what changes when the backend's events
+ * route is wired up (nothing here).
  */
+/**
+ * What the tab strip filters by.
+ *
+ * `"all"` is a VIEW, not a track, so it lives here rather than in
+ * `EVENT_TRACKS` — that array describes how the fest is actually organised and
+ * a third fake track in it would leak into anything else reading the data.
+ */
+type EventFilter = "all" | EventTrack;
+
+const EVENT_FILTERS: { id: EventFilter; label: string }[] = [
+  { id: "all", label: "All" },
+  ...EVENT_TRACKS,
+];
+
+/** The events one tab shows. "All" is sheet order — which runs the eight
+ *  technical events and then the five non-technical ones, the organisers' own
+ *  sequence rather than a re-sort into something tidier. */
+function eventsForFilter(filter: EventFilter): FestEvent[] {
+  return filter === "all" ? FEST_EVENTS : eventsForTrack(filter);
+}
+
 export function EventsModal({
   open,
   onOpenChange,
@@ -26,119 +60,186 @@ export function EventsModal({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const [categoryId, setCategoryId] = useState<string | null>(null);
+  const [filter, setFilter] = useState<EventFilter>("all");
+  const [selected, setSelected] = useState<FestEvent | null>(null);
 
-  const { data: categories } = useAsync(
-    () => (open ? repo.reference.categories() : Promise.resolve([])),
-    [open],
-  );
+  /**
+   * Reopening lands on the list, never on whatever was last read.
+   *
+   * Adjusted during render rather than in an effect. An effect would be a
+   * cascading render the compiler rightly rejects, and it would also have to
+   * fire on CLOSE — `open` is owned by the parent, so no callback tells this
+   * component it was reopened. Resetting on close means the panel swaps from
+   * detail back to list underneath the exit animation, in full view. React
+   * re-runs this render before painting, so the reset is invisible.
+   */
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (open) setSelected(null);
+  }
 
-  const { data: events, loading } = useAsync(
-    () =>
-      open
-        ? repo.events.list({
-            status: ["published", "ongoing", "registration_closed", "completed"],
-          })
-        : Promise.resolve([]),
-    [open],
-  );
-
-  const shown = (events ?? []).filter(
-    (e) => !categoryId || e.categoryId === categoryId,
-  );
+  const shown = eventsForFilter(filter);
 
   return (
     <BlockModal
       open={open}
       onOpenChange={onOpenChange}
-      title="Events"
-      description="Every event at the fest, grouped by category."
+      // The heading follows the level, so the modal always says where it is.
+      title={selected ? selected.name : "Events"}
+      description={
+        selected
+          ? `${selected.kind}. Full details, rules and prizes.`
+          : "Every event at the fest, split into technical and non-technical."
+      }
       variant="panel"
       className="max-w-2xl"
       footer={
-        // The cva function rather than <BlockButton>: this navigates, so it
-        // must be an anchor. Nesting a <Link> inside the component's <button>
-        // would be invalid HTML and would break keyboard activation.
-        <Link
-          href="/events"
-          onClick={() => onOpenChange(false)}
-          className={cn(blockButton({ variant: "emerald", size: "sm" }), "no-underline")}
-        >
-          Open full events page
-        </Link>
+        selected ? (
+          // One full-width row rather than two footer children: BlockModal's
+          // footer is `justify-end`, which would stack these to the right and
+          // leave the back control chasing the rules button's width. `w-full`
+          // + `justify-between` pins back to the left rail and rules to the
+          // right, on a shared baseline, whether or not the rules link exists.
+          <div className="flex w-full flex-wrap items-center justify-between gap-[var(--mc-unit)]">
+            <BlockButton variant="stone" size="sm" onClick={() => setSelected(null)}>
+              ← All events
+            </BlockButton>
+            {selected.rulesUrl ? (
+              <a
+                href={selected.rulesUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={cn(
+                  blockButton({ variant: "gold", size: "sm" }),
+                  "no-underline",
+                )}
+              >
+                Read the rules ↗
+              </a>
+            ) : null}
+          </div>
+        ) : (
+          // The cva function rather than <BlockButton>: this navigates, so it
+          // must be an anchor. Nesting a <Link> inside the component's <button>
+          // would be invalid HTML and would break keyboard activation.
+          <Link
+            href="/events"
+            onClick={() => onOpenChange(false)}
+            className={cn(blockButton({ variant: "emerald", size: "sm" }), "no-underline")}
+          >
+            Open full events page
+          </Link>
+        )
       }
     >
-      <nav
-        aria-label="Event categories"
-        className="mb-[calc(var(--mc-unit)*1.5)] flex flex-wrap gap-[calc(var(--mc-unit)*0.5)]"
-      >
-        <CategoryChip
-          label="All"
-          active={categoryId === null}
-          onClick={() => setCategoryId(null)}
-        />
-        {(categories ?? []).map((c) => (
-          <CategoryChip
-            key={c.id}
-            label={c.name}
-            active={categoryId === c.id}
-            onClick={() => setCategoryId(c.id)}
-          />
-        ))}
-      </nav>
-
-      {loading ? (
-        <LoadingBlocks label="Loading events…" />
-      ) : shown.length === 0 ? (
-        <p className="text-mc-text-dim">No events in this category yet.</p>
+      {selected ? (
+        <EventDetail event={selected} />
       ) : (
-        <ul className="flex flex-col gap-[calc(var(--mc-unit)*0.75)]">
-          {shown.map((e) => (
-            <li key={e.id}>
-              <Link
-                href={`/events/${e.slug}`}
-                onClick={() => onOpenChange(false)}
-                className="block no-underline"
-              >
-                <BlockPanel
-                  variant="slot"
-                  padded="md"
-                  className="transition-[filter] duration-75 hover:brightness-125"
+        <>
+          <nav
+            aria-label="Filter events"
+            className="mb-[calc(var(--mc-unit)*1.5)] flex flex-wrap gap-[calc(var(--mc-unit)*0.5)]"
+          >
+            {EVENT_FILTERS.map((f) => (
+              <FilterTab
+                key={f.id}
+                label={f.label}
+                count={eventsForFilter(f.id).length}
+                active={filter === f.id}
+                onClick={() => setFilter(f.id)}
+              />
+            ))}
+          </nav>
+
+          <ul className="flex flex-col gap-[calc(var(--mc-unit)*0.75)]">
+            {shown.map((e) => (
+              <li key={e.slug}>
+                <button
+                  type="button"
+                  onClick={() => setSelected(e)}
+                  className="block w-full text-left"
                 >
-                  <div className="flex flex-wrap items-baseline justify-between gap-[var(--mc-unit)]">
-                    <h3 className="text-[10px] uppercase text-mc-accent md:text-[12px]">
-                      {e.title}
-                    </h3>
-                    <span className="font-pixel text-[8px] uppercase tracking-[0.1em] text-mc-success">
-                      {e.mode === "team" ? "Team" : "Solo"}
-                    </span>
-                  </div>
-                  {e.tagline ? (
-                    <p className="mt-[calc(var(--mc-unit)*0.5)] text-[19px] leading-snug text-mc-text-dim">
-                      {e.tagline}
+                  <BlockPanel
+                    variant="slot"
+                    padded="md"
+                    className="transition-[filter] duration-75 hover:brightness-125"
+                  >
+                    <div className="flex flex-wrap items-baseline justify-between gap-[var(--mc-unit)]">
+                      <h3 className="text-[10px] uppercase text-mc-accent md:text-[12px]">
+                        {e.name}
+                      </h3>
+                      {/* The kind, not the name, is what tells a visitor what
+                          they would be doing — these names give nothing away. */}
+                      <span className="event-kind font-pixel text-[8px] uppercase tracking-[0.1em] text-mc-success">
+                        {e.kind}
+                      </span>
+                    </div>
+                    <p className="mt-[calc(var(--mc-unit)*0.5)] text-[18px] text-mc-text-dim/80">
+                      {e.participation}
                     </p>
-                  ) : null}
-                  {e.venue ? (
-                    <p className="mt-[calc(var(--mc-unit)*0.25)] text-[18px] text-mc-text-dim/80">
-                      {e.venue}
-                    </p>
-                  ) : null}
-                </BlockPanel>
-              </Link>
-            </li>
-          ))}
-        </ul>
+                  </BlockPanel>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </>
       )}
     </BlockModal>
   );
 }
 
-function CategoryChip({
+/** One event, in full. Everything the sheet records, minus what it leaves blank. */
+function EventDetail({ event }: { event: FestEvent }) {
+  return (
+    <div className="flex flex-col gap-[calc(var(--mc-unit)*1.25)]">
+      <p className="event-kind font-pixel text-[8px] uppercase tracking-[0.1em] text-mc-success">
+        {event.kind}
+      </p>
+
+      <p className="text-[19px] leading-snug text-mc-text">{event.description}</p>
+
+      <BlockPanel variant="slot" padded="md">
+        <dl className="grid gap-x-[calc(var(--mc-unit)*1.5)] gap-y-[var(--mc-unit)] sm:grid-cols-2">
+          <Fact label="Participation" value={event.participation} />
+          <Fact label="Date" value={event.date} />
+          <Fact label="Time" value={eventTime(event)} />
+          <Fact label="Venue" value={event.venue} />
+          <Fact label="Prizes" value={event.prizes} />
+          <Fact label="Prize pool" value={event.prizePool} />
+        </dl>
+      </BlockPanel>
+    </div>
+  );
+}
+
+/**
+ * One labelled fact. Renders nothing when the sheet has no value — an empty
+ * row under a heading reads as a loading failure rather than as "unknown",
+ * and "TBA" is a real value the organisers wrote, so it is shown as given.
+ */
+function Fact({ label, value }: { label: string; value: string }) {
+  if (!value) return null;
+  return (
+    <div>
+      <dt className="font-pixel text-[8px] uppercase tracking-[0.1em] text-mc-eyebrow">
+        {label}
+      </dt>
+      <dd className="mt-[calc(var(--mc-unit)*0.25)] text-[18px] leading-snug text-mc-text-dim">
+        {value}
+      </dd>
+    </div>
+  );
+}
+
+function FilterTab({
   label,
+  count,
   active,
   onClick,
 }: {
   label: string;
+  count: number;
   active: boolean;
   onClick: () => void;
 }) {
@@ -155,7 +256,7 @@ function CategoryChip({
           : "border-mc-border bg-mc-slot text-mc-text-dim hover:text-mc-text",
       )}
     >
-      {label}
+      {label} <span className="text-mc-text-dim/70">({count})</span>
     </button>
   );
 }
