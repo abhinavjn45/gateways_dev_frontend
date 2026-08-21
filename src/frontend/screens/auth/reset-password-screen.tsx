@@ -75,7 +75,7 @@ export function ResetPasswordScreen() {
             <BlockInput label="New password" type="password" autoComplete="new-password" placeholder="••••••••" error={errors.newPassword?.message} {...register("newPassword")} />
             <BlockInput label="Confirm password" type="password" autoComplete="new-password" placeholder="••••••••" error={errors.confirmPassword?.message} {...register("confirmPassword")} />
             {formError ? (
-              <BlockPanel variant="slot" padded="sm" role="alert" aria-live="assertive" className="border-mc-redstone text-mc-danger text-[16px]">
+              <BlockPanel variant="slot" padded="sm" role="alert" aria-live="assertive" className="border-mc-redstone text-mc-danger text-[19px]">
                 {formError}
               </BlockPanel>
             ) : null}
@@ -83,7 +83,7 @@ export function ResetPasswordScreen() {
               Set new password
             </BlockButton>
           </form>
-          <button type="button" className="min-h-11 cursor-pointer text-[16px] text-mc-eyebrow hover:text-mc-text hover:underline" onClick={() => router.replace("/login")}>
+          <button type="button" className="min-h-11 cursor-pointer text-[19px] text-mc-eyebrow hover:text-mc-text hover:underline" onClick={() => router.replace("/login")}>
             Back to login
           </button>
         </div>

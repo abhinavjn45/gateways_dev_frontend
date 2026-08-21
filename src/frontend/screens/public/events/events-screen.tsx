@@ -135,7 +135,7 @@ export function EventsScreen() {
             <p className="font-pixel text-[11px] uppercase text-mc-gold">
               One-time Gateways pass
             </p>
-            <p className="mt-[calc(var(--mc-unit)*0.5)] text-[14px]">
+            <p className="mt-[calc(var(--mc-unit)*0.5)] text-[17px]">
               {!userId
                 ? "Sign in to make the one-time payment and register for events."
                 : userReceipt?.status === "pending"
@@ -214,11 +214,11 @@ export function EventsScreen() {
                 >
                   <p className="font-pixel text-[11px] text-mc-success">{e.title}</p>
                   {e.tagline ? (
-                    <p className="mt-[calc(var(--mc-unit)*0.5)] text-[15px] text-mc-text-dim">
+                    <p className="mt-[calc(var(--mc-unit)*0.5)] text-[18px] text-mc-text-dim">
                       {e.tagline}
                     </p>
                   ) : null}
-                  <dl className="mt-[var(--mc-unit)] flex flex-wrap gap-x-[var(--mc-unit)] text-[14px] text-mc-text-dim">
+                  <dl className="mt-[var(--mc-unit)] flex flex-wrap gap-x-[var(--mc-unit)] text-[17px] text-mc-text-dim">
                     <div>
                       <dt className="sr-only">Starts</dt>
                       <dd>

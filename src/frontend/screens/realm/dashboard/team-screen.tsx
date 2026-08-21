@@ -74,14 +74,14 @@ function TeamCard({
     <BlockPanel variant="panel" title={name} action={
       isLeader ? <span className="font-pixel text-[9px] uppercase text-mc-accent-strong">Leader</span> : null
     }>
-      <p className="text-[15px] text-mc-text-dim">{eventTitle}</p>
-      <p className="mt-[calc(var(--mc-unit)*0.5)] text-[15px]">
+      <p className="text-[18px] text-mc-text-dim">{eventTitle}</p>
+      <p className="mt-[calc(var(--mc-unit)*0.5)] text-[18px]">
         Join code: <code className="font-pixel text-[11px] text-mc-success">{joinCode}</code>
       </p>
       <p className="mt-[var(--mc-unit)] font-pixel text-[9px] uppercase text-mc-text-dim">
         Members ({members?.length ?? 0})
       </p>
-      <ul className="mt-[calc(var(--mc-unit)*0.5)] flex flex-col gap-[2px] text-[15px] text-mc-text-dim">
+      <ul className="mt-[calc(var(--mc-unit)*0.5)] flex flex-col gap-[2px] text-[18px] text-mc-text-dim">
         {(members ?? []).map((m) => (
           <li key={m.userId} className="break-all">
             {m.userId} {m.role === "leader" ? "· leader" : ""}

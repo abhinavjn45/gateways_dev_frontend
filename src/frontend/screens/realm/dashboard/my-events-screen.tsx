@@ -67,7 +67,7 @@ function Group({
     <section>
       <h2 className="font-pixel text-[11px] uppercase text-mc-text-dim">{title}</h2>
       {rows.length === 0 ? (
-        <p className="mt-[calc(var(--mc-unit)*0.5)] text-[15px] text-mc-text-dim">{empty}</p>
+        <p className="mt-[calc(var(--mc-unit)*0.5)] text-[18px] text-mc-text-dim">{empty}</p>
       ) : (
         <ul className="mt-[var(--mc-unit)] grid gap-[var(--mc-unit)] sm:grid-cols-2">
           {rows.map(({ reg, event }) => (
@@ -75,10 +75,10 @@ function Group({
               <Link href={`/events/${event!.slug}`} className="block no-underline">
                 <BlockPanel variant="panel" padded="md" className="hover:brightness-115">
                   <p className="font-pixel text-[11px] text-mc-success">{event!.title}</p>
-                  <p className="mt-[calc(var(--mc-unit)*0.5)] text-[15px] text-mc-text-dim">
+                  <p className="mt-[calc(var(--mc-unit)*0.5)] text-[18px] text-mc-text-dim">
                     {new Date(event!.startsAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}
                   </p>
-                  <p className="mt-[calc(var(--mc-unit)*0.5)] text-[14px] capitalize text-mc-text-dim">{reg.status}</p>
+                  <p className="mt-[calc(var(--mc-unit)*0.5)] text-[17px] capitalize text-mc-text-dim">{reg.status}</p>
                 </BlockPanel>
               </Link>
             </li>

@@ -76,29 +76,29 @@ export function LeaderboardScreen() {
                       <span className="flex items-center gap-[calc(var(--mc-unit)*0.6)]">
                         <PixelAvatar skinId={r.skinId} size={28} />
                         <span className="min-w-0">
-                          <span className="block truncate text-[16px]">
+                          <span className="block truncate text-[19px]">
                             {r.playerName}
                             {isMe ? (
-                              <span className="ml-1 text-[13px] text-mc-eyebrow">
+                              <span className="ml-1 text-[16px] text-mc-eyebrow">
                                 (you)
                               </span>
                             ) : null}
                           </span>
                           {r.title ? (
-                            <span className="block text-[13px] text-mc-text-dim">
+                            <span className="block text-[16px] text-mc-text-dim">
                               {r.title}
                             </span>
                           ) : null}
                         </span>
                       </span>
                     </td>
-                    <td className="hidden p-[calc(var(--mc-unit)*0.5)] text-[15px] text-mc-text-dim sm:table-cell">
+                    <td className="hidden p-[calc(var(--mc-unit)*0.5)] text-[18px] text-mc-text-dim sm:table-cell">
                       {r.college ?? "—"}
                     </td>
-                    <td className="p-[calc(var(--mc-unit)*0.5)] text-right text-[16px] tabular-nums">
+                    <td className="p-[calc(var(--mc-unit)*0.5)] text-right text-[19px] tabular-nums">
                       {r.level}
                     </td>
-                    <td className="p-[calc(var(--mc-unit)*0.5)] text-right text-[16px] text-mc-success tabular-nums">
+                    <td className="p-[calc(var(--mc-unit)*0.5)] text-right text-[19px] text-mc-success tabular-nums">
                       {r.totalXp}
                     </td>
                   </tr>

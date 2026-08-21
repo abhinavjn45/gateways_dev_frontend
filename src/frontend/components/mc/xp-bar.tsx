@@ -47,7 +47,7 @@ export function XpBar({
           ) : null}
         </span>
         {!compact ? (
-          <span className="text-[15px] text-mc-text-dim tabular-nums">
+          <span className="text-[18px] text-mc-text-dim tabular-nums">
             {current} / {required} XP
           </span>
         ) : null}

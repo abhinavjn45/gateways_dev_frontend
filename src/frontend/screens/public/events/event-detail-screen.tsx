@@ -344,7 +344,7 @@ export function EventDetailScreen({
         {event.rules ? (
           <div className="mt-[calc(var(--mc-unit)*1.5)]">
             <h2 className="font-pixel text-[10px] uppercase text-mc-text-dim">Rules</h2>
-            <p className="mt-[calc(var(--mc-unit)*0.5)] text-[16px] text-mc-text-dim">
+            <p className="mt-[calc(var(--mc-unit)*0.5)] text-[19px] text-mc-text-dim">
               {event.rules}
             </p>
           </div>
@@ -371,7 +371,7 @@ export function EventDetailScreen({
             <div className="flex flex-col gap-[var(--mc-unit)] w-full">
               {userReceipt?.status === "pending" && (
                 <BlockPanel variant="slot" className="border-l-4 border-mc-gold p-[var(--mc-unit)] w-full">
-                  <p className="text-[14px]">
+                  <p className="text-[17px]">
                     Your one-time entry fee payment is pending verification. Please wait while we verify your receipt before registering for events.
                   </p>
                 </BlockPanel>
@@ -382,7 +382,7 @@ export function EventDetailScreen({
                     ❌ Payment Rejected
                   </p>
                   {userReceipt.reviewNote && (
-                    <p className="text-[14px] text-mc-text-dim">Reason: {userReceipt.reviewNote}</p>
+                    <p className="text-[17px] text-mc-text-dim">Reason: {userReceipt.reviewNote}</p>
                   )}
                 </BlockPanel>
               )}
@@ -445,7 +445,7 @@ export function EventDetailScreen({
                         {copied ? "Copied" : "Copy"}
                       </BlockButton>
                     </div>
-                    <p className="mt-[6px] text-[15px] text-mc-text-dim">
+                    <p className="mt-[6px] text-[18px] text-mc-text-dim">
                       Share this with your teammates — they enter it under
                       &ldquo;Join a team&rdquo;. Everyone on a team must be from
                       your college and department.
@@ -465,7 +465,7 @@ export function EventDetailScreen({
                     */}
                     <ul className="mt-[6px] flex flex-col gap-[2px]">
                       {(teamMembers ?? []).map((member) => (
-                        <li key={member.userId} className="text-[16px] text-mc-text">
+                        <li key={member.userId} className="text-[19px] text-mc-text">
                           {member.fullName?.trim() ||
                             (member.userId === userId ? "You" : "Teammate")}
                           {member.fullName?.trim() && member.userId === userId ? (
@@ -479,7 +479,7 @@ export function EventDetailScreen({
                       ))}
                     </ul>
                     {teamMembers && teamMembers.length < event.minTeamSize ? (
-                      <p className="mt-[6px] text-[15px] text-mc-gold">
+                      <p className="mt-[6px] text-[18px] text-mc-gold">
                         Needs at least {event.minTeamSize} to compete — {" "}
                         {event.minTeamSize - teamMembers.length} more to go.
                       </p>
@@ -559,12 +559,12 @@ export function EventDetailScreen({
               )}
 
               {teamError ? (
-                <p role="alert" className="text-[16px] text-mc-redstone-light">
+                <p role="alert" className="text-[19px] text-mc-redstone-light">
                   {teamError}
                 </p>
               ) : null}
 
-              <p className="text-[15px] text-mc-text-dim">
+              <p className="text-[18px] text-mc-text-dim">
                 Teams of {event.minTeamSize}–{event.maxTeamSize}. Creating or
                 joining a team registers you for this event.
               </p>
@@ -597,7 +597,7 @@ function Fact({ label, children }: { label: string; children: React.ReactNode })
   return (
     <div>
       <dt className="font-pixel text-[9px] uppercase text-mc-text-dim">{label}</dt>
-      <dd className="mt-[2px] text-[16px]">{children}</dd>
+      <dd className="mt-[2px] text-[19px]">{children}</dd>
     </div>
   );
 }

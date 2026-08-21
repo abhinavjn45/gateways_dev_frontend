@@ -233,17 +233,17 @@ export function PaymentUploadModal({
             />
             {file ? (
               <div className="text-center">
-                <p className="text-mc-success text-[16px] break-all">
+                <p className="text-mc-success text-[19px] break-all">
                   File: {file.name}
                 </p>
-                <p className="text-mc-text-dim text-[14px] mt-1">
+                <p className="text-mc-text-dim text-[17px] mt-1">
                   Click or drag to change file
                 </p>
               </div>
             ) : (
               <div className="text-center">
-                <p className="text-[16px]">Click or drag & drop a PDF file here</p>
-                <p className="text-mc-text-dim text-[14px] mt-1">Max file size: 5MB</p>
+                <p className="text-[19px]">Click or drag & drop a PDF file here</p>
+                <p className="text-mc-text-dim text-[17px] mt-1">Max file size: 5MB</p>
               </div>
             )}
           </div>

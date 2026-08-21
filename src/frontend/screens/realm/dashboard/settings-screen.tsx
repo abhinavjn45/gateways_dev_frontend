@@ -70,7 +70,7 @@ export function SettingsScreen() {
           <legend className="font-pixel text-[10px] uppercase text-mc-text-dim">
             Colour theme
           </legend>
-          <p className="mt-[calc(var(--mc-unit)*0.5)] text-[15px] text-mc-text-dim">
+          <p className="mt-[calc(var(--mc-unit)*0.5)] text-[18px] text-mc-text-dim">
             The switch in the sidebar flips straight between light and dark.
             Choose <strong className="text-mc-text">Follow system</strong> here to
             hand the decision back to your device.
@@ -103,7 +103,7 @@ export function SettingsScreen() {
           <legend className="font-pixel text-[10px] uppercase text-mc-text-dim">
             Animations
           </legend>
-          <p className="mt-[calc(var(--mc-unit)*0.5)] text-[15px] text-mc-text-dim">
+          <p className="mt-[calc(var(--mc-unit)*0.5)] text-[18px] text-mc-text-dim">
             Your system currently requests{" "}
             <strong className="text-mc-text">
               {osReduce ? "reduced motion" : "full motion"}
@@ -134,7 +134,7 @@ export function SettingsScreen() {
       </BlockPanel>
 
       <BlockPanel variant="panel" title="Account">
-        <dl className="flex flex-col gap-[calc(var(--mc-unit)*0.5)] text-[16px]">
+        <dl className="flex flex-col gap-[calc(var(--mc-unit)*0.5)] text-[19px]">
           <div className="flex flex-wrap gap-x-[var(--mc-unit)]">
             <dt className="text-mc-text-dim">Email</dt>
             <dd>{session?.email ?? "—"}</dd>

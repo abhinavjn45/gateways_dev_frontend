@@ -35,7 +35,7 @@ function Section({ title, note, children }: { title: string; note?: string; chil
     <section className="flex flex-col gap-[calc(var(--mc-unit)*1.5)]">
       <div>
         <h2 className="font-pixel text-[14px] uppercase text-mc-accent">{title}</h2>
-        {note ? <p className="mt-1 text-[15px] text-mc-text-dim">{note}</p> : null}
+        {note ? <p className="mt-1 text-[18px] text-mc-text-dim">{note}</p> : null}
       </div>
       {children}
     </section>
@@ -62,7 +62,7 @@ export function KitchenSink() {
           Every design-system primitive in every variant. Dev-only. All art below
           is a generated placeholder — real files land in <code>/public/art</code>.
         </p>
-        <label className="mt-2 flex items-center gap-2 text-[15px]">
+        <label className="mt-2 flex items-center gap-2 text-[18px]">
           <input
             type="checkbox"
             checked={reduceMotion}
@@ -79,7 +79,7 @@ export function KitchenSink() {
         <div className="flex flex-col gap-[var(--mc-unit)]">
           {BUTTON_VARIANTS.map((v) => (
             <div key={v} className="flex flex-wrap items-center gap-[var(--mc-unit)]">
-              <span className="w-[80px] shrink-0 text-[14px] text-mc-text-dim">{v}</span>
+              <span className="w-[80px] shrink-0 text-[17px] text-mc-text-dim">{v}</span>
               {SIZES.map((s) => (
                 <BlockButton key={s} variant={v} size={s}>
                   {s}
@@ -153,7 +153,7 @@ export function KitchenSink() {
             { item: "warpOrb", label: "Teleport" },
           ]}
         />
-        <p className="text-[15px] text-mc-text-dim">Selected slot: {slot + 1}</p>
+        <p className="text-[18px] text-mc-text-dim">Selected slot: {slot + 1}</p>
       </Section>
 
       <Section title="Achievement badges" note="Locked, unlocked, and secret states across all five rarities.">
@@ -171,12 +171,12 @@ export function KitchenSink() {
           {SKIN_IDS.map((s) => (
             <div key={s} className="flex flex-col items-center gap-1">
               <PixelAvatar skinId={s} size={56} />
-              <span className="text-[14px] text-mc-text-dim">{s}</span>
+              <span className="text-[17px] text-mc-text-dim">{s}</span>
             </div>
           ))}
           <div className="flex flex-col items-center gap-1">
             <PixelAvatar skinId="prospector" size={64} full />
-            <span className="text-[14px] text-mc-text-dim">full body</span>
+            <span className="text-[17px] text-mc-text-dim">full body</span>
           </div>
         </BlockPanel>
       </Section>
@@ -247,7 +247,7 @@ export function KitchenSink() {
                 label={key}
                 className="max-w-[88px] max-h-[88px] w-auto h-auto object-contain"
               />
-              <span className="text-[13px] leading-tight text-mc-text-dim break-all">
+              <span className="text-[16px] leading-tight text-mc-text-dim break-all">
                 {group}.{key}
                 <br />
                 {spec.w}×{spec.h}
@@ -262,7 +262,7 @@ export function KitchenSink() {
           {Object.entries(ART.blocks).map(([name, spec]) => (
             <div key={name} className="flex flex-col items-center gap-1">
               <PixelImage asset={spec} label={name} scale={4} />
-              <span className="text-[13px] text-mc-text-dim">{name}</span>
+              <span className="text-[16px] text-mc-text-dim">{name}</span>
             </div>
           ))}
         </div>
@@ -288,7 +288,7 @@ export function KitchenSink() {
                   </p>
                 </div>
               </BiomeScene>
-              <p className="text-[13px] leading-tight text-mc-text-dim">
+              <p className="text-[16px] leading-tight text-mc-text-dim">
                 <code>{s.key}</code> · {s.layers.length} layers ·{" "}
                 {s.layers.map((l) => `${l.layer}@${l.depth}`).join(", ")}
               </p>

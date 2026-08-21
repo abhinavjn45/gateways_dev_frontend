@@ -410,7 +410,7 @@ export const WorldViewport = forwardRef<
         </BlockButton>
       </div>
 
-      <p className="pointer-events-none absolute bottom-[var(--mc-unit)] left-[var(--mc-unit)] z-20 text-[14px] text-mc-text-dim">
+      <p className="pointer-events-none absolute bottom-[var(--mc-unit)] left-[var(--mc-unit)] z-20 text-[17px] text-mc-text-dim">
         Drag to pan · ⌘-scroll or pinch to zoom · arrows when focused
       </p>
     </div>

@@ -11,6 +11,10 @@ import { Press_Start_2P, VT323 } from "next/font/google";
  * restricted to headings, buttons and short labels. VT323 carries body text:
  * still pixel, but legible in paragraphs. Mixing them is not an aesthetic
  * compromise, it is what keeps the UI readable.
+ *
+ * VT323 is set LARGE wherever it appears — see the note on `body` in
+ * globals.css. It draws about a quarter smaller than its nominal size, so a
+ * number that looks generous in the stylesheet is ordinary on the page.
  */
 export const pressStart = Press_Start_2P({
   weight: "400",

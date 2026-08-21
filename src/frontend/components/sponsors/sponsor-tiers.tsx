@@ -67,7 +67,7 @@ export function SponsorTiers({ className }: { className?: string }) {
                   >
                     <p className="font-pixel text-[11px]">{s.name}</p>
                     {s.blurb ? (
-                      <p className="mt-[calc(var(--mc-unit)*0.5)] text-[15px] text-mc-text-dim">
+                      <p className="mt-[calc(var(--mc-unit)*0.5)] text-[18px] text-mc-text-dim">
                         {s.blurb}
                       </p>
                     ) : null}
@@ -76,7 +76,7 @@ export function SponsorTiers({ className }: { className?: string }) {
                         href={s.websiteUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="mt-[var(--mc-unit)] inline-block text-[15px] text-mc-eyebrow underline"
+                        className="mt-[var(--mc-unit)] inline-block text-[18px] text-mc-eyebrow underline"
                       >
                         Visit site
                       </a>

@@ -80,18 +80,18 @@ export function InventoryScreen() {
                     <p className="font-pixel text-[11px] text-mc-success">
                       {event.title}
                     </p>
-                    <p className="mt-[calc(var(--mc-unit)*0.5)] text-[15px] text-mc-text-dim">
+                    <p className="mt-[calc(var(--mc-unit)*0.5)] text-[18px] text-mc-text-dim">
                       {new Date(event.startsAt).toLocaleString(undefined, {
                         dateStyle: "medium",
                         timeStyle: "short",
                       })}
                     </p>
-                    <p className="mt-[calc(var(--mc-unit)*0.5)] text-[15px]">
+                    <p className="mt-[calc(var(--mc-unit)*0.5)] text-[18px]">
                       <StatusPill status={reg.status} />
                     </p>
                     <Link
                       href={`/events/${event.slug}`}
-                      className="mt-[calc(var(--mc-unit)*0.5)] inline-flex min-h-11 items-center text-[15px] text-mc-eyebrow underline"
+                      className="mt-[calc(var(--mc-unit)*0.5)] inline-flex min-h-11 items-center text-[18px] text-mc-eyebrow underline"
                     >
                       View
                     </Link>

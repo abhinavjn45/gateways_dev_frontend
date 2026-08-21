@@ -132,7 +132,7 @@ export function DigitalTwinsSection() {
             and the other not, which is how white on sand happened. Both sides of
             a contrast pair are themed here, or neither is. */}
         <div className="relative z-10 mx-[var(--mc-unit)] mb-[var(--mc-unit)] mt-auto bg-mc-panel/85 p-[calc(var(--mc-unit)*1.5)] bevel-inset md:mx-auto md:mb-[calc(var(--mc-unit)*2)] md:w-[68%] md:p-[calc(var(--mc-unit)*2)]">
-          <p className="mx-auto max-w-[74ch] text-[17px] leading-relaxed text-mc-text md:text-[20px]">
+          <p className="mx-auto max-w-[74ch] text-[20px] leading-relaxed text-mc-text md:text-[20px]">
             <strong className="text-mc-info">Digital Twins</strong>{" "}
             represent the convergence of AI, IoT, cloud computing, and
             simulation by creating intelligent virtual replicas of real-world
@@ -175,7 +175,7 @@ export function StartJourneySection() {
         >
           Start the Journey
         </BlockButton>
-        <p className="text-[16px] text-mc-text-dim">
+        <p className="text-[19px] text-mc-text-dim">
           Choose your name, register for events, and explore the realm.
         </p>
       </div>
