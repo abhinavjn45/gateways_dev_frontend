@@ -265,7 +265,19 @@ function NavLink({
 
   if (onClick) {
     return (
-      <button type="button" onClick={onClick} className={cn(className, "cursor-pointer border-0")}>
+      <button
+        type="button"
+        onClick={onClick}
+        // `appearance-none` is load-bearing, not tidiness. Tailwind's preflight
+        // sets `button { appearance: button }`, which leaves these as NATIVE
+        // widgets, and `html`/`html[data-theme="light"]` flip `color-scheme`
+        // between dark and light. On every theme switch the browser repainted
+        // its own button chrome for one frame before the author styles took
+        // over — the flash on Events and Schedule, and only on those two,
+        // because they are the row's only <button>s (the rest are <a>) and
+        // their `bg-transparent` left nothing covering the widget underneath.
+        className={cn(className, "cursor-pointer appearance-none border-0")}
+      >
         {label}
       </button>
     );
@@ -309,7 +321,8 @@ function MenuLink({
           onNavigate();
           onClick();
         }}
-        className={cn(className, "cursor-pointer border-0")}
+        // Same native-widget repaint as NavLink above — see the note there.
+        className={cn(className, "cursor-pointer appearance-none border-0")}
       >
         {label}
       </button>
