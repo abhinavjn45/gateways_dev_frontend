@@ -16,8 +16,11 @@ export const repo = new Proxy({} as Repository, {
           });
           const data = await res.json();
           if (!res.ok) {
-          if (res.status === 403 && data.code === 'EMAIL_NOT_VERIFIED') {
+            if (res.status === 403 && data.code === 'EMAIL_NOT_VERIFIED') {
               throw new DataError("EMAIL_NOT_VERIFIED", data.message);
+            }
+            if (res.status === 423) {
+              throw new DataError("ACCOUNT_LOCKED", data.message);
             }
             if (res.status === 401) {
               throw new DataError("INVALID_CREDENTIALS", "Email or Password is wrong");
@@ -105,6 +108,39 @@ export const repo = new Proxy({} as Repository, {
           const data = await res.json();
           if (!res.ok) {
             throw new Error(data.message || "Failed to resend OTP");
+          }
+        },
+        requestPasswordReset: async (email: string) => {
+          const res = await fetch(`${API_URL}/auth/forgot-password`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ email }),
+          });
+          const data = await res.json();
+          if (!res.ok) {
+            throw new Error(data.message || "Failed to request password reset");
+          }
+        },
+        resetPassword: async (email: string, otp: string, newPassword: string) => {
+          const res = await fetch(`${API_URL}/auth/reset-password`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ email, otp, newPassword }),
+          });
+          const data = await res.json();
+          if (!res.ok) {
+            if (res.status === 400 && data.message.includes("Invalid OTP")) {
+              throw new DataError("VALIDATION_FAILED", data.message);
+            }
+            if (res.status === 400 && data.message.includes("invalidated")) {
+              throw new DataError("VALIDATION_FAILED", data.message);
+            }
+            if (res.status === 400 && data.message.includes("expired")) {
+              throw new DataError("VALIDATION_FAILED", data.message);
+            }
+            throw new Error(data.message || "Failed to reset password");
           }
         },
       };
