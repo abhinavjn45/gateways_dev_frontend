@@ -192,7 +192,7 @@ export function LoginScreen() {
     defaultValues: { email: "", username: "", password: "", confirm: "", remember: true },
   });
 
-  const requestedDestination = params.get("next") ?? "/travelling";
+  const requestedDestination = params.get("next") ?? "/dashboard";
 
   const [usernameStatus, setUsernameStatus] = useState<"idle" | "checking" | "available" | "taken" | "error">("idle");
   const usernameValue = watch("username");
@@ -243,7 +243,7 @@ export function LoginScreen() {
         const handoff = await repo.auth.createConsoleHandoff("/");
         window.location.assign(handoff.url);
       } else {
-        router.replace("/travelling");
+        router.replace("/dashboard");
       }
       return;
     }
