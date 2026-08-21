@@ -19,7 +19,7 @@ export function PaymentInstructions({
       <h3 className="mb-[var(--mc-unit)] font-pixel text-[12px] uppercase text-mc-success">
         Instructions
       </h3>
-      <ol className="list-inside list-decimal space-y-[calc(var(--mc-unit)*0.5)] text-[16px]">
+      <ol className="list-inside list-decimal space-y-[calc(var(--mc-unit)*0.5)] text-[19px]">
         <li>
           Visit the payment portal at{" "}
           <a

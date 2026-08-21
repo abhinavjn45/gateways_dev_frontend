@@ -150,7 +150,7 @@ export function AchievementModal() {
             {current.description}
           </p>
           {current.flavorText ? (
-            <p className="mt-[calc(var(--mc-unit)*0.5)] text-[15px] italic text-mc-text-dim/80">
+            <p className="mt-[calc(var(--mc-unit)*0.5)] text-[18px] italic text-mc-text-dim/80">
               {current.flavorText}
             </p>
           ) : null}

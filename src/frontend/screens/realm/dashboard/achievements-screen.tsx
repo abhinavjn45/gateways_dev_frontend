@@ -55,7 +55,7 @@ export function AchievementsScreen() {
                     <p className="font-pixel text-[10px] text-mc-text">
                       {hidden ? "Hidden achievement" : a.name}
                     </p>
-                    <p className="mt-[2px] text-[15px] text-mc-text-dim">
+                    <p className="mt-[2px] text-[18px] text-mc-text-dim">
                       {hidden ? "Keep exploring to reveal this one." : a.description}
                     </p>
                     <p className="mt-[calc(var(--mc-unit)*0.5)] font-pixel text-[8px] uppercase text-mc-text-dim">

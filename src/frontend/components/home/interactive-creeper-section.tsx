@@ -322,7 +322,7 @@ export function InteractiveCreeperSection() {
         <p className="font-pixel text-[8px] uppercase tracking-[0.28em] text-mc-emerald-light md:text-[10px]">
           World encounter
         </p>
-        <p className="pixel-shadow mt-[var(--mc-unit)] text-[18px] leading-snug text-white md:text-[24px]">
+        <p className="pixel-shadow mt-[var(--mc-unit)] text-[21px] leading-snug text-white md:text-[24px]">
           The blocks are watching.
         </p>
       </div>

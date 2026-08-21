@@ -76,7 +76,7 @@ export function ScheduleList({ className }: { className?: string }) {
                         minute: "2-digit",
                       })}
                     </time>
-                    <span className="flex-1 text-[16px]">
+                    <span className="flex-1 text-[19px]">
                       {event ? (
                         <Link
                           href={`/events/${event.slug}`}
@@ -95,7 +95,7 @@ export function ScheduleList({ className }: { className?: string }) {
                         event; set a real one there and it appears here with no
                         further change. Until then it renders as a dash, so
                         thirteen rows do not all repeat the same placeholder. */}
-                    <span className="text-[14px] text-mc-text-dim">
+                    <span className="text-[17px] text-mc-text-dim">
                       {s.venue && s.venue !== "To be announced" ? s.venue : "—"}
                     </span>
                   </BlockPanel>

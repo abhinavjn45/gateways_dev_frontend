@@ -39,11 +39,11 @@ export function NotificationsScreen() {
                     {a.isPinned ? "Pinned: " : ""}
                     {a.title}
                   </p>
-                  <time dateTime={a.publishedAt} className="text-[14px] text-mc-text-dim">
+                  <time dateTime={a.publishedAt} className="text-[17px] text-mc-text-dim">
                     {new Date(a.publishedAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}
                   </time>
                 </div>
-                <p className="mt-[calc(var(--mc-unit)*0.5)] text-[16px] text-mc-text-dim">{a.body}</p>
+                <p className="mt-[calc(var(--mc-unit)*0.5)] text-[19px] text-mc-text-dim">{a.body}</p>
               </BlockPanel>
             </li>
           ))}

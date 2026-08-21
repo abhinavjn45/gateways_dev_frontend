@@ -42,7 +42,7 @@ export function SiteFooter() {
             <p className="font-pixel text-[8px] uppercase tracking-[0.2em] text-mc-portal-pale">
               {FEST.theme.name} · {FEST.theme.subject}
             </p>
-            <p className="mt-[calc(var(--mc-unit)*0.5)] max-w-[42ch] text-[16px] leading-snug text-mc-cloud">
+            <p className="mt-[calc(var(--mc-unit)*0.5)] max-w-[42ch] text-[19px] leading-snug text-mc-cloud">
               {FEST.host.department}, {FEST.host.university}, {FEST.host.city}.
             </p>
           </div>
@@ -74,11 +74,7 @@ export function SiteFooter() {
             {FEST.host.university} ↗
           </a>
         </div>
-
-        <p className="text-[15px] text-mc-cloud/75">
-          Voxel aesthetic, original artwork. Not affiliated with or endorsed by
-          Mojang or Microsoft.
-        </p>
+        
       </div>
     </footer>
   );

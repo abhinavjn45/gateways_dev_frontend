@@ -112,9 +112,9 @@ export function ScheduleModal({
                     >
                       {timeRange(slot)}
                     </time>
-                    <span className="text-[17px] text-mc-text">{slot.title}</span>
+                    <span className="text-[20px] text-mc-text">{slot.title}</span>
                     {slot.venue ? (
-                      <span className="text-[15px] text-mc-text-dim/80">
+                      <span className="text-[18px] text-mc-text-dim/80">
                         {slot.venue}
                       </span>
                     ) : null}
