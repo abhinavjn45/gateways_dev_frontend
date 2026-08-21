@@ -423,6 +423,13 @@ html[data-theme="light"] .university-mark {
   filter: brightness(0);
 }
 
+/* Requirement ticks keep the dark theme's luminous emerald, but need a more
+   grounded green against the light theme's cream form panels. Scoped here so
+   success text elsewhere continues to use the theme's semantic token. */
+html[data-theme="light"] .password-requirement-met {
+  color: seagreen;
+}
+
 /* The portal canvas's loading fallback. Global rather than in the portal CSS
    module because it is handed to <Canvas fallback>, which renders outside the
    component that owns the module's classes.
