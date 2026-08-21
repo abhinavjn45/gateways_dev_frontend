@@ -521,7 +521,9 @@ export type DataErrorCode =
   // code; the UI shows the OTP step rather than an error.
   | "EMAIL_NOT_VERIFIED"
   // Address belongs to a Google identity — there is no password to use.
-  | "OAUTH_ACCOUNT";
+  | "OAUTH_ACCOUNT"
+  // Account temporarily locked due to multiple failed login attempts
+  | "ACCOUNT_LOCKED";
 
 export class DataError extends Error {
   readonly code: DataErrorCode;
