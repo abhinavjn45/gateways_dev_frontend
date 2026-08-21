@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { BlockButton, BlockCheckbox, BlockInput, BlockPanel } from "@/frontend/components/mc";
@@ -104,6 +104,29 @@ interface FormValues {
   remember: boolean;
 }
 
+const PASSWORD_REQUIREMENTS = [
+  {
+    label: "8–72 characters",
+    test: (password: string) => password.length >= 8 && password.length <= 72,
+  },
+  {
+    label: "One uppercase letter",
+    test: (password: string) => /[A-Z]/.test(password),
+  },
+  {
+    label: "One lowercase letter",
+    test: (password: string) => /[a-z]/.test(password),
+  },
+  {
+    label: "One number",
+    test: (password: string) => /\d/.test(password),
+  },
+  {
+    label: "One special character",
+    test: (password: string) => /[^a-zA-Z\d]/.test(password),
+  },
+] as const;
+
 /**
  * The backend supports Google OAuth only. Keep the provider list explicit so a
  * provider cannot quietly reappear in the UI without a matching backend flow.
@@ -184,9 +207,9 @@ export function LoginScreen() {
   const {
     register,
     handleSubmit,
-    watch,
     formState: { errors, isSubmitting },
     reset,
+    control,
   } = useForm<FormValues>({
     resolver: zodResolver(authSchema(mode)),
     defaultValues: { email: "", username: "", password: "", confirm: "", remember: true },
@@ -194,28 +217,47 @@ export function LoginScreen() {
 
   const requestedDestination = params.get("next") ?? "/dashboard";
 
-  const [usernameStatus, setUsernameStatus] = useState<"idle" | "checking" | "available" | "taken" | "error">("idle");
-  const usernameValue = watch("username");
+  const [usernameCheck, setUsernameCheck] = useState<{
+    value: string;
+    status: "available" | "taken" | "error";
+  }>({ value: "", status: "error" });
+  const usernameValue = useWatch({ control, name: "username" });
+  const passwordValue = useWatch({ control, name: "password" });
+  const confirmValue = useWatch({ control, name: "confirm" });
+  const normalizedUsername = usernameValue.trim();
+  const usernameIsCheckable = /^[A-Za-z0-9_]{3,16}$/.test(normalizedUsername);
+  const visibleUsernameStatus = !usernameIsCheckable
+    ? "idle"
+    : usernameCheck.value === normalizedUsername
+      ? usernameCheck.status
+      : "checking";
 
   useEffect(() => {
     if (mode !== "signup") return;
-    if (!usernameValue || usernameValue.length < 3 || !/^[A-Za-z0-9_]{3,16}$/.test(usernameValue.trim())) {
-      setUsernameStatus("idle");
-      return;
-    }
+    if (!usernameIsCheckable) return;
 
-    setUsernameStatus("checking");
+    let cancelled = false;
     const timeoutId = setTimeout(async () => {
       try {
-        const available = await repo.auth.checkUsername(usernameValue);
-        setUsernameStatus(available ? "available" : "taken");
-      } catch (err) {
-        setUsernameStatus("error");
+        const available = await repo.auth.checkUsername(normalizedUsername);
+        if (!cancelled) {
+          setUsernameCheck({
+            value: normalizedUsername,
+            status: available ? "available" : "taken",
+          });
+        }
+      } catch {
+        if (!cancelled) {
+          setUsernameCheck({ value: normalizedUsername, status: "error" });
+        }
       }
     }, 600);
 
-    return () => clearTimeout(timeoutId);
-  }, [usernameValue, mode]);
+    return () => {
+      cancelled = true;
+      clearTimeout(timeoutId);
+    };
+  }, [normalizedUsername, usernameIsCheckable, mode]);
 
   async function routeAuthenticatedUser() {
     const live = await repo.auth.getSession();
@@ -538,9 +580,9 @@ export function LoginScreen() {
               spellCheck={false}
               maxLength={16}
               hint={
-                usernameStatus === "checking" ? "Checking availability..." :
-                usernameStatus === "taken" ? "Username already taken." :
-                usernameStatus === "available" ? "Username is available!" :
+                visibleUsernameStatus === "checking" ? "Checking availability..." :
+                visibleUsernameStatus === "taken" ? "Username already taken." :
+                visibleUsernameStatus === "available" ? "Username is available!" :
                 "Unique, 3–16 letters, numbers, or underscores."
               }
               error={errors.username?.message}
@@ -553,8 +595,11 @@ export function LoginScreen() {
             autoComplete={mode === "login" ? "current-password" : "new-password"}
             error={errors.password?.message}
             registration={register("password")}
-            hint={mode === "signup" ? "Min 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char." : undefined}
           />
+
+          {mode === "signup" ? (
+            <PasswordRequirements password={passwordValue} />
+          ) : null}
 
           {mode === "signup" ? (
             <PasswordField
@@ -562,6 +607,21 @@ export function LoginScreen() {
               autoComplete="new-password"
               error={errors.confirm?.message}
               registration={register("confirm")}
+              hint={
+                confirmValue
+                  ? confirmValue === passwordValue
+                    ? (
+                      <span className="inline-flex items-center gap-2 text-mc-success">
+                        <StatusGlyph met /> Passwords match.
+                      </span>
+                    )
+                    : (
+                      <span className="inline-flex items-center gap-2 text-mc-danger">
+                        <StatusGlyph met={false} /> Passwords do not match.
+                      </span>
+                    )
+                  : "Retype your password to confirm it."
+              }
             />
           ) : null}
 
@@ -653,6 +713,69 @@ export function LoginScreen() {
   );
 }
 
+function StatusGlyph({ met }: { met: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 8 8"
+      className="h-3 w-3 shrink-0"
+      shapeRendering="crispEdges"
+      aria-hidden
+    >
+      {met ? (
+        <path
+          d="M6 1h2v2H6z M5 2h2v2H5z M4 3h2v2H4z M3 4h2v2H3z M2 5h2v2H2z M1 4h2v2H1z M0 3h2v2H0z"
+          fill="currentColor"
+        />
+      ) : (
+        <path
+          d="M1 1h2v2H1z M5 1h2v2H5z M2 2h2v2H2z M4 2h2v2H4z M3 3h2v2H3z M2 4h2v2H2z M4 4h2v2H4z M1 5h2v2H1z M5 5h2v2H5z"
+          fill="currentColor"
+        />
+      )}
+    </svg>
+  );
+}
+
+function PasswordRequirements({ password }: { password: string }) {
+  const metCount = PASSWORD_REQUIREMENTS.filter((requirement) =>
+    requirement.test(password),
+  ).length;
+
+  return (
+    <div
+      className="mb-[calc(var(--mc-unit)*0.5)] border-l-[length:var(--mc-bevel)] border-mc-border pl-[var(--mc-unit)]"
+      aria-label="Password requirements"
+    >
+      <p className="mb-[calc(var(--mc-unit)*0.5)] font-pixel text-[9px] uppercase tracking-wide text-mc-text-dim">
+        Craft a strong password
+      </p>
+      <ul className="grid gap-1 sm:grid-cols-2">
+        {PASSWORD_REQUIREMENTS.map((requirement) => {
+          const met = requirement.test(password);
+          return (
+            <li
+              key={requirement.label}
+              className={cn(
+                "flex items-center gap-2 text-[16px] leading-tight transition-colors",
+                met
+                  ? "password-requirement-met text-mc-success"
+                  : "text-mc-text-dim",
+              )}
+            >
+              <StatusGlyph met={met} />
+              <span>{requirement.label}</span>
+              <span className="sr-only">{met ? "met" : "not met"}</span>
+            </li>
+          );
+        })}
+      </ul>
+      <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+        {metCount} of {PASSWORD_REQUIREMENTS.length} password requirements met.
+      </p>
+    </div>
+  );
+}
+
 /** Password field with a reveal toggle. */
 function PasswordField({
   label,
@@ -665,7 +788,7 @@ function PasswordField({
   autoComplete: string;
   error?: string;
   registration: ReturnType<ReturnType<typeof useForm<FormValues>>["register"]>;
-  hint?: string;
+  hint?: React.ReactNode;
 }) {
   const [visible, setVisible] = useState(false);
 
