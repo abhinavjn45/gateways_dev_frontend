@@ -1,10 +1,8 @@
 "use client";
 
-import Link from "next/link";
-import { BlockPanel, LoadingBlocks } from "@/frontend/components/mc";
-import { useAsync } from "@/frontend/hooks/use-async";
+import { BlockPanel } from "@/frontend/components/mc";
+import { eventSchedule, eventTimeOrTba } from "@/frontend/lib/events";
 import { cn } from "@/frontend/lib/utils";
-import { repo } from "@/lib/data";
 
 /**
  * Fest schedule, grouped by day.
@@ -14,98 +12,56 @@ import { repo } from "@/lib/data";
  * inside the shell, which need different chrome around identical content.
  *
  * The homepage's `<ScheduleModal>` deliberately does NOT use this: it presents
- * the same data as day tabs with time ranges, and groups by calendar date
- * rather than dayLabel so two differently-dated "Day 1" slots cannot merge.
- * That is a different view of the data, not a duplicate of this one.
+ * the same data as day tabs rather than stacked sections. That is a different
+ * view of the data, not a duplicate of this one.
  *
- * All times are stored as UTC ISO strings and formatted with toLocaleString, so
- * they render in the viewer's timezone. When this goes multi-timezone (or the
- * fest fixes a venue timezone), replace the formatter with a single helper
- * pinned to that zone — never rely on the browser default for a venue clock.
+ * Source is `eventSchedule()`, not `repo.events.schedule()`. The data layer
+ * answers that call from a stub and returns `[]`, so this list rendered empty
+ * on both pages; `frontend/lib/events.ts` carries the real line-up. Times are
+ * the organisers' own strings and are NOT parsed into Date objects — see the
+ * note on `ScheduleDay` for why there is nothing here to convert.
  */
 export function ScheduleList({ className }: { className?: string }) {
-  const { data: slots, loading } = useAsync(() => repo.events.schedule(), []);
-  const { data: events } = useAsync(() => repo.events.list(), []);
-
-  const byDay = new Map<string, NonNullable<typeof slots>>();
-  for (const s of slots ?? []) {
-    const list = byDay.get(s.dayLabel) ?? [];
-    list.push(s);
-    byDay.set(s.dayLabel, list);
-  }
-
-  if (loading) {
-    return (
-      <BlockPanel variant="slot">
-        <LoadingBlocks label="Loading schedule" />
-      </BlockPanel>
-    );
-  }
+  const days = eventSchedule();
 
   return (
     <div className={cn("flex flex-col gap-[calc(var(--mc-unit)*1.5)]", className)}>
-      {[...byDay.entries()].map(([day, daySlots]) => {
-        return (
-        <section key={day}>
+      {days.map((day) => (
+        <section key={day.date}>
           {/* "Venue" is a COLUMN LABEL, not a value — it heads the right-hand
-              column the rows below fill in. Printing the shared placeholder up
-              here instead would have to be undone the moment a single event
-              gets a real room. */}
+              column the rows below fill in. */}
           <div className="flex flex-wrap items-baseline justify-between gap-x-[var(--mc-unit)] gap-y-[2px]">
-            <h3 className="font-pixel text-[11px] uppercase text-mc-eyebrow">{day}</h3>
+            <h3 className="schedule-date font-pixel text-[11px] uppercase text-mc-eyebrow">{day.date}</h3>
             <span className="font-pixel text-[9px] uppercase tracking-[0.1em] text-mc-text-dim">
               Venue
             </span>
           </div>
           <ol className="mt-[var(--mc-unit)] flex flex-col gap-[calc(var(--mc-unit)*0.5)]">
-            {daySlots.map((s) => {
-              const event = events?.find((e) => e.id === s.eventId);
-              return (
-                <li key={s.id}>
-                  <BlockPanel
-                    variant={s.isBreak ? "slot" : "panel"}
-                    padded="sm"
-                    className="flex flex-wrap items-baseline gap-x-[var(--mc-unit)] gap-y-[2px]"
-                  >
-                    <time
-                      dateTime={s.startsAt}
-                      className="font-pixel text-[10px] tabular-nums text-mc-accent-strong"
-                    >
-                      {new Date(s.startsAt).toLocaleTimeString(undefined, {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </time>
-                    <span className="flex-1 text-[19px]">
-                      {event ? (
-                        <Link
-                          href={`/events/${event.slug}`}
-                          className="text-mc-text no-underline hover:text-mc-eyebrow"
-                        >
-                          {s.title}
-                        </Link>
-                      ) : (
-                        <span className={s.isBreak ? "text-mc-text-dim" : undefined}>
-                          {s.title}
-                        </span>
-                      )}
-                    </span>
-                    {/* Each event's own venue, under the column label above.
-                        The seed still carries "To be announced" for every
-                        event; set a real one there and it appears here with no
-                        further change. Until then it renders as a dash, so
-                        thirteen rows do not all repeat the same placeholder. */}
-                    <span className="text-[17px] text-mc-text-dim">
-                      {s.venue && s.venue !== "To be announced" ? s.venue : "—"}
-                    </span>
-                  </BlockPanel>
-                </li>
-              );
-            })}
+            {day.events.map((event) => (
+              <li key={event.slug}>
+                <BlockPanel
+                  variant="panel"
+                  padded="sm"
+                  className="flex flex-wrap items-baseline gap-x-[var(--mc-unit)] gap-y-[2px]"
+                >
+                  {/* Not a <time>: "To be announced" is not a datetime, and a
+                      <time> with no valid dateTime is worse than a span. */}
+                  <span className="schedule-time font-pixel text-[10px] tabular-nums text-mc-accent-strong">
+                    {eventTimeOrTba(event)}
+                  </span>
+                  <span className="flex-1 text-[19px] text-mc-text">
+                    {event.name}
+                    <span className="text-mc-text-dim"> — {event.kind}</span>
+                  </span>
+                  <span className="text-[17px] text-mc-text-dim">
+                    {event.venue || "—"}
+                  </span>
+                </BlockPanel>
+              </li>
+            ))}
           </ol>
         </section>
-        );
-      })}
+      ))}
     </div>
   );
 }
