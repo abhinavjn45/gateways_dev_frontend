@@ -430,6 +430,31 @@ html[data-theme="light"] .password-requirement-met {
   color: seagreen;
 }
 
+/* Three more light-theme-only corrections, same shape as the rule above and
+   for the same reason: each of these tokens is tuned for luminous text on the
+   dark theme's near-black, and the light theme's cream panels need a different
+   answer in these specific places — not a change to the token, which would move
+   the colour everywhere it is used.
+
+   Dark is deliberately untouched by all three; each is scoped to
+   `html[data-theme="light"]`, which is (0,2,1) against Tailwind's (0,1,0)
+   utility, so the override wins without `!important` or source-order games. */
+
+/* The event KIND chip in the events modal ("24 Hour Hackathon"). */
+html[data-theme="light"] .event-kind {
+  color: seagreen;
+}
+
+/* The time column in the schedule. */
+html[data-theme="light"] .schedule-time {
+  color: navy;
+}
+
+/* The date heading above each schedule section. */
+html[data-theme="light"] .schedule-date {
+  color: var(--color-mc-accent);
+}
+
 /* The portal canvas's loading fallback. Global rather than in the portal CSS
    module because it is handed to <Canvas fallback>, which renders outside the
    component that owns the module's classes.
