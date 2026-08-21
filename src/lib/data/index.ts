@@ -145,6 +145,93 @@ export const repo = new Proxy({} as Repository, {
         },
       };
     }
+    if (prop === "profiles") {
+      return {
+        get: async (userId: string) => {
+          const res = await fetch(`${API_URL}/profile/${userId}`, { credentials: "include" });
+          if (!res.ok) return null;
+          return await res.json();
+        },
+        update: async (userId: string, data: any) => {
+          const res = await fetch(`${API_URL}/profile`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify(data),
+          });
+          if (!res.ok) {
+            const err = await res.json();
+            throw new DataError("VALIDATION_FAILED", err.message || "Failed to update profile");
+          }
+          return await res.json();
+        }
+      };
+    }
+
+    if (prop === "payments") {
+      return {
+        create: async (userId: string, formData: FormData) => {
+          const res = await fetch(`${API_URL}/payment`, {
+            method: "POST",
+            credentials: "include",
+            body: formData, // Do not set Content-Type header; browser will boundary it
+          });
+          if (!res.ok) {
+            const err = await res.json();
+            throw new DataError("VALIDATION_FAILED", err.message || "Failed to submit payment");
+          }
+          return await res.json();
+        }
+      };
+    }
+
+    if (prop === "characters") {
+      return {
+        getByUser: async (userId: string) => {
+          const res = await fetch(`${API_URL}/character/${userId}`, { credentials: "include" });
+          if (!res.ok) return null;
+          return await res.json();
+        },
+        update: async (userId: string, data: any) => {
+          const res = await fetch(`${API_URL}/character`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify(data),
+          });
+          if (!res.ok) {
+            const err = await res.json();
+            throw new DataError("VALIDATION_FAILED", err.message || "Failed to update character");
+          }
+          return await res.json();
+        },
+        isPlayerNameTaken: async (playerName: string, excludeUserId?: string) => {
+          const query = new URLSearchParams({ name: playerName });
+          if (excludeUserId) query.set("excludeUserId", excludeUserId);
+          const res = await fetch(`${API_URL}/character/check-name?${query.toString()}`, { credentials: "include" });
+          if (!res.ok) return true; // fail safe
+          const data = await res.json();
+          return data.taken;
+        }
+      };
+    }
+
+    if (prop === "reference") {
+      return {
+        colleges: async () => {
+          const res = await fetch(`${API_URL}/reference/colleges`, { credentials: "include" });
+          if (!res.ok) return [];
+          return await res.json();
+        },
+        departments: async (collegeId: string | null) => {
+          if (!collegeId) return [];
+          const res = await fetch(`${API_URL}/reference/departments?collegeId=${collegeId}`, { credentials: "include" });
+          if (!res.ok) return [];
+          return await res.json();
+        },
+        levels: async () => []
+      };
+    }
     
     // Return a dummy object where any method called returns an empty array/null
     return new Proxy({}, {
