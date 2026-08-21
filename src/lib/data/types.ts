@@ -78,7 +78,7 @@ export type AchievementTrigger =
    and the console's filters and CSV exports key off the exact strings. Widen or
    rename them only in lockstep with that repo. */
 
-export type Gender = "male" | "female" | "other";
+export type Gender = "Male" | "Female" | "Other";
 
 /** Sets the base fee on the console's side (participant ₹350 … guest ₹0). */
 export type ParticipantCategory =
@@ -91,7 +91,7 @@ export type ParticipantCategory =
 
 export type TshirtSize = "XS" | "S" | "M" | "L" | "XL" | "XXL";
 
-export type DietaryPref = "veg" | "non_veg" | "vegan" | "jain";
+export type DietaryPref = "Vegeterian" | "Non-Vegeterian";
 
 /**
  * One row per person, matching the console's `Participant`.
@@ -116,11 +116,10 @@ export interface Profile {
   phone: string | null;
   collegeId?: string | null;
   departmentId?: string | null;
-  yearOfStudy?: number | null;
+  yearOfStudy?: string | null;
   gender: Gender | null;
   /** "YYYY-MM-DD". A plain date, not a timestamp — nobody has a birth instant. */
   dateOfBirth: string | null;
-  category: ParticipantCategory | null;
   tshirtSize: TshirtSize | null;
   emergencyName: string | null;
   emergencyPhone: string | null;
@@ -143,10 +142,9 @@ export interface ParticipantDetails {
   phone: string;
   collegeId: string;
   departmentId: string;
-  yearOfStudy: number;
+  yearOfStudy: string;
   gender: Gender;
   dateOfBirth: string;
-  category: ParticipantCategory;
   tshirtSize: TshirtSize;
   emergencyName: string;
   emergencyPhone: string;
@@ -174,14 +172,13 @@ export function isParticipantComplete(
       profile.phone?.trim() &&
       profile.gender &&
       profile.dateOfBirth &&
-      profile.category &&
       profile.tshirtSize &&
       profile.emergencyName?.trim() &&
       profile.emergencyPhone?.trim() &&
       profile.dietaryPref &&
-      character.collegeId &&
-      character.departmentId &&
-      character.yearOfStudy != null,
+      (profile.collegeId || character.collegeId) &&
+      (profile.departmentId || character.departmentId) &&
+      (profile.yearOfStudy != null || character.yearOfStudy != null),
   );
 }
 
@@ -192,7 +189,7 @@ export interface Character {
   playerName: string;
   collegeId: string | null;
   departmentId: string | null;
-  yearOfStudy: number | null;
+  yearOfStudy: string | null;
   skinId: SkinId;
   bio: string | null;
   /** Denormalised cache of the XP ledger sum. */
@@ -207,7 +204,7 @@ export interface NewCharacter {
   playerName: string;
   collegeId: string | null;
   departmentId: string | null;
-  yearOfStudy: number | null;
+  yearOfStudy: string | null;
   skinId: SkinId;
   bio?: string | null;
 }
@@ -218,6 +215,9 @@ export interface Session {
   roles: Role[];
   assignments?: RoleAssignment[];
   mustChangePassword?: boolean;
+  isProfileComplete?: boolean;
+  paymentStatus?: 'none' | 'pending' | 'verified' | 'rejected';
+  isPaymentVerified?: boolean;
   /** ISO timestamp; the local implementation expires sessions like a real one. */
   expiresAt: string;
 }
