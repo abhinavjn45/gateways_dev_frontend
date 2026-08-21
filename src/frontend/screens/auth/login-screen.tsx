@@ -440,7 +440,7 @@ export function LoginScreen() {
                 padded="sm"
                 role="alert"
                 aria-live="assertive"
-                className="border-mc-redstone text-mc-danger text-[16px]"
+                className="border-mc-redstone text-mc-danger text-[19px]"
               >
                 {formError}
               </BlockPanel>
@@ -458,7 +458,7 @@ export function LoginScreen() {
 
             <button
               type="button"
-              className="min-h-11 cursor-pointer text-[16px] text-mc-eyebrow hover:text-mc-text hover:underline disabled:cursor-not-allowed disabled:opacity-60"
+              className="min-h-11 cursor-pointer text-[19px] text-mc-eyebrow hover:text-mc-text hover:underline disabled:cursor-not-allowed disabled:opacity-60"
               onClick={() => void onResend()}
               disabled={resending || resendCooldown > 0}
             >
@@ -472,7 +472,7 @@ export function LoginScreen() {
 
             <button
               type="button"
-              className="min-h-11 cursor-pointer text-[16px] text-mc-eyebrow hover:text-mc-text hover:underline"
+              className="min-h-11 cursor-pointer text-[19px] text-mc-eyebrow hover:text-mc-text hover:underline"
               onClick={() => {
                 setPendingEmail(null);
                 setCode("");
@@ -570,7 +570,7 @@ export function LoginScreen() {
               <BlockCheckbox label="Remember me" {...register("remember")} />
               <button
                 type="button"
-                className="cursor-pointer text-[16px] text-mc-eyebrow hover:text-mc-text hover:underline"
+                className="cursor-pointer text-[19px] text-mc-eyebrow hover:text-mc-text hover:underline"
                 onClick={() => router.push("/forgot-password")}
               >
                 Forgot password?
@@ -585,7 +585,7 @@ export function LoginScreen() {
               padded="sm"
               role="alert"
               aria-live="assertive"
-              className="border-mc-redstone text-mc-danger text-[16px]"
+              className="border-mc-redstone text-mc-danger text-[19px]"
             >
               {formError}
             </BlockPanel>
@@ -595,7 +595,7 @@ export function LoginScreen() {
               a warm backend never shows this. aria-live so it doesn't read as
               a silent hang for screen-reader users either. */}
           {serverWarming ? (
-            <p role="status" aria-live="polite" className="text-center text-[14px] text-mc-text-dim">
+            <p role="status" aria-live="polite" className="text-center text-[17px] text-mc-text-dim">
               Waking up the server — this can take a few seconds…
             </p>
           ) : null}
@@ -614,7 +614,7 @@ export function LoginScreen() {
 
         <div className="flex items-center gap-[var(--mc-unit)]">
           <span className="h-[2px] flex-1 bg-mc-border" />
-          <span className="text-[14px] uppercase text-mc-text-dim">Or continue with</span>
+          <span className="text-[17px] uppercase text-mc-text-dim">Or continue with</span>
           <span className="h-[2px] flex-1 bg-mc-border" />
         </div>
 
@@ -641,7 +641,7 @@ export function LoginScreen() {
               account lives in the backend's database, so the disclaimer would
               be actively wrong. */}
           {isApiBackendEnabled ? null : (
-            <p className="text-center text-[14px] text-mc-text-dim">
+            <p className="text-center text-[17px] text-mc-text-dim">
               Prototype: accounts are stored in this browser only.
             </p>
           )}

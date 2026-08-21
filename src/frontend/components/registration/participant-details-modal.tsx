@@ -282,7 +282,7 @@ export function ParticipantDetailsModal({
             padded="sm"
             role="alert"
             aria-live="assertive"
-            className="border-mc-redstone text-mc-danger text-[16px]"
+            className="border-mc-redstone text-mc-danger text-[19px]"
           >
             {formError}
           </BlockPanel>

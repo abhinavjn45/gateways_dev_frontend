@@ -99,8 +99,13 @@ export function BlockModal({
                   </Dialog.Title>
                   {!hideClose ? (
                     <Dialog.Close asChild>
-                      <BlockButton variant="ghost" size="sm" aria-label="Close">
-                        ✕
+                      <BlockButton
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Close"
+                        className="text-mc-redstone hover:text-mc-redstone-light"
+                      >
+                        <PixelCross size={22} />
                       </BlockButton>
                     </Dialog.Close>
                   ) : null}
@@ -130,5 +135,39 @@ export function BlockModal({
         ) : null}
       </AnimatePresence>
     </Dialog.Root>
+  );
+}
+
+/**
+ * The close X, drawn rather than typed.
+ *
+ * It used to be a literal "✕" (U+2715), and that was the bug behind it looking
+ * thin and off-brand: Press Start 2P has no glyph at that codepoint, so every
+ * browser silently fell back to a system font and rendered a hairline vector
+ * cross in the middle of an otherwise pixel-art UI.
+ *
+ * Same technique as the item glyphs in `item-icon.tsx` — 2px-wide arms on a
+ * 16×16 grid with `shapeRendering="crispEdges"`, so it is real pixel art and
+ * stays sharp at any `--mc-scale` instead of resampling like an <img> would.
+ * `currentColor` keeps the colour with the button, so a variant change or a
+ * hover state moves the X with it.
+ */
+function PixelCross({ size }: { size: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 16 16"
+      shapeRendering="crispEdges"
+      fill="currentColor"
+      aria-hidden
+      focusable="false"
+    >
+      {/* "\\" arm, top-left to bottom-right. */}
+      <path d="M3 3h2v2H3z M4 4h2v2H4z M5 5h2v2H5z M6 6h2v2H6z M7 7h2v2H7z M8 8h2v2H8z M9 9h2v2H9z M10 10h2v2H10z M11 11h2v2H11z" />
+      {/* "/" arm. The centre cell is already drawn above, so it is skipped here
+          rather than painted twice. */}
+      <path d="M11 3h2v2H11z M10 4h2v2H10z M9 5h2v2H9z M8 6h2v2H8z M6 8h2v2H6z M5 9h2v2H5z M4 10h2v2H4z M3 11h2v2H3z" />
+    </svg>
   );
 }

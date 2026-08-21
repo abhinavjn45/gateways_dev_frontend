@@ -114,12 +114,12 @@ export function EventsModal({
                     </span>
                   </div>
                   {e.tagline ? (
-                    <p className="mt-[calc(var(--mc-unit)*0.5)] text-[16px] leading-snug text-mc-text-dim">
+                    <p className="mt-[calc(var(--mc-unit)*0.5)] text-[19px] leading-snug text-mc-text-dim">
                       {e.tagline}
                     </p>
                   ) : null}
                   {e.venue ? (
-                    <p className="mt-[calc(var(--mc-unit)*0.25)] text-[15px] text-mc-text-dim/80">
+                    <p className="mt-[calc(var(--mc-unit)*0.25)] text-[18px] text-mc-text-dim/80">
                       {e.venue}
                     </p>
                   ) : null}

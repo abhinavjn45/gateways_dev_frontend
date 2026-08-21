@@ -153,7 +153,7 @@ export function ProfileScreen() {
             </>
           ) : (
             <>
-              <p className="break-all text-[17px] text-mc-text">{character.playerName}</p>
+              <p className="break-all text-[20px] text-mc-text">{character.playerName}</p>
               <div>
                 <BlockButton
                   variant="gold"
@@ -167,7 +167,7 @@ export function ProfileScreen() {
                   Change username
                 </BlockButton>
               </div>
-              <p className="text-[15px] text-mc-text-dim">
+              <p className="text-[18px] text-mc-text-dim">
                 This is the name teammates and the leaderboard see.
               </p>
             </>
@@ -235,7 +235,7 @@ export function ProfileScreen() {
           </BlockButton>
         </div>
 
-        <p className="text-[15px] text-mc-text-dim">
+        <p className="text-[18px] text-mc-text-dim">
           Asked once and reused for every event you register for.
         </p>
       </BlockPanel>
@@ -248,7 +248,7 @@ export function ProfileScreen() {
             <PixelAvatar skinId={character.skinId} size={96} full />
             <div className="w-full min-w-0 flex-1 sm:min-w-[220px]">
               <p className="font-pixel text-[14px] text-mc-success">{character.playerName}</p>
-              <p className="mt-[calc(var(--mc-unit)*0.5)] text-[16px] text-mc-text-dim">
+              <p className="mt-[calc(var(--mc-unit)*0.5)] text-[19px] text-mc-text-dim">
                 {college?.name ?? "—"}
                 {department ? ` · ${department.name}` : ""}
                 {character.yearOfStudy ? ` · Year ${character.yearOfStudy}` : ""}
@@ -274,14 +274,14 @@ export function ProfileScreen() {
       <section>
         <h2 className="font-pixel text-[11px] uppercase text-mc-text-dim">XP history</h2>
         {(ledger ?? []).length === 0 ? (
-          <p className="mt-[calc(var(--mc-unit)*0.5)] text-[15px] text-mc-text-dim">No XP earned yet.</p>
+          <p className="mt-[calc(var(--mc-unit)*0.5)] text-[18px] text-mc-text-dim">No XP earned yet.</p>
         ) : (
           <ul className="mt-[var(--mc-unit)] flex flex-col gap-[3px]">
             {(ledger ?? []).map((e) => (
               <li key={e.id}>
                 <BlockPanel variant="slot" padded="sm" className="flex flex-wrap justify-between gap-[var(--mc-unit)]">
-                  <span className="text-[15px]">{e.reason}</span>
-                  <span className="text-[15px] text-mc-success tabular-nums">+{e.amount} XP</span>
+                  <span className="text-[18px]">{e.reason}</span>
+                  <span className="text-[18px] text-mc-success tabular-nums">+{e.amount} XP</span>
                 </BlockPanel>
               </li>
             ))}
@@ -296,7 +296,7 @@ function Detail({ label, value }: { label: string; value?: string | number | nul
   return (
     <div>
       <dt className="font-pixel text-[9px] uppercase text-mc-text-dim">{label}</dt>
-      <dd className="mt-[2px] text-[16px] text-mc-text">{value || "—"}</dd>
+      <dd className="mt-[2px] text-[19px] text-mc-text">{value || "—"}</dd>
     </div>
   );
 }

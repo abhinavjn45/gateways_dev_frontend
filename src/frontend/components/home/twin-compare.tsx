@@ -269,7 +269,7 @@ export function TwinCompare() {
                 <span className="font-pixel text-[9px] uppercase leading-relaxed text-mc-accent">
                   Drop an image here
                 </span>
-                <span className="text-[15px] leading-snug text-mc-text-dim">
+                <span className="text-[18px] leading-snug text-mc-text-dim">
                   or press to browse · PNG, JPEG, WebP · 10 MB max
                 </span>
               </span>
@@ -377,13 +377,13 @@ export function TwinCompare() {
           </BlockButton>
         </div>
 
-        <p className="text-center text-[15px] leading-snug text-mc-text-dim">
+        <p className="text-center text-[18px] leading-snug text-mc-text-dim">
           Processed privately in your browser. Nothing is uploaded or saved.
         </p>
         {error ? (
           <p
             role="alert"
-            className="w-full border-[length:var(--mc-bevel)] border-mc-redstone bg-mc-redstone/10 px-[var(--mc-unit)] py-[calc(var(--mc-unit)*0.75)] text-center text-[16px] text-mc-danger"
+            className="w-full border-[length:var(--mc-bevel)] border-mc-redstone bg-mc-redstone/10 px-[var(--mc-unit)] py-[calc(var(--mc-unit)*0.75)] text-center text-[19px] text-mc-danger"
           >
             {error}
           </p>
@@ -402,7 +402,7 @@ function PanelCaption({ label, caption }: { label: string; caption: string }) {
       <p className="font-pixel text-[9px] uppercase tracking-[0.14em] text-mc-accent md:text-[10px]">
         {label}
       </p>
-      <p className="max-w-full truncate text-[16px] leading-snug text-mc-text-dim">
+      <p className="max-w-full truncate text-[19px] leading-snug text-mc-text-dim">
         {caption}
       </p>
     </div>

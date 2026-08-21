@@ -105,13 +105,13 @@ function ReceiptCard({
         <p className="font-pixel text-[12px] text-mc-success">
           {event ? event.title : "Loading event..."}
         </p>
-        <p className="text-[16px] text-mc-text-dim">
+        <p className="text-[19px] text-mc-text-dim">
           Player: <span className="text-mc-text">{character ? character.playerName : "Loading..."}</span>
         </p>
-        <p className="text-[14px] text-mc-text-dim">
+        <p className="text-[17px] text-mc-text-dim">
           Submitted: {new Date(receipt.submittedAt).toLocaleString()}
         </p>
-        <p className="text-[14px] text-mc-text-dim">
+        <p className="text-[17px] text-mc-text-dim">
           File: {receipt.fileName} ({(receipt.fileSizeBytes / 1024).toFixed(1)} KB)
         </p>
       </div>
@@ -149,11 +149,11 @@ function ReceiptCard({
         }
       >
         <div className="flex flex-col gap-[var(--mc-unit)]">
-          <p className="text-[16px] text-mc-text">Please provide a reason for rejecting this payment receipt:</p>
+          <p className="text-[19px] text-mc-text">Please provide a reason for rejecting this payment receipt:</p>
           <textarea 
             value={rejectNote}
             onChange={(e) => setRejectNote(e.target.value)}
-            className="bg-mc-slot text-mc-text border-2 border-mc-border p-[var(--mc-unit)] w-full h-[100px] font-body text-[16px] focus:outline-none focus:border-mc-portal-light bevel-inset"
+            className="bg-mc-slot text-mc-text border-2 border-mc-border p-[var(--mc-unit)] w-full h-[100px] font-body text-[19px] focus:outline-none focus:border-mc-portal-light bevel-inset"
             placeholder="E.g., Receipt is blurry, transaction ID missing..."
           />
         </div>

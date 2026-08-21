@@ -47,7 +47,7 @@ export function RegisterSection() {
             {FEST.registerSteps.map((step, i) => (
               <li
                 key={step}
-                className="flex items-start gap-[var(--mc-unit)] text-[17px] leading-snug text-mc-text md:text-[19px]"
+                className="flex items-start gap-[var(--mc-unit)] text-[20px] leading-snug text-mc-text md:text-[22px]"
               >
                 <span
                   aria-hidden
@@ -73,8 +73,8 @@ export function RegisterSection() {
             <ul className="flex flex-col gap-[calc(var(--mc-unit)*1.5)]">
               <li className="flex items-center justify-between gap-2">
                 <div className="flex flex-col">
-                  <span className="text-[15px] text-mc-text-dim">Early bird</span>
-                  <span className="text-[14px] text-mc-text-dim">(From 17th Aug to 09th Sep, 2026)</span>
+                  <span className="text-[18px] text-mc-text-dim">Early bird</span>
+                  <span className="text-[17px] text-mc-text-dim">(From 17th Aug to 09th Sep, 2026)</span>
                 </div>
                 <span className="font-pixel text-[16px] text-mc-accent md:text-[18px]">
                   {inr(FEST.money.registration.earlyBirdInr)}
@@ -82,8 +82,8 @@ export function RegisterSection() {
               </li>
               <li className="flex items-center justify-between gap-2">
                 <div className="flex flex-col">
-                  <span className="text-[15px] text-mc-text-dim">Standard</span>
-                  <span className="text-[14px] text-mc-text-dim">(From 09th Sep to 07th Oct, 2026)</span>
+                  <span className="text-[18px] text-mc-text-dim">Standard</span>
+                  <span className="text-[17px] text-mc-text-dim">(From 09th Sep to 07th Oct, 2026)</span>
                 </div>
                 <span className="font-pixel text-[16px] text-mc-accent md:text-[18px]">
                   {inr(FEST.money.registration.standardInr)}
@@ -91,8 +91,8 @@ export function RegisterSection() {
               </li>
               <li className="flex items-center justify-between gap-2">
                 <div className="flex flex-col">
-                  <span className="text-[15px] text-mc-text-dim">On the spot</span>
-                  <span className="text-[14px] text-mc-text-dim">(From 08th Oct to 09th Oct, 2026)</span>
+                  <span className="text-[18px] text-mc-text-dim">On the spot</span>
+                  <span className="text-[17px] text-mc-text-dim">(From 08th Oct to 09th Oct, 2026)</span>
                 </div>
                 <span className="font-pixel text-[16px] text-mc-accent md:text-[18px]">
                   {inr(FEST.money.registration.onSpotInr)}
@@ -100,8 +100,8 @@ export function RegisterSection() {
               </li>
               <li className="flex items-center justify-between gap-2">
                 <div className="flex flex-col">
-                  <span className="text-[15px] text-mc-text-dim">Christite</span>
-                  <span className="text-[14px] text-mc-text-dim">(From 17th Aug to 09th Oct, 2026)</span>
+                  <span className="text-[18px] text-mc-text-dim">Christite</span>
+                  <span className="text-[17px] text-mc-text-dim">(From 17th Aug to 09th Oct, 2026)</span>
                 </div>
                 <span className="font-pixel text-[16px] text-mc-accent md:text-[18px]">
                   {inr(FEST.money.registration.christiteInr)}
@@ -109,15 +109,15 @@ export function RegisterSection() {
               </li>
               <li className="flex items-center justify-between gap-2">
                 <div className="flex flex-col">
-                  <span className="text-[15px] text-mc-text-dim">International</span>
-                  <span className="text-[14px] text-mc-text-dim">(From 17th Aug to 09th Oct, 2026)</span>
+                  <span className="text-[18px] text-mc-text-dim">International</span>
+                  <span className="text-[17px] text-mc-text-dim">(From 17th Aug to 09th Oct, 2026)</span>
                 </div>
                 <span className="font-pixel text-[16px] text-mc-accent md:text-[18px]">
                   {inr(FEST.money.registration.internationalInr)}
                 </span>
               </li>
             </ul>
-            <p className="text-[14px] leading-snug text-mc-text-dim">
+            <p className="text-[17px] leading-snug text-mc-text-dim">
               Per person. One pass covers every event you enter.
             </p>
           </BlockPanel>
@@ -134,7 +134,7 @@ export function RegisterSection() {
               <span>{inr(FEST.money.accommodationPerDayInr)}</span>
               <span className="text-[10px] text-mc-text-dim leading-snug tracking-normal">+ GST</span>
             </p>
-            <p className="text-[16px] leading-snug text-mc-text-dim">
+            <p className="text-[19px] leading-snug text-mc-text-dim">
               {FEST.money.accommodationNote}. Allotted first-come, first-served;
               payable on arrival. Ask the hospitality contact below.
             </p>

@@ -127,7 +127,7 @@ export function ForgotPasswordScreen() {
               {...registerEmail("email")}
             />
             {formError ? (
-              <BlockPanel variant="slot" padded="sm" role="alert" aria-live="assertive" className="border-mc-redstone text-mc-danger text-[16px]">
+              <BlockPanel variant="slot" padded="sm" role="alert" aria-live="assertive" className="border-mc-redstone text-mc-danger text-[19px]">
                 {formError}
               </BlockPanel>
             ) : null}
@@ -146,7 +146,7 @@ export function ForgotPasswordScreen() {
             cannot arrive. Saying it here costs nothing, because it is the same
             sentence for every visitor and so leaks nothing about any account.
           */}
-          <BlockPanel variant="slot" padded="sm" className="text-[16px] text-mc-text-dim">
+          <BlockPanel variant="slot" padded="sm" className="text-[19px] text-mc-text-dim">
             Signed up with Google? Use{" "}
             <button
               type="button"
@@ -158,7 +158,7 @@ export function ForgotPasswordScreen() {
             instead — password reset only works for accounts that have a
             password.
           </BlockPanel>
-          <button type="button" className="min-h-11 cursor-pointer text-[16px] text-mc-eyebrow hover:text-mc-text hover:underline" onClick={() => router.replace("/login")}>
+          <button type="button" className="min-h-11 cursor-pointer text-[19px] text-mc-eyebrow hover:text-mc-text hover:underline" onClick={() => router.replace("/login")}>
             Back to login
           </button>
         </div>

@@ -410,7 +410,7 @@ export function WorldScreen({
               <p className="font-pixel text-[11px] text-mc-success">
                 Welcome, {character.playerName}!
               </p>
-              <p className="text-[15px] text-mc-text-dim">
+              <p className="text-[18px] text-mc-text-dim">
                 Level {character.level} · {character.title}
               </p>
             </div>
@@ -549,7 +549,7 @@ export function WorldScreen({
         <>
           {voxelSupport === "reduced-motion" ? (
             <BlockPanel variant="slot" padded="sm" className="border-mc-gold">
-              <p className="text-[15px] text-mc-text-dim">
+              <p className="text-[18px] text-mc-text-dim">
                 You have reduced motion enabled. The 3D view moves the camera as
                 you walk — switch to{" "}
                 <button
@@ -640,7 +640,7 @@ export function WorldScreen({
                 <p className="font-pixel text-[10px] text-mc-success">
                   Welcome, {character.playerName}!
                 </p>
-                <p className="text-[15px] text-mc-text-dim">
+                <p className="text-[18px] text-mc-text-dim">
                   Your adventure begins now.
                 </p>
               </div>
@@ -664,7 +664,7 @@ export function WorldScreen({
                   <p className="font-pixel text-[11px] uppercase text-mc-accent-strong">
                     {selectedLoc.label}
                   </p>
-                  <p className="mt-[calc(var(--mc-unit)*0.5)] text-[16px] text-mc-text-dim">
+                  <p className="mt-[calc(var(--mc-unit)*0.5)] text-[19px] text-mc-text-dim">
                     {selectedLoc.blurb}
                   </p>
                 </div>
@@ -708,7 +708,7 @@ export function WorldScreen({
                     <p className="font-pixel text-[11px] uppercase text-mc-accent-strong">
                       {l.label}
                     </p>
-                    <p className="mt-[calc(var(--mc-unit)*0.5)] text-[16px] text-mc-text-dim">
+                    <p className="mt-[calc(var(--mc-unit)*0.5)] text-[19px] text-mc-text-dim">
                       {l.blurb}
                     </p>
                   </div>
