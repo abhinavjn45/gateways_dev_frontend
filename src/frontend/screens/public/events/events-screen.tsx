@@ -5,10 +5,11 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
   BackLink,
+  blockButton,
   BlockButton,
   BlockInput,
+  BlockModal,
   BlockPanel,
-  LoadingBlocks,
 } from "@/frontend/components/mc";
 import {
   GATEWAYS_ENTRY_PAYMENT_ID,
@@ -16,16 +17,34 @@ import {
 } from "@/frontend/components/registration/payment-upload-modal";
 import { BiomeScene } from "@/frontend/components/scene";
 import { useSession } from "@/frontend/components/auth/session-provider";
+import { EventDetails } from "@/frontend/components/events/event-details";
 import { useAsync } from "@/frontend/hooks/use-async";
+import {
+  EVENT_TRACKS,
+  eventsForTrack,
+  FEST_EVENTS,
+  type FestEvent,
+} from "@/frontend/lib/events";
 import { repo } from "@/lib/data";
 import { locationByKey } from "@/frontend/lib/world/world-locations";
 import { cn } from "@/frontend/lib/utils";
 
 /**
- * Events list, filterable by category and free-text search.
+ * Events list, filterable by track and free-text search.
  *
- * The `?category=` param is what the world-map signposts link to, so clicking
- * "Hackathon Mine" lands here pre-filtered.
+ * The line-up comes from `frontend/lib/events.ts`, not `repo.events.list()` —
+ * the data layer stubs that call and returns `[]`, which left this page showing
+ * "No events match that search" against an empty grid. See that file's header.
+ *
+ * `?category=` is kept as the filter param rather than renamed: the world-map
+ * signposts and the BackLink below already build URLs with it. Its values are
+ * now the two track slugs.
+ *
+ * Picking an event opens its detail in a modal rather than navigating to
+ * `/events/<slug>`. That route is the registration flow, which is repo-driven
+ * and genuinely needs the backend; pointing thirteen cards at it today would
+ * be thirteen dead ends. The modal shows the same `<EventDetails>` the
+ * homepage does.
  */
 export function EventsScreen() {
   const params = useSearchParams();
@@ -35,33 +54,20 @@ export function EventsScreen() {
   const { session } = useSession();
   const userId = session?.userId;
 
-  const { data: categories } = useAsync(() => repo.reference.categories(), []);
+  const [selected, setSelected] = useState<FestEvent | null>(null);
   /**
-   * Every event, ignoring the current category filter, purely to work out which
-   * category chips are worth showing.
+   * The grid contents: the track from `?category=`, narrowed by the search box.
    *
-   * The catalogue still carries the seven world-map categories, which the 3D
-   * map keys its locations off, but no 2026 event is filed under them. Showing
-   * a chip per category would have put seven dead ends next to the two real
-   * tracks, so a category only earns a chip once something is in it.
+   * Search covers name, kind and description together — the names give nothing
+   * away on their own ("24° Shift", "Deviation"), so a visitor looking for the
+   * hackathon is far more likely to type its KIND than its name.
    */
-  const { data: allEvents } = useAsync(
-    () => repo.events.list({ status: ["published", "ongoing", "registration_closed", "completed"] }),
-    [],
-  );
-  // Events come from a Google Sheet that staff edit during the fest, so this
-  // polls rather than relying on a page load. The backend caches the sheet for
-  // 5s, so an edit goes live within ~10s worst case without hammering Google's
-  // per-project read quota.
-  const { data: events, loading } = useAsync(
-    () =>
-      repo.events.list({
-        categorySlug,
-        search: search || undefined,
-        status: ["published", "ongoing", "registration_closed", "completed"],
-      }),
-    [categorySlug, search],
-    { pollMs: 5000 },
+  const activeTrack = EVENT_TRACKS.find((t) => t.id === categorySlug)?.id;
+  const query = search.trim().toLowerCase();
+  const events = (activeTrack ? eventsForTrack(activeTrack) : FEST_EVENTS).filter(
+    (e) =>
+      !query ||
+      `${e.name} ${e.kind} ${e.description}`.toLowerCase().includes(query),
   );
   const {
     data: userReceipt,
@@ -72,11 +78,12 @@ export function EventsScreen() {
     [userId],
   );
 
-  const activeCategory = categories?.find((c) => c.slug === categorySlug);
-  const populatedCategoryIds = new Set((allEvents ?? []).map((e) => e.categoryId));
-  // Category slugs double as scene keys, so filtering to a category shows its
-  // biome illustration as the header banner.
-  const bannerScene = activeCategory?.slug ?? "portal-approach";
+  const activeLabel = EVENT_TRACKS.find((t) => t.id === activeTrack)?.label;
+  // Pinned rather than derived from the filter: scene keys are the world-map
+  // biomes ("hackathon-mine"), and the track slugs are not among them —
+  // passing one would ask BiomeScene for art that does not exist and render an
+  // empty banner.
+  const bannerScene = "portal-approach";
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-[calc(var(--mc-unit)*1.5)] px-[calc(var(--mc-unit)*2)] py-[calc(var(--mc-unit)*1.5)] md:p-[calc(var(--mc-unit)*2)]">
@@ -113,16 +120,14 @@ export function EventsScreen() {
             className="text-mc-accent text-base md:text-lg"
             style={{ textShadow: "3px 3px 0 rgba(0,0,0,0.7)" }}
           >
-            {activeCategory ? activeCategory.name.toUpperCase() : "ALL EVENTS"}
+            {activeLabel ? activeLabel.toUpperCase() : "ALL EVENTS"}
           </h1>
-          {activeCategory?.description ? (
-            <p
-              className="mt-[calc(var(--mc-unit)*0.5)] text-mc-text"
-              style={{ textShadow: "2px 2px 0 rgba(0,0,0,0.8)" }}
-            >
-              {activeCategory.description}
-            </p>
-          ) : null}
+          <p
+            className="mt-[calc(var(--mc-unit)*0.5)] text-mc-text"
+            style={{ textShadow: "2px 2px 0 rgba(0,0,0,0.8)" }}
+          >
+            {events.length} {events.length === 1 ? "event" : "events"}
+          </p>
         </header>
       </BiomeScene>
 
@@ -177,72 +182,92 @@ export function EventsScreen() {
         onChange={(e) => setSearch(e.target.value)}
       />
 
-      <nav aria-label="Categories" className="flex flex-wrap gap-[calc(var(--mc-unit)*0.5)]">
-        <CategoryChip href="/events" label="All" active={!categorySlug} />
-        {(categories ?? [])
-          .filter((c) => populatedCategoryIds.has(c.id))
-          .map((c) => (
-            <CategoryChip
-              key={c.id}
-              href={`/events?category=${c.slug}`}
-              label={c.name}
-              active={c.slug === categorySlug}
-            />
-          ))}
+      <nav aria-label="Event tracks" className="flex flex-wrap gap-[calc(var(--mc-unit)*0.5)]">
+        <CategoryChip
+          href="/events"
+          label={`All (${FEST_EVENTS.length})`}
+          active={!activeTrack}
+        />
+        {EVENT_TRACKS.map((t) => (
+          <CategoryChip
+            key={t.id}
+            href={`/events?category=${t.id}`}
+            label={`${t.label} (${eventsForTrack(t.id).length})`}
+            active={t.id === activeTrack}
+          />
+        ))}
       </nav>
 
-      {loading ? (
-        <BlockPanel variant="slot">
-          <LoadingBlocks label="Loading events" />
-        </BlockPanel>
-      ) : (events ?? []).length === 0 ? (
+      {events.length === 0 ? (
         <BlockPanel variant="slot" className="text-center">
           <p className="text-mc-text-dim">No events match that search.</p>
         </BlockPanel>
       ) : (
         <ul className="grid gap-[var(--mc-unit)] sm:grid-cols-2 lg:grid-cols-3">
-          {(events ?? []).map((e) => (
-            <li key={e.id}>
-              <Link
-                href={`/events/${e.slug}?fromCategory=${encodeURIComponent(categorySlug ?? "all")}`}
-                className="block no-underline"
+          {events.map((e) => (
+            <li key={e.slug}>
+              <button
+                type="button"
+                onClick={() => setSelected(e)}
+                // appearance-none for the same reason as the nav's modal
+                // triggers: a native widget repaints on every `color-scheme`
+                // flip, which reads as a flash when the theme is toggled.
+                className="block h-full w-full appearance-none border-0 bg-transparent p-0 text-left"
               >
                 <BlockPanel
                   variant="panel"
                   padded="md"
                   className="h-full transition-[filter,transform] duration-100 hover:brightness-115 hover:-translate-y-[2px]"
                 >
-                  <p className="font-pixel text-[11px] text-mc-success">{e.title}</p>
-                  {e.tagline ? (
-                    <p className="mt-[calc(var(--mc-unit)*0.5)] text-[18px] text-mc-text-dim">
-                      {e.tagline}
-                    </p>
-                  ) : null}
+                  <p className="font-pixel text-[11px] text-mc-success">{e.name}</p>
+                  {/* The kind, not a tagline: these names are deliberately
+                      cryptic, so this is the only line that tells a visitor
+                      what they would actually be doing. */}
+                  <p className="mt-[calc(var(--mc-unit)*0.5)] text-[18px] text-mc-text-dim">
+                    {e.kind}
+                  </p>
                   <dl className="mt-[var(--mc-unit)] flex flex-wrap gap-x-[var(--mc-unit)] text-[17px] text-mc-text-dim">
                     <div>
-                      <dt className="sr-only">Starts</dt>
-                      <dd>
-                        {new Date(e.startsAt).toLocaleDateString(undefined, {
-                          month: "short",
-                          day: "numeric",
-                        })}
-                      </dd>
+                      <dt className="sr-only">Date</dt>
+                      <dd>{e.date}</dd>
                     </div>
                     <div>
-                      <dt className="sr-only">Mode</dt>
-                      <dd className="capitalize">{e.mode}</dd>
-                    </div>
-                    <div>
-                      <dt className="sr-only">Reward</dt>
-                      <dd className="text-mc-accent-strong">+{e.xpReward} XP</dd>
+                      <dt className="sr-only">Participation</dt>
+                      <dd className="text-mc-accent-strong">{e.participation}</dd>
                     </div>
                   </dl>
                 </BlockPanel>
-              </Link>
+              </button>
             </li>
           ))}
         </ul>
       )}
+
+      <BlockModal
+        open={selected !== null}
+        onOpenChange={(next) => {
+          if (!next) setSelected(null);
+        }}
+        title={selected?.name ?? ""}
+        description={selected ? `${selected.kind}. Full details, rules and prizes.` : ""}
+        variant="panel"
+        className="max-w-2xl"
+        footer={
+          selected?.rulesUrl ? (
+            <a
+              href={selected.rulesUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={cn(blockButton({ variant: "gold", size: "sm" }), "no-underline")}
+            >
+              Read the rules ↗
+            </a>
+          ) : null
+        }
+      >
+        {selected ? <EventDetails event={selected} /> : null}
+      </BlockModal>
+
     </div>
   );
 }

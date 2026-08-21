@@ -6,11 +6,11 @@ import { blockButton, BlockButton, BlockModal, BlockPanel } from "@/frontend/com
 import {
   EVENT_TRACKS,
   eventsForTrack,
-  eventTime,
   FEST_EVENTS,
   type EventTrack,
   type FestEvent,
 } from "@/frontend/lib/events";
+import { EventDetails } from "@/frontend/components/events/event-details";
 import { cn } from "@/frontend/lib/utils";
 
 /**
@@ -134,7 +134,7 @@ export function EventsModal({
       }
     >
       {selected ? (
-        <EventDetail event={selected} />
+        <EventDetails event={selected} />
       ) : (
         <>
           <nav
@@ -186,49 +186,6 @@ export function EventsModal({
         </>
       )}
     </BlockModal>
-  );
-}
-
-/** One event, in full. Everything the sheet records, minus what it leaves blank. */
-function EventDetail({ event }: { event: FestEvent }) {
-  return (
-    <div className="flex flex-col gap-[calc(var(--mc-unit)*1.25)]">
-      <p className="event-kind font-pixel text-[8px] uppercase tracking-[0.1em] text-mc-success">
-        {event.kind}
-      </p>
-
-      <p className="text-[19px] leading-snug text-mc-text">{event.description}</p>
-
-      <BlockPanel variant="slot" padded="md">
-        <dl className="grid gap-x-[calc(var(--mc-unit)*1.5)] gap-y-[var(--mc-unit)] sm:grid-cols-2">
-          <Fact label="Participation" value={event.participation} />
-          <Fact label="Date" value={event.date} />
-          <Fact label="Time" value={eventTime(event)} />
-          <Fact label="Venue" value={event.venue} />
-          <Fact label="Prizes" value={event.prizes} />
-          <Fact label="Prize pool" value={event.prizePool} />
-        </dl>
-      </BlockPanel>
-    </div>
-  );
-}
-
-/**
- * One labelled fact. Renders nothing when the sheet has no value — an empty
- * row under a heading reads as a loading failure rather than as "unknown",
- * and "TBA" is a real value the organisers wrote, so it is shown as given.
- */
-function Fact({ label, value }: { label: string; value: string }) {
-  if (!value) return null;
-  return (
-    <div>
-      <dt className="font-pixel text-[8px] uppercase tracking-[0.1em] text-mc-eyebrow">
-        {label}
-      </dt>
-      <dd className="mt-[calc(var(--mc-unit)*0.25)] text-[18px] leading-snug text-mc-text-dim">
-        {value}
-      </dd>
-    </div>
   );
 }
 
