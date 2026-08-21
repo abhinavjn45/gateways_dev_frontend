@@ -170,7 +170,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                   <p className="font-pixel text-[11px] text-mc-text">
                     {character.playerName}
                   </p>
-                  <p className="text-[15px] text-mc-text-dim">
+                  <p className="text-[18px] text-mc-text-dim">
                     {character.totalXp} XP total
                   </p>
                 </div>
@@ -208,7 +208,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 active ? "text-mc-eyebrow" : "text-mc-text-dim",
               )}
             >
-              <span aria-hidden className="text-[18px] leading-none">
+              <span aria-hidden className="text-[21px] leading-none">
                 {t.icon}
               </span>
               <span className="font-pixel text-[8px] uppercase">{t.label}</span>
@@ -251,7 +251,7 @@ function SidebarContent({
               className={cn(
                 "flex items-center gap-[calc(var(--mc-unit)*0.75)] no-underline",
                 "px-[var(--mc-unit)] py-[calc(var(--mc-unit)*0.65)] min-h-[44px]",
-                "text-[16px]",
+                "text-[19px]",
                 active
                   ? "bg-mc-panel-light text-mc-text bevel-inset"
                   : "text-mc-text-dim hover:bg-mc-panel-light/50 hover:text-mc-text",

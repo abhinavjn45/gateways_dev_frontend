@@ -133,7 +133,7 @@ export function HeroSection() {
         </h1>
 
         <p
-          className="landing-tagline gsap-hidden pixel-shadow mt-[calc(var(--mc-unit)*2)] max-w-[46ch] text-center text-[18px] leading-snug text-white md:text-[23px]"
+          className="landing-tagline gsap-hidden pixel-shadow mt-[calc(var(--mc-unit)*2)] max-w-[46ch] text-center text-[21px] leading-snug text-white md:text-[23px]"
           style={{ transform: "translateY(12px)" }}
         >
           {FEST.theme.tagline}
@@ -160,7 +160,7 @@ export function HeroSection() {
           >
             Start the Journey
           </BlockButton>
-          {/* <p className="pixel-shadow text-center text-[15px] text-white/80 max-w-[40ch]">
+          {/* <p className="pixel-shadow text-center text-[18px] text-white/80 max-w-[40ch]">
             Choose your name, register for events, and explore the realm.
           </p> */}
         </div>

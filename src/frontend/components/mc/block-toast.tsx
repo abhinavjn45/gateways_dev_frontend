@@ -62,7 +62,7 @@ export function BlockToast({
           {title}
         </p>
         {body ? (
-          <p className="mt-[calc(var(--mc-unit)*0.4)] text-[15px] leading-snug text-mc-text-dim break-words">
+          <p className="mt-[calc(var(--mc-unit)*0.4)] text-[18px] leading-snug text-mc-text-dim break-words">
             {body}
           </p>
         ) : null}

@@ -88,7 +88,7 @@ export function HomeSection({
           {lead ? (
             <div
               className={cn(
-                "max-w-[70ch] text-[17px] leading-relaxed text-mc-text md:text-[19px]",
+                "max-w-[70ch] text-[20px] leading-relaxed text-mc-text md:text-[22px]",
                 centered && "mx-auto",
               )}
             >

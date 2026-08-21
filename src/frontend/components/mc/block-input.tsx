@@ -62,7 +62,7 @@ function FieldShell({
         id={`${htmlFor}-msg`}
         aria-live="polite"
         className={cn(
-          "text-[15px] leading-tight min-h-[1.2em]",
+          "text-[18px] leading-tight min-h-[1.2em]",
           error ? "text-mc-danger" : "text-mc-text-dim",
         )}
       >
@@ -76,7 +76,7 @@ const wellClasses = [
   "w-full bg-mc-slot text-mc-text bevel-inset",
   "border-0 outline-none",
   "px-[calc(var(--mc-unit)*1)] py-[calc(var(--mc-unit)*0.85)]",
-  "text-[17px] font-body",
+  "text-[20px] font-body",
   "min-h-[44px]",
   "placeholder:text-mc-text-dim/60",
   "disabled:brightness-75 disabled:cursor-not-allowed",
@@ -243,7 +243,7 @@ export const BlockCheckbox = forwardRef<HTMLInputElement, BlockCheckboxProps>(
         </label>
         <label
           htmlFor={fieldId}
-          className="cursor-pointer text-[16px] text-mc-text-dim select-none"
+          className="cursor-pointer text-[19px] text-mc-text-dim select-none"
         >
           {label}
         </label>

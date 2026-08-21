@@ -24,11 +24,20 @@ import { DecorLayer, PixelDecor } from "./pixel-decor";
  * widest prop here (64px) for its inner edge to clear the content column — at
  * 36px the 64px props still overlapped the text by ~10px while the 32px torches
  * looked fine, which is exactly the kind of near-miss that reads as sloppy
- * rather than broken. 60px (`--mc-unit` × 5 at desktop scale) clears everything
- * and still fits inside the 64px margin the `xl` breakpoint guarantees.
+ * rather than broken.
+ *
+ * × 5 was that same near-miss one more time and it shipped. `--mc-unit` is 12px
+ * between 768px and 1919px (`--mc-scale: 3`), so × 5 is 60px — FOUR SHORT of the
+ * 64px sapling. Its outer edge cleared the column; its inner 4px did not, and
+ * because <DecorLayer> clips, that 4px column was the only decor on the page
+ * that rendered at all: a grey sliver of placeholder beside the Register
+ * section's buttons, on every desktop narrower than 1920px.
+ *
+ * × 6 is 72px at that scale and 96px at `--mc-scale: 4`, so the widest prop
+ * clears at both — and 64px props are the widest the manifest declares.
  */
-const OUT_LEFT = "-left-[calc(var(--mc-unit)*5)]";
-const OUT_RIGHT = "-right-[calc(var(--mc-unit)*5)]";
+const OUT_LEFT = "-left-[calc(var(--mc-unit)*6)]";
+const OUT_RIGHT = "-right-[calc(var(--mc-unit)*6)]";
 
 /** Two torches flanking the section, as if lighting a hall. */
 export function TorchPair() {

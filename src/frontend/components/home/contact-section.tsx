@@ -18,7 +18,7 @@ export function ContactSection() {
               padded="lg"
               className="flex h-full flex-col gap-[calc(var(--mc-unit)*0.5)]"
             >
-              <p className="text-[17px] text-mc-text">{c.name}</p>
+              <p className="text-[20px] text-mc-text">{c.name}</p>
               {c.role ? (
                 <p className="font-pixel text-[7px] uppercase tracking-[0.12em] text-mc-text-dim">
                   {c.role}
@@ -26,9 +26,12 @@ export function ContactSection() {
               ) : null}
               <div className="mt-auto flex min-h-11 flex-col justify-center">
                 {c.email ? (
-                  <p className="text-[17px] tracking-tighter whitespace-nowrap text-mc-text">
+                  <a
+                    href={`mailto:${c.email}`}
+                    className="text-[20px] tracking-tighter whitespace-nowrap text-mc-accent no-underline hover:text-mc-accent-strong"
+                  >
                     {c.email}
-                  </p>
+                  </a>
                 ) : null}
                 {c.phone ? (
                   <a

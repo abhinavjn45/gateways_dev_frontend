@@ -10,7 +10,7 @@ export function ContactScreen() {
     <div id="top" className="flex w-full flex-col min-h-screen">
       <main className="mx-auto flex w-full max-w-[1220px] flex-col px-[calc(var(--mc-unit)*2)] py-[calc(var(--mc-unit)*2)]">
         <div>
-          <BackLink href="/" />
+          <BackLink href="/" label="Home" />
         </div>
 
         <div className="flex flex-col pb-[calc(var(--mc-unit)*4)]">
@@ -29,7 +29,7 @@ export function ContactScreen() {
                     padded="lg"
                     className="flex h-full flex-col gap-[calc(var(--mc-unit)*0.5)]"
                   >
-                    <p className="text-[17px] text-mc-text">{c.name}</p>
+                    <p className="text-[20px] text-mc-text">{c.name}</p>
                     {c.role ? (
                       <p className="font-pixel text-[7px] uppercase tracking-[0.12em] text-mc-text-dim">
                         {c.role}
@@ -37,9 +37,12 @@ export function ContactScreen() {
                     ) : null}
                     <div className="mt-auto flex min-h-11 flex-col justify-center">
                       {c.email ? (
-                        <p className="text-[17px] tracking-tighter whitespace-nowrap text-mc-text">
+                        <a
+                          href={`mailto:${c.email}`}
+                          className="text-[20px] tracking-tighter whitespace-nowrap text-mc-accent no-underline hover:text-mc-accent-strong"
+                        >
                           {c.email}
-                        </p>
+                        </a>
                       ) : null}
                       {c.phone ? (
                         <a
@@ -60,7 +63,7 @@ export function ContactScreen() {
                 Location
               </h2>
               {/* <BlockPanel variant="panel" padded="lg" className="w-full max-w-2xl text-left">
-                <p className="text-[16px] leading-relaxed text-mc-text text-center">
+                <p className="text-[19px] leading-relaxed text-mc-text text-center">
                   <strong>{FEST.host.university}</strong>
                   <br />
                   {FEST.host.address}
@@ -71,7 +74,7 @@ export function ContactScreen() {
                     href="https://maps.app.goo.gl/rVQDB8jkFWeAQPeG9"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center text-[15px] font-bold text-mc-accent hover:text-mc-gold-light underline underline-offset-4"
+                    className="inline-flex items-center text-[18px] font-bold text-mc-accent hover:text-mc-gold-light underline underline-offset-4"
                   >
                     View on Google Maps
                   </a>
@@ -96,7 +99,7 @@ export function ContactScreen() {
                       {FEST.host.reach.nearest.map((n) => (
                         <li
                           key={n.label}
-                          className="flex items-start gap-[var(--mc-unit)] text-[15px] leading-snug text-mc-text"
+                          className="flex items-start gap-[var(--mc-unit)] text-[18px] leading-snug text-mc-text"
                         >
                           <Check
                             aria-hidden
@@ -117,7 +120,7 @@ export function ContactScreen() {
                     <h4 className="mt-[calc(var(--mc-unit)*3)] font-pixel text-[10px] md:text-[12px] uppercase tracking-wider text-mc-success">
                       Bus Routes
                     </h4>
-                    <p className="mt-[calc(var(--mc-unit)*0.75)] text-[15px] text-mc-text-dim">
+                    <p className="mt-[calc(var(--mc-unit)*0.75)] text-[18px] text-mc-text-dim">
                       {FEST.host.reach.busStopNote}
                     </p>
                     <div className="mt-[calc(var(--mc-unit)*1.25)] grid gap-[var(--mc-unit)] sm:grid-cols-2">
@@ -129,7 +132,7 @@ export function ContactScreen() {
                           <p className="font-pixel text-[9px] uppercase text-mc-text">
                             {group.from}
                           </p>
-                          <p className="mt-[calc(var(--mc-unit)*0.75)] text-[14px] text-mc-text-dim leading-relaxed">
+                          <p className="mt-[calc(var(--mc-unit)*0.75)] text-[17px] text-mc-text-dim leading-relaxed">
                             {group.routes.join(", ")}
                           </p>
                         </div>
@@ -139,7 +142,7 @@ export function ContactScreen() {
                     <h4 className="mt-[calc(var(--mc-unit)*3)] font-pixel text-[10px] md:text-[12px] uppercase tracking-wider text-mc-success">
                       Cab / Auto Rickshaw Services
                     </h4>
-                    <p className="mt-[calc(var(--mc-unit)*0.75)] text-[15px] text-mc-text-dim">
+                    <p className="mt-[calc(var(--mc-unit)*0.75)] text-[18px] text-mc-text-dim">
                       {FEST.host.reach.cabNote}
                     </p>
                   </div>

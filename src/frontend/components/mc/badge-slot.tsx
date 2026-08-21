@@ -76,7 +76,7 @@ export function BadgeSlot({
       </span>
 
       {!unlocked && !hidden ? (
-        <div className="absolute -bottom-[2px] right-[4px] text-[16px] filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]" />
+        <div className="absolute -bottom-[2px] right-[4px] text-[19px] filter drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]" />
       ) : null}
     </>
   );
