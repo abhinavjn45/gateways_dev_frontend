@@ -33,7 +33,7 @@ export function ChangePasswordScreen() {
 
   useEffect(() => {
     if (status === "unauthenticated") router.replace("/login");
-    if (status === "ready") router.replace(params.get("next") ?? "/travelling");
+    if (status === "ready") router.replace(params.get("next") ?? "/dashboard");
   }, [status, router, params]);
 
   async function onSubmit(values: FormValues) {
@@ -50,7 +50,7 @@ export function ChangePasswordScreen() {
         const handoff = await repo.auth.createConsoleHandoff("/");
         window.location.assign(handoff.url);
       } else {
-        router.replace(params.get("next") ?? "/travelling");
+        router.replace(params.get("next") ?? "/dashboard");
       }
     } catch (error) {
       setFormError(error instanceof DataError ? error.message : "Could not change your password.");
