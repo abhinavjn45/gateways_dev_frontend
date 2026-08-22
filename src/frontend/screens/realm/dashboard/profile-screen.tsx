@@ -3,16 +3,26 @@
 import { useState } from "react";
 import { BlockButton, BlockInput, BlockPanel, LoadingBlocks, PixelAvatar, XpBar } from "@/frontend/components/mc";
 import { ParticipantDetailsModal } from "@/frontend/components/registration/participant-details-modal";
+import { PaymentModal } from "@/frontend/components/registration/payment-modal";
 import { useSession } from "@/frontend/components/auth/session-provider";
 import { useAsync } from "@/frontend/hooks/use-async";
 import { repo, xpProgress } from "@/lib/data";
 import { DataError } from "@/lib/data/types";
 import { isParticipantComplete } from "@/lib/data/types";
 
+function formatDate(isoDate: string | null | undefined) {
+  if (!isoDate) return null;
+  const [y, m, d] = isoDate.split("-");
+  if (!y || !m || !d) return isoDate;
+  const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  return `${d} ${months[parseInt(m, 10) - 1]}, ${y}`;
+}
+
 export function ProfileScreen() {
   const { session, character, refresh } = useSession();
   const userId = session?.userId;
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [paymentOpen, setPaymentOpen] = useState(false);
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState("");
   const [nameBusy, setNameBusy] = useState(false);
@@ -107,6 +117,8 @@ export function ProfileScreen() {
   const college = colleges?.find((c) => c.id === character?.collegeId);
   const department = departments?.find((d) => d.id === character?.departmentId);
 
+  const isLocked = !detailsComplete || !session?.isPaymentVerified;
+
   return (
     <div className="flex flex-col gap-[calc(var(--mc-unit)*1.5)]">
       <h1 className="text-mc-accent text-base md:text-lg">PROFILE</h1>
@@ -119,7 +131,7 @@ export function ProfileScreen() {
         Signup derives it from the name plus the user id, which produces things
         like "YanishRai_019ffc9b…" — legible to a database and to nobody else.
       */}
-      {character ? (
+      {character && !isLocked ? (
         <BlockPanel variant="panel" padded="lg" className="flex flex-col gap-[var(--mc-unit)]">
           <h2 className="font-pixel text-[10px] uppercase tracking-[0.1em] text-mc-success">
             Username
@@ -176,17 +188,42 @@ export function ProfileScreen() {
       ) : null}
 
       {userId ? (
-        <ParticipantDetailsModal
-          open={detailsOpen}
-          onOpenChange={setDetailsOpen}
-          userId={userId}
-          profile={profile ?? null}
-          character={character}
-          onSaved={async () => {
-            await reloadProfile();
-            setDetailsOpen(false);
-          }}
-        />
+        <>
+          <ParticipantDetailsModal
+            open={detailsOpen}
+            onOpenChange={setDetailsOpen}
+            userId={userId}
+            profile={profile ?? null}
+            character={character}
+            onSaved={async () => {
+              await reloadProfile();
+              await refresh();
+              setDetailsOpen(false);
+              if (session?.paymentStatus === 'none' || !session?.paymentStatus) {
+                setPaymentOpen(true);
+              }
+            }}
+          />
+          <PaymentModal 
+            open={paymentOpen} 
+            onOpenChange={setPaymentOpen} 
+            userId={userId} 
+            onSaved={() => {
+              setPaymentOpen(false);
+            }} 
+          />
+        </>
+      ) : null}
+
+      {detailsComplete && session?.paymentStatus === 'pending' ? (
+        <BlockPanel variant="slot" padded="lg" className="border-[length:var(--mc-bevel)] border-mc-success flex flex-col gap-[calc(var(--mc-unit)*1)]">
+          <h2 className="font-pixel text-[14px] uppercase tracking-wide text-mc-success">
+            Registration Submitted!
+          </h2>
+          <p className="text-[18px] text-mc-text font-body leading-relaxed">
+            Hurray! You have successfully completed your profile and submitted your payment details. Our team will verify your transaction within 24 hours. Thank you for your interest in Gateways 2026!
+          </p>
+        </BlockPanel>
       ) : null}
 
       {/*
@@ -210,22 +247,29 @@ export function ProfileScreen() {
           </span>
         </div>
 
-        <dl className="grid gap-[var(--mc-unit)] sm:grid-cols-2">
-          <Detail label="Full name" value={profile?.fullName} />
-          <Detail label="Mobile" value={profile?.phone} />
-          <Detail label="College" value={detailCollege?.name} />
-          <Detail label="Department" value={detailDepartment?.name} />
-          <Detail label="Year of study" value={profile?.yearOfStudy ? `Year ${profile.yearOfStudy}` : null} />
-          <Detail label="Date of birth" value={profile?.dateOfBirth} />
-          <Detail label="Gender" value={profile?.gender} />
-          <Detail label="Category" value={profile?.category} />
-          <Detail label="T-shirt" value={profile?.tshirtSize} />
-          <Detail label="Dietary" value={profile?.dietaryPref} />
-          <Detail label="Emergency contact" value={profile?.emergencyName} />
-          <Detail label="Emergency number" value={profile?.emergencyPhone} />
-        </dl>
+        {!detailsComplete ? (
+          <div className="py-[var(--mc-unit)]">
+            <p className="text-[18px] text-mc-gold">
+              Your profile is incomplete. All dashboard features will remain locked until your profile is completed and your payment is verified.
+            </p>
+          </div>
+        ) : (
+          <dl className="grid gap-[var(--mc-unit)] sm:grid-cols-2">
+            <Detail label="Full name" value={profile?.fullName} />
+            <Detail label="Mobile" value={profile?.phone} />
+            <Detail label="College" value={detailCollege?.name} />
+            <Detail label="Department" value={detailDepartment?.name} />
+            <Detail label="Year of study" value={profile?.yearOfStudy ? `${profile.yearOfStudy} Year` : null} />
+            <Detail label="Date of birth" value={formatDate(profile?.dateOfBirth)} />
+            <Detail label="Gender" value={profile?.gender} />
+            <Detail label="T-shirt" value={profile?.tshirtSize} />
+            <Detail label="Dietary" value={profile?.dietaryPref} />
+            <Detail label="Emergency contact" value={profile?.emergencyName} />
+            <Detail label="Emergency number" value={profile?.emergencyPhone} />
+          </dl>
+        )}
 
-        <div>
+        <div className="flex flex-wrap gap-[var(--mc-unit)]">
           <BlockButton
             variant={detailsComplete ? "stone" : "gold"}
             size="sm"
@@ -233,16 +277,27 @@ export function ProfileScreen() {
           >
             {detailsComplete ? "Edit details" : "Complete your details"}
           </BlockButton>
+          {detailsComplete && (session?.paymentStatus === 'none' || !session?.paymentStatus) ? (
+            <BlockButton
+              variant="emerald"
+              size="sm"
+              onClick={() => setPaymentOpen(true)}
+            >
+              Submit Payment
+            </BlockButton>
+          ) : null}
         </div>
 
-        <p className="text-[18px] text-mc-text-dim">
-          Asked once and reused for every event you register for.
-        </p>
+        {detailsComplete ? (
+          <p className="text-[18px] text-mc-text-dim">
+            Asked once and reused for every event you register for.
+          </p>
+        ) : null}
       </BlockPanel>
 
       {/* Everything below needs a character. Rendered only when there is one,
           rather than blocking the page — see the note on the guard above. */}
-      {character && progress ? (
+      {character && progress && !isLocked ? (
         <>
           <BlockPanel variant="panel" padded="lg" className="flex flex-wrap items-center gap-[calc(var(--mc-unit)*2)]">
             <PixelAvatar skinId={character.skinId} size={96} full />
@@ -251,7 +306,7 @@ export function ProfileScreen() {
               <p className="mt-[calc(var(--mc-unit)*0.5)] text-[19px] text-mc-text-dim">
                 {college?.name ?? "—"}
                 {department ? ` · ${department.name}` : ""}
-                {character.yearOfStudy ? ` · Year ${character.yearOfStudy}` : ""}
+                {character.yearOfStudy ? ` · ${character.yearOfStudy} Year` : ""}
               </p>
               <XpBar
                 className="mt-[var(--mc-unit)]"
@@ -271,23 +326,25 @@ export function ProfileScreen() {
         </>
       ) : null}
 
-      <section>
-        <h2 className="font-pixel text-[11px] uppercase text-mc-text-dim">XP history</h2>
-        {(ledger ?? []).length === 0 ? (
-          <p className="mt-[calc(var(--mc-unit)*0.5)] text-[18px] text-mc-text-dim">No XP earned yet.</p>
-        ) : (
-          <ul className="mt-[var(--mc-unit)] flex flex-col gap-[3px]">
-            {(ledger ?? []).map((e) => (
-              <li key={e.id}>
-                <BlockPanel variant="slot" padded="sm" className="flex flex-wrap justify-between gap-[var(--mc-unit)]">
-                  <span className="text-[18px]">{e.reason}</span>
-                  <span className="text-[18px] text-mc-success tabular-nums">+{e.amount} XP</span>
-                </BlockPanel>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      {!isLocked ? (
+        <section>
+          <h2 className="font-pixel text-[11px] uppercase text-mc-text-dim">XP history</h2>
+          {(ledger ?? []).length === 0 ? (
+            <p className="mt-[calc(var(--mc-unit)*0.5)] text-[18px] text-mc-text-dim">No XP earned yet.</p>
+          ) : (
+            <ul className="mt-[var(--mc-unit)] flex flex-col gap-[3px]">
+              {(ledger ?? []).map((e) => (
+                <li key={e.id}>
+                  <BlockPanel variant="slot" padded="sm" className="flex flex-wrap justify-between gap-[var(--mc-unit)]">
+                    <span className="text-[18px]">{e.reason}</span>
+                    <span className="text-[18px] text-mc-success tabular-nums">+{e.amount} XP</span>
+                  </BlockPanel>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      ) : null}
     </div>
   );
 }

@@ -28,47 +28,36 @@ import { useAsync } from "@/frontend/hooks/use-async";
  * no longer a separate step.
  */
 
-const CATEGORIES = [
-  ["participant", "Participant — competing in events"],
-  ["delegate", "Delegate — attending, not competing"],
-  ["accompanist", "Accompanist — supporting a performer"],
-  ["faculty", "Faculty escort"],
-  ["volunteer", "Volunteer"],
-  ["guest", "Guest / Judge"],
-] as const;
-
 const TSHIRT_SIZES = ["XS", "S", "M", "L", "XL", "XXL"] as const;
 
 const DIETS = [
-  ["veg", "Vegetarian"],
-  ["non_veg", "Non-vegetarian"],
-  ["vegan", "Vegan"],
-  ["jain", "Jain"],
+  ["Vegeterian", "Vegeterian"],
+  ["Non-Vegeterian", "Non-Vegeterian"],
 ] as const;
 
-/** Indian mobile numbers are 10 digits; strip formatting before counting so
- *  "+91 98765 43210" is accepted, exactly as the console's CSV import does. */
 const phone = (label: string) =>
   z
     .string()
-    .refine((v) => v.replace(/\D/g, "").length >= 10, `Enter a valid 10-digit ${label}.`);
+    .trim()
+    .regex(/^\d{10}$/, `Enter a valid 10-digit ${label}.`);
 
 const schema = z.object({
   fullName: z.string().trim().min(3, "At least 3 characters."),
   phone: phone("mobile number"),
-  collegeId: z.string().min(1, "Select your college."),
-  departmentId: z.string().min(1, "Select your department."),
-  yearOfStudy: z.string().regex(/^[1-6]$/, "Select your year."),
-  gender: z.enum(["male", "female", "other"]),
-  // A plain <input type="date"> yields "" when empty and "YYYY-MM-DD" otherwise,
-  // which is already the wire format — no parsing, no timezone to get wrong.
+  collegeId: z.string().trim().min(1, "Select your college."),
+  departmentId: z.string().trim().min(1, "Select your department."),
+  yearOfStudy: z.string().trim().regex(/^(1st|2nd|3rd|4th|5th|6th)$/, "Select your year."),
+  gender: z.enum(["Male", "Female", "Other"]),
   dateOfBirth: z
     .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, "Enter your date of birth.")
-    .refine((v) => new Date(v) < new Date(), "Date of birth must be in the past."),
-  category: z.enum(["participant", "delegate", "accompanist", "faculty", "volunteer", "guest"]),
+    .trim()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Please select a valid date.")
+    .refine((v) => {
+      const date = new Date(v);
+      return date < new Date();
+    }, "Date of birth must be in the past."),
   tshirtSize: z.enum(["XS", "S", "M", "L", "XL", "XXL"]),
-  dietaryPref: z.enum(["veg", "non_veg", "vegan", "jain"]),
+  dietaryPref: z.enum(["Vegeterian", "Non-Vegeterian"]),
   emergencyName: z.string().trim().min(3, "Who should we call?"),
   emergencyPhone: phone("emergency number"),
 });
@@ -76,17 +65,18 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 function defaultFormValues(profile: Profile | null, character: Character | null): FormValues {
+  let dob = profile?.dateOfBirth ?? "";
+
   return {
     fullName: profile?.fullName ?? "",
     phone: profile?.phone ?? "",
     collegeId: profile?.collegeId ?? character?.collegeId ?? "",
     departmentId: profile?.departmentId ?? character?.departmentId ?? "",
-    yearOfStudy: String(profile?.yearOfStudy ?? character?.yearOfStudy ?? ""),
-    gender: profile?.gender ?? "male",
-    dateOfBirth: profile?.dateOfBirth ?? "",
-    category: profile?.category ?? "participant",
+    yearOfStudy: profile?.yearOfStudy ?? character?.yearOfStudy ?? "",
+    gender: (profile?.gender as any) ?? "Male",
+    dateOfBirth: dob,
     tshirtSize: profile?.tshirtSize ?? "M",
-    dietaryPref: profile?.dietaryPref ?? "veg",
+    dietaryPref: (profile?.dietaryPref as any) ?? "Vegeterian",
     emergencyName: profile?.emergencyName ?? "",
     emergencyPhone: profile?.emergencyPhone ?? "",
   };
@@ -138,19 +128,22 @@ export function ParticipantDetailsModal({
   const onSubmit = handleSubmit(async (values) => {
     setFormError(null);
     try {
+      const isoDob = values.dateOfBirth;
+
       await repo.profiles.update(userId, {
         ...values,
-        yearOfStudy: Number(values.yearOfStudy),
+        dateOfBirth: isoDob,
+        yearOfStudy: values.yearOfStudy,
       });
       await repo.characters.update(userId, {
         collegeId: values.collegeId,
         departmentId: values.departmentId,
-        yearOfStudy: Number(values.yearOfStudy),
+        yearOfStudy: values.yearOfStudy,
       });
       // Saving and registering are two steps and the caller owns the second, so
       // a failed registration leaves the details saved rather than discarding
       // nine fields the student just typed.
-      await onSaved({ ...values, yearOfStudy: Number(values.yearOfStudy) });
+      await onSaved({ ...values, dateOfBirth: isoDob, yearOfStudy: values.yearOfStudy });
       onOpenChange(false);
     } catch (e) {
       setFormError(
@@ -178,11 +171,16 @@ export function ParticipantDetailsModal({
         <BlockInput
           label="Mobile number"
           type="tel"
-          inputMode="tel"
-          placeholder="98765 43210"
+          inputMode="numeric"
+          placeholder="9876543210"
           autoComplete="tel"
+          maxLength={10}
           error={errors.phone?.message}
-          {...register("phone")}
+          {...register("phone", {
+            onChange: (e) => {
+              e.target.value = e.target.value.replace(/\D/g, "");
+            },
+          })}
         />
 
         <BlockSelect label="College" error={errors.collegeId?.message} {...register("collegeId")}>
@@ -209,9 +207,9 @@ export function ParticipantDetailsModal({
 
         <BlockSelect label="Year of study" error={errors.yearOfStudy?.message} {...register("yearOfStudy")}>
           <option value="">Select your year…</option>
-          {[1, 2, 3, 4, 5, 6].map((year) => (
+          {["1st", "2nd", "3rd", "4th", "5th", "6th"].map((year) => (
             <option key={year} value={year}>
-              {year}{year === 1 ? "st" : year === 2 ? "nd" : year === 3 ? "rd" : "th"} Year
+              {year} Year
             </option>
           ))}
         </BlockSelect>
@@ -219,32 +217,21 @@ export function ParticipantDetailsModal({
         <BlockInput
           label="Date of birth"
           type="date"
+          placeholder="YYYY-MM-DD"
           autoComplete="bday"
           hint="Participants under 18 need guardian consent at the desk."
           error={errors.dateOfBirth?.message}
+          wrapperClassName="mb-[calc(var(--mc-unit)*0.75)]"
           {...register("dateOfBirth")}
         />
 
         <BlockSelect label="Gender" error={errors.gender?.message} {...register("gender")}>
-          <option value="male">Male</option>
-          <option value="female">Female</option>
-          <option value="other">Other</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+          <option value="Other">Other</option>
         </BlockSelect>
 
-        <BlockSelect
-          label="Category"
-          hint="Most students are Participants."
-          error={errors.category?.message}
-          {...register("category")}
-        >
-          {CATEGORIES.map(([value, label]) => (
-            <option key={value} value={value}>
-              {label}
-            </option>
-          ))}
-        </BlockSelect>
-
-        <BlockSelect label="T-shirt size" error={errors.tshirtSize?.message} {...register("tshirtSize")}>
+        <BlockSelect label="T-shirt size (Polo T-shirt)" error={errors.tshirtSize?.message} {...register("tshirtSize")}>
           {TSHIRT_SIZES.map((s) => (
             <option key={s} value={s}>
               {s}
@@ -270,10 +257,15 @@ export function ParticipantDetailsModal({
         <BlockInput
           label="Emergency contact number"
           type="tel"
-          inputMode="tel"
-          placeholder="98765 43210"
+          inputMode="numeric"
+          placeholder="9876543210"
+          maxLength={10}
           error={errors.emergencyPhone?.message}
-          {...register("emergencyPhone")}
+          {...register("emergencyPhone", {
+            onChange: (e) => {
+              e.target.value = e.target.value.replace(/\D/g, "");
+            },
+          })}
         />
 
         {formError ? (
@@ -296,7 +288,7 @@ export function ParticipantDetailsModal({
           loading={isSubmitting}
           className="mt-[var(--mc-unit)]"
         >
-          Save and register
+          Save Profile
         </BlockButton>
       </form>
     </BlockModal>

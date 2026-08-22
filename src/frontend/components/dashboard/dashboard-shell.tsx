@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
+import { Lock } from "lucide-react";
 import {
   BackLink,
   BlockButton,
@@ -55,10 +56,19 @@ const TABS = [
 ] as const;
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
-  const { character, signOut } = useSession();
+  const { character, session, signOut } = useSession();
   const pathname = usePathname();
   const router = useRouter();
   const [drawerOpen, setDrawerOpen] = useState(false);
+
+  // Auto-redirect if locked out
+  useEffect(() => {
+    if (session && (!session.isProfileComplete || !session.isPaymentVerified)) {
+      if (pathname.startsWith("/dashboard") && pathname !== "/dashboard/profile" && pathname !== "/dashboard/settings") {
+        router.replace("/dashboard/profile");
+      }
+    }
+  }, [session, pathname, router]);
 
   const { data: levels } = useAsync(() => repo.reference.levels(), []);
   const progress =
@@ -114,6 +124,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             pathname={pathname}
             onNavigate={() => undefined}
             onSignOut={handleSignOut}
+            session={session}
           />
         </aside>
 
@@ -149,6 +160,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                   pathname={pathname}
                   onNavigate={() => setDrawerOpen(false)}
                   onSignOut={handleSignOut}
+                  session={session}
                 />
               </motion.aside>
             </>
@@ -224,11 +236,15 @@ function SidebarContent({
   pathname,
   onNavigate,
   onSignOut,
+  session,
 }: {
   pathname: string;
   onNavigate: () => void;
   onSignOut: () => void;
+  session: any;
 }) {
+  const isLocked = session && (!session.isProfileComplete || !session.isPaymentVerified);
+
   return (
     <>
       <Link
@@ -242,11 +258,20 @@ function SidebarContent({
       <nav aria-label="Dashboard" className="flex flex-col gap-[2px]">
         {NAV.map((item) => {
           const active = pathname === item.href;
+          const isItemLocked = isLocked && item.href !== "/dashboard/profile" && item.href !== "/dashboard/settings";
+          
           return (
             <Link
               key={item.href}
-              href={item.href}
-              onClick={onNavigate}
+              href={isItemLocked ? "/dashboard/profile" : item.href}
+              onClick={(e) => {
+                if (isItemLocked) {
+                  e.preventDefault();
+                } else {
+                  onNavigate();
+                }
+              }}
+              aria-disabled={isItemLocked}
               aria-current={active ? "page" : undefined}
               className={cn(
                 "flex items-center gap-[calc(var(--mc-unit)*0.75)] no-underline",
@@ -255,10 +280,11 @@ function SidebarContent({
                 active
                   ? "bg-mc-panel-light text-mc-text bevel-inset"
                   : "text-mc-text-dim hover:bg-mc-panel-light/50 hover:text-mc-text",
+                isItemLocked && "opacity-50 cursor-not-allowed"
               )}
             >
-              <span aria-hidden className="w-[18px] text-center">
-                {item.icon}
+              <span aria-hidden className="w-[18px] text-center flex items-center justify-center h-full">
+                {isItemLocked ? <Lock size={14} /> : item.icon}
               </span>
               {item.label}
             </Link>

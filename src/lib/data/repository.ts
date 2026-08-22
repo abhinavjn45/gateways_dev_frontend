@@ -53,6 +53,9 @@ export interface Repository {
   announcements: AnnouncementRepository;
   reference: ReferenceRepository;
   paymentReceipts: PaymentReceiptRepository;
+  payments: {
+    create: (userId: string, formData: FormData) => Promise<any>;
+  };
 }
 
 export type Unsubscribe = () => void;
