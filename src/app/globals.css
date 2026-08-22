@@ -724,6 +724,25 @@ a[href^="tel:"] {
   cursor: pointer;
 }
 
+/* Dismiss and close controls — the bubble's ✕, and anything else whose whole
+   job is "make this go away".
+
+   Same reasoning as the two links above. The pickaxe means "this acts on the
+   realm", which is right for navigation and wrong for a control that only
+   removes a piece of UI; the system hand is what every visitor already reads as
+   "this is a control, click it". A `cursor-pointer` class alone cannot express
+   that, because the grouped rule further up deliberately captures
+   `.cursor-pointer` too and paints the pickaxe over it.
+
+   Written as `button.cursor-hand` as well as the bare class so it lands at
+   (0,1,1) on a <button> — above both the grouped `button` selector (0,0,1) and
+   `.cursor-pointer` (0,1,0) — and therefore does not depend on source order. */
+button.cursor-hand,
+a.cursor-hand,
+.cursor-hand {
+  cursor: pointer;
+}
+
 /* Two cursors carry meaning rather than decoration, so they are left alone: a
    text caret tells you a field is editable, and not-allowed tells you a control
    is dead. Replacing either with a pickaxe would remove information. */
