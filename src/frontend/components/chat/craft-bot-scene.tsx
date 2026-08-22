@@ -196,16 +196,29 @@ function Bot({ active }: { active: boolean }) {
 export default function CraftBotScene({
   active = false,
   animate = true,
+  onReady,
 }: {
   active?: boolean;
   animate?: boolean;
+  /**
+   * Fires once the WebGL context exists, i.e. the moment Pixey can actually be
+   * drawn. The launcher holds itself hidden until then so the bot and its
+   * speech bubble arrive together — `next/dynamic` otherwise paints the rest of
+   * the launcher while this chunk is still downloading, and the bubble shows up
+   * on its own next to an empty square.
+   */
+  onReady?: () => void;
 }) {
   return (
     <Canvas
       frameloop={animate ? "always" : "demand"}
       dpr={[1, 1.5]}
-      camera={{ position: [0, 0.2, 5.2], fov: 34 }}
+      // Pulled in from z=5.2: the launcher canvas is now square and as small as
+      // 64px, where the old framing left Pixey swimming in empty space. y=0.2
+      // centres the head-plus-grass-block mass rather than the head alone.
+      camera={{ position: [0, 0.2, 4.7], fov: 34 }}
       gl={{ antialias: true, alpha: true, powerPreference: "low-power" }}
+      onCreated={() => onReady?.()}
     >
       <ambientLight intensity={1.6} />
       <directionalLight position={[3, 5, 6]} intensity={2.1} />
