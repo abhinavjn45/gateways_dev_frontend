@@ -63,7 +63,12 @@ export function FestChat() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const logRef = useRef<HTMLDivElement>(null);
+  /** Flips once the WebGL context exists, so bot and bubble arrive together. */
+  const [ready, setReady] = useState(false);
+  /** Session-only. Dismissing the bubble leaves the bot, which is the control. */
+  const [bubbleDismissed, setBubbleDismissed] = useState(false);
   const reducedMotion = useReducedMotion();
+
 
   /**
    * Keep the newest turn in view as tokens stream in.
@@ -129,48 +134,104 @@ export function FestChat() {
   return (
     <>
       {/* ── Launcher ──────────────────────────────────────────────────────
-          Bot and label are ONE button. Clicking the bot is what a visitor tries
-          first, and the canvas used to sit outside the control with
-          `pointer-events: none` — so the bot was scenery, and only the small
-          word "Ask" did anything. Putting the canvas inside the button fixes
-          both halves: the click bubbles up from the canvas to the button, and
-          the scene finally receives the pointermove events its eye-tracking
-          reads. */}
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        aria-label="Ask Pixey about the fest"
+          A row, not one button. The bubble used to live INSIDE the bot's
+          <button>, which was fine until it needed a dismiss control of its own —
+          a <button> inside a <button> is invalid HTML, and the inner click
+          would fire the outer one too. So the bubble and the bot are siblings
+          now, and each owns its own controls.
+
+          The whole row fades and lifts in together, once the WebGL context
+          exists. Before, `next/dynamic` streamed the bubble in immediately
+          while the scene chunk was still downloading, so the bubble arrived
+          alone and the bot popped in after it. */}
+      <div
         className={cn(
-          "group fixed bottom-[calc(var(--mc-unit)*2)] right-[calc(var(--mc-unit)*2)] z-30",
-          "flex cursor-pointer appearance-none flex-col items-center",
-          "border-0 bg-transparent p-0",
+          "fixed bottom-[calc(var(--mc-unit)*1.5)] right-[calc(var(--mc-unit)*1.5)] z-30",
+          "sm:bottom-[calc(var(--mc-unit)*2)] sm:right-[calc(var(--mc-unit)*2)]",
+          "flex items-center gap-[calc(var(--mc-unit)*1.25)]",
+          "transition-[opacity,transform] duration-300 ease-out",
+          ready
+            ? "translate-y-0 opacity-100"
+            : // Not just invisible — untouchable, so nothing can be clicked
+              // before it is on screen.
+              "pointer-events-none translate-y-3 opacity-0",
+          // Reduced motion keeps the fade and drops the travel; a thing that
+          // appears with no transition at all reads as a glitch.
+          reducedMotion && "translate-y-0 duration-150",
         )}
       >
-        {/* The canvas keeps its own pointer events so the scene can track the
-            cursor; the click still reaches the button by bubbling. */}
-        <span className="block h-[96px] w-[104px]">
-          <CraftBotScene active={busy} animate={!reducedMotion} />
-        </span>
+        {/* Speech bubble, desktop only.
+            Hidden below `sm` because a phone has no room beside a corner FAB —
+            and a 64px bot in the corner of a small screen is self-explanatory
+            in a way it is not on a wide desktop, where he could read as
+            decoration. Unmounted while the panel is open: the interface is
+            already on screen, so a floating "Ask Pixey" behind it invites the
+            visitor to do the thing they are already doing. */}
+        {!open && !bubbleDismissed ? (
+          <div className="relative hidden sm:block">
+            <button
+              type="button"
+              onClick={() => setOpen(true)}
+              className={cn(
+                "cursor-pointer appearance-none whitespace-nowrap border-0",
+                "bg-mc-panel text-mc-text [--bevel-light:var(--color-mc-panel-light)]",
+                "[--bevel-dark:var(--color-mc-panel-dark)] bevel",
+                "px-[calc(var(--mc-unit)*1.25)] py-[calc(var(--mc-unit)*0.75)]",
+                "font-pixel text-[9px] uppercase tracking-[0.12em]",
+                "transition-[filter] duration-75 hover:brightness-110",
+              )}
+            >
+              Ask Pixey
+            </button>
 
-        {/* appearance-none: Tailwind's preflight sets `appearance: button`, and
-            globals.css flips `color-scheme` per theme — a native button
-            repaints its own chrome for a frame on every theme toggle, which
-            reads as a flash. Same fix as the nav's modal triggers. */}
-        <span
+            {/* The tail: a plain square nub rather than a rotated triangle.
+                A 45° tail antialiases into a soft grey wedge, which is the one
+                thing a pixel UI cannot have. */}
+            <span
+              aria-hidden
+              className="pointer-events-none absolute left-full top-1/2 h-[8px] w-[8px] -translate-y-1/2 bg-mc-panel"
+            />
+
+            {/* Dismiss, on the bubble's left corner. Overhangs the corner so it
+                reads as attached to the bubble rather than as part of its
+                label. */}
+            <button
+              type="button"
+              onClick={() => setBubbleDismissed(true)}
+              aria-label="Dismiss"
+              className={cn(
+                "absolute -left-[9px] -top-[9px] grid h-[20px] w-[20px] place-items-center",
+                // `cursor-hand`, not `cursor-pointer`: globals.css captures
+                // `.cursor-pointer` along with every <button> and paints the
+                // themed pickaxe over it. See the rule in globals.css.
+                "cursor-hand appearance-none border-0",
+                "bg-mc-panel-dark text-mc-redstone",
+                "border-[length:var(--mc-bevel)] border-mc-border",
+                "transition-[filter] duration-75 hover:brightness-125",
+              )}
+            >
+              <PixelX />
+            </button>
+          </div>
+        ) : null}
+
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          aria-label="Ask Pixey about the fest"
           className={cn(
-            "-mt-[calc(var(--mc-unit)*1.5)] inline-block",
-            "bg-mc-portal text-white [--bevel-light:var(--color-mc-portal-light)]",
-            "[--bevel-dark:var(--color-mc-portal-dark)] bevel",
-            "px-[calc(var(--mc-unit)*2)] py-[var(--mc-unit)]",
-            "font-pixel text-[10px] uppercase tracking-[0.12em]",
-            "transition-[transform,filter] duration-75",
-            "group-hover:brightness-110",
-            "group-active:translate-y-[var(--mc-bevel)] group-active:bevel-pressed",
+            "cursor-pointer appearance-none border-0 bg-transparent p-0",
+            "h-[64px] w-[64px] sm:h-[88px] sm:w-[88px]",
+            "transition-transform duration-75 active:translate-y-[2px]",
           )}
         >
-          Ask Pixey
-        </span>
-      </button>
+          <CraftBotScene
+            active={busy}
+            animate={!reducedMotion}
+            onReady={() => setReady(true)}
+          />
+        </button>
+      </div>
 
       <BlockModal
         open={open}
@@ -178,7 +239,15 @@ export function FestChat() {
         title="Gateways Assistant"
         description="Answers come from this site's own information."
         variant="panel"
-        className="max-w-xl"
+        // Wider and taller on a phone — a centred dialog with 2rem of margin
+        // wastes a third of a small screen on backdrop. `dvh`, not `vh`: the
+        // on-screen keyboard shrinks the visual viewport when the input is
+        // focused, and `vh` ignores that, so the send button ends up under the
+        // keyboard exactly when it is needed.
+        className={cn(
+          "w-[calc(100vw-0.75rem)] max-h-[92dvh]",
+          "sm:w-[calc(100vw-2rem)] sm:max-w-xl sm:max-h-[85vh]",
+        )}
         footer={
           <div className="flex w-full flex-wrap items-center justify-between gap-[var(--mc-unit)]">
             <span className="text-[15px] text-mc-text-dim/80">
@@ -230,7 +299,8 @@ export function FestChat() {
             aria-live="polite"
             aria-atomic="false"
             className={cn(
-              "flex max-h-[46vh] min-h-[180px] flex-col gap-[var(--mc-unit)]",
+              "flex flex-col gap-[var(--mc-unit)]",
+              "max-h-[42dvh] min-h-[132px] sm:max-h-[46vh] sm:min-h-[180px]",
               "overflow-y-auto border-[length:var(--mc-bevel)] border-mc-border",
               "bg-mc-slot p-[var(--mc-unit)]",
               // The block grid from the reference, as a token-tinted overlay
@@ -265,7 +335,19 @@ export function FestChat() {
           </div>
 
           {/* ── Quick replies ───────────────────────────────────────────── */}
-          <div className="flex flex-wrap gap-[calc(var(--mc-unit)*0.5)]">
+          {/* One horizontally scrollable row on a phone rather than four
+              buttons wrapping to three lines — the standard mobile chat
+              affordance, and it keeps the input above the fold. `-mx` + `px`
+              lets the row bleed to the panel edge so the last chip is visibly
+              cut off, which is what signals it scrolls. */}
+          <div
+            className={cn(
+              "flex gap-[calc(var(--mc-unit)*0.5)]",
+              "-mx-[calc(var(--mc-unit)*2)] px-[calc(var(--mc-unit)*2)]",
+              "overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+              "sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0",
+            )}
+          >
             {SUGGESTIONS.map((s) => (
               <button
                 key={s}
@@ -276,6 +358,9 @@ export function FestChat() {
                   "appearance-none cursor-pointer",
                   "border-[length:var(--mc-bevel)] border-mc-border bg-mc-panel",
                   "px-[var(--mc-unit)] py-[calc(var(--mc-unit)*0.5)] min-h-[36px]",
+                  // Chips must not shrink or they compress into unreadable
+                  // slivers instead of scrolling.
+                  "shrink-0 whitespace-nowrap sm:whitespace-normal",
                   "text-[16px] text-mc-text-dim",
                   "transition-colors hover:text-mc-text hover:border-mc-gold",
                   "disabled:cursor-not-allowed disabled:opacity-50",
@@ -374,14 +459,17 @@ function Bubble({
   return (
     <div
       className={cn(
-        "flex max-w-[88%] items-start gap-[calc(var(--mc-unit)*0.75)]",
+        "flex items-start gap-[calc(var(--mc-unit)*0.5)] sm:gap-[calc(var(--mc-unit)*0.75)]",
+        // Wider on a phone: 88% of a 360px screen leaves a bubble narrow
+        // enough that answers wrap every three or four words.
+        "max-w-[94%] sm:max-w-[88%]",
         bot ? "self-start" : "self-end",
       )}
     >
       {/* Pixey's signpost marks every answer. `aria-hidden` because the bubble
           already says who is speaking — announcing the sign as well would read
           the speaker twice to a screen reader. */}
-      {bot ? <PixeyFace className="mt-[2px] shrink-0" size={34} /> : null}
+      {bot ? <PixeyFace className="mt-[2px] h-[26px] w-[26px] shrink-0 sm:h-[34px] sm:w-[34px]" /> : null}
 
       <div
         className={cn(
@@ -415,7 +503,7 @@ function Bubble({
  * rather than a vector that resamples. Colours are the scene's own constants, so
  * the flat face and the 3D one read as one character.
  */
-function PixeyFace({ size = 34, className }: { size?: number; className?: string }) {
+function PixeyFace({ className }: { className?: string }) {
   const STONE = "#77736e";
   const DARK = "#343332";
   const SCREEN = "#050706";
@@ -426,8 +514,6 @@ function PixeyFace({ size = 34, className }: { size?: number; className?: string
 
   return (
     <svg
-      width={size}
-      height={size}
       viewBox="0 0 12 12"
       shapeRendering="crispEdges"
       aria-hidden
@@ -458,6 +544,31 @@ function PixeyFace({ size = 34, className }: { size?: number; className?: string
       <rect x="4" y="5" width="1" height="2" fill={EMERALD} />
       <rect x="7" y="5" width="1" height="2" fill={EMERALD} />
       <rect x="4" y="8" width="4" height="1" fill={EMERALD} />
+    </svg>
+  );
+}
+
+
+/**
+ * The bubble's dismiss cross, drawn on an 8×8 grid.
+ *
+ * Not a "✕" character: Press Start 2P has no glyph at U+2715, so every browser
+ * silently falls back to a system font and renders a hairline vector cross in
+ * the middle of pixel art — the same bug the modal's close button had.
+ */
+function PixelX() {
+  return (
+    <svg
+      width={10}
+      height={10}
+      viewBox="0 0 8 8"
+      shapeRendering="crispEdges"
+      fill="currentColor"
+      aria-hidden
+      focusable="false"
+    >
+      <path d="M1 1h2v2H1z M3 3h2v2H3z M5 5h2v2H5z" />
+      <path d="M5 1h2v2H5z M1 5h2v2H1z" />
     </svg>
   );
 }
