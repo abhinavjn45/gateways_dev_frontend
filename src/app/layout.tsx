@@ -61,9 +61,59 @@ const SPLASH_BOOT = `try{if(sessionStorage.getItem(${JSON.stringify(SPLASH_SEEN_
 const THEME_BOOT = `try{var p=localStorage.getItem(${JSON.stringify(THEME_STORAGE_KEY)});document.documentElement.setAttribute("data-theme",p==="light"||p==="dark"?p:(window.matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"))}catch(e){}`;
 
 export const metadata: Metadata = {
-  title: "Parallax — Another World Awaits",
+  metadataBase: new URL("https://gateways.christuniversity.in"),
+  title: {
+    default: "Gateways 2026 | National Level IT Fest by Christ University",
+    template: "%s | Gateways 2026",
+  },
   description:
-    "A Minecraft-inspired college fest portal. Choose your character name, explore the realm, and register for events.",
+    "Gateways 2026 is the premier National Level IT Fest hosted by the Department of Computer Science, CHRIST (Deemed to be University), Bangalore. Experience 'Parallax: Digital Twins' through hackathons, coding challenges, and tech symposiums.",
+  keywords: [
+    "Gateways 2026",
+    "IT Fest Bangalore",
+    "Hackathon 2026",
+    "Christ University Tech Fest",
+    "National Level IT Fest",
+    "MCA Technical Fest",
+    "Coding Competitions India",
+    "Digital Twins Symposium",
+  ],
+  authors: [{ name: "Gateways Organising Committee" }],
+  openGraph: {
+    type: "website",
+    locale: "en_IN",
+    url: "https://gateways.christuniversity.in",
+    siteName: "Gateways 2026",
+    title: "Gateways 2026 | National Level IT Fest by Christ University",
+    description:
+      "Join Gateways 2026, the premier National Level IT Fest by CHRIST (Deemed to be University), Bangalore. Compete in hackathons, coding events, and explore 'Parallax: Digital Twins'.",
+    images: [
+      {
+        url: "/og-image.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Gateways 2026 IT Fest Banner",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Gateways 2026 | National Level IT Fest by Christ University",
+    description:
+      "Experience Gateways 2026, the ultimate tech fest in Bangalore featuring a massive Hackathon, Web Dev challenges, and more.",
+    images: ["/og-image.jpg"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
 };
 
 export const viewport: Viewport = {

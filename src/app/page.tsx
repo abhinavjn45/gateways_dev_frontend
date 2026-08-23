@@ -6,7 +6,17 @@ import { FEST } from "@/frontend/lib/fest";
 
 export const metadata: Metadata = {
   title: `${FEST.edition} — ${FEST.theme.name}`,
-  description: FEST.theme.tagline,
+  description: "Welcome to Gateways 2026, the premier IT Fest in Bangalore hosted by Christ University. Register for our massive hackathons and coding events.",
+  keywords: [
+    "Gateways 2026 Home",
+    "Best IT Fest Bangalore",
+    "Christ University Tech Events",
+    "Hackathon India 2026",
+    "MCA Inter-collegiate Fest",
+    "Digital Twins Events",
+    "Parallax Theme Tech Fest",
+    "Bangalore Coding Competitions",
+  ],
 };
 
 /**
