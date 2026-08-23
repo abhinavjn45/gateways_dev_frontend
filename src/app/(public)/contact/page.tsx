@@ -1,5 +1,4 @@
 import { ContactScreen } from "@/frontend/screens/public/contact/contact-screen";
-import { FestChat } from "@/frontend/components/chat/fest-chat";
 
 export const metadata = { title: "Contact Us — Parallax" };
 
@@ -15,7 +14,6 @@ export default function ContactPage() {
   return (
     <>
       <ContactScreen />
-      <FestChat />
     </>
   );
 }

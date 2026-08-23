@@ -11,10 +11,7 @@ import {
   BlockModal,
   BlockPanel,
 } from "@/frontend/components/mc";
-import {
-  GATEWAYS_ENTRY_PAYMENT_ID,
-  PaymentUploadModal,
-} from "@/frontend/components/registration/payment-upload-modal";
+
 import { BiomeScene } from "@/frontend/components/scene";
 import { useSession } from "@/frontend/components/auth/session-provider";
 import { EventDetails } from "@/frontend/components/events/event-details";
@@ -50,7 +47,7 @@ export function EventsScreen() {
   const params = useSearchParams();
   const categorySlug = params.get("category") ?? undefined;
   const [search, setSearch] = useState("");
-  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+
   const { session } = useSession();
   const userId = session?.userId;
 
@@ -87,15 +84,6 @@ export function EventsScreen() {
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col gap-[calc(var(--mc-unit)*1.5)] px-[calc(var(--mc-unit)*2)] py-[calc(var(--mc-unit)*1.5)] md:p-[calc(var(--mc-unit)*2)]">
-      {userId ? (
-        <PaymentUploadModal
-          open={paymentModalOpen}
-          onOpenChange={setPaymentModalOpen}
-          eventId={GATEWAYS_ENTRY_PAYMENT_ID}
-          registrationId={GATEWAYS_ENTRY_PAYMENT_ID}
-          onSuccess={reloadReceipt}
-        />
-      ) : null}
 
       <BackLink
         href={
@@ -156,14 +144,15 @@ export function EventsScreen() {
                 Awaiting verification
               </span>
             ) : (
-              <BlockButton
-                variant="gold"
-                size="sm"
-                className="shrink-0"
-                onClick={() => setPaymentModalOpen(true)}
-              >
-                {userReceipt?.status === "rejected" ? "Re-upload receipt" : "Make Payment"}
-              </BlockButton>
+              <Link href="/dashboard/profile" className="shrink-0 no-underline">
+                <BlockButton
+                  variant="gold"
+                  size="sm"
+                  className="w-full"
+                >
+                  {userReceipt?.status === "rejected" ? "Re-upload receipt" : "Make Payment"}
+                </BlockButton>
+              </Link>
             )
           ) : (
             <Link href="/login?next=/events" className="shrink-0 no-underline">

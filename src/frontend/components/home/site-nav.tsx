@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Menu } from "lucide-react";
+import { Menu, User, LogIn } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { BlockButton, BlockModal, ThemeToggle } from "@/frontend/components/mc";
 import { ART } from "@/frontend/lib/assets/manifest";
 import { FEST } from "@/frontend/lib/fest";
 import { cn } from "@/frontend/lib/utils";
+import { repo } from "@/lib/data";
 
 /**
  * The sticky top bar.
@@ -42,6 +44,15 @@ export interface SiteNavProps {
 export function SiteNav({ onOpenEvents, onOpenSchedule }: SiteNavProps) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [session, setSession] = useState<any>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    repo.auth.getSession().then((s) => setSession(s));
+    return repo.auth.onAuthStateChange(() => {
+      repo.auth.getSession().then((s) => setSession(s));
+    });
+  }, []);
 
   useEffect(() => {
     // passive: this listener never calls preventDefault, and saying so lets the
@@ -66,33 +77,73 @@ export function SiteNav({ onOpenEvents, onOpenSchedule }: SiteNavProps) {
             single lockup, and two targets to the same anchor would just give a
             keyboard user a redundant stop. The crest is decorative here because
             the wordmark beside it already names the link. */}
-        <a
-          href="#top"
-          className="flex min-h-11 min-w-11 shrink-0 items-center gap-[calc(var(--mc-unit)*0.75)] no-underline min-[1320px]:justify-self-start"
-        >
-          {/* Two crests, one shown. The gold mark is drawn for a dark ground
-              and muddies against the light theme's sky, so that theme gets the
-              black cut instead. The choice is made in CSS off `data-theme`
-              rather than in React, because the bar is above the fold and a
-              hydration-time swap is a visible flicker on every load — same
-              mechanism, and same reason, as the theme toggle's own glyph.
-              Both files are 1254² so the swap cannot shift the lockup. */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={ART.brand.gatewaysCrest.src}
-            alt=""
-            aria-hidden
-            className="theme-only-dark h-10 w-auto shrink-0 md:h-12"
-          />
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={ART.brand.gatewaysCrestBlack.src}
-            alt=""
-            aria-hidden
-            className="theme-only-light h-10 w-auto shrink-0 md:h-12"
-          />
+        {/* Crests and wordmarks container */}
+        <div className="flex shrink-0 items-center gap-[calc(var(--mc-unit)*1.5)] md:gap-[calc(var(--mc-unit)*2)] min-[1320px]:justify-self-start">
+          {/*
+            The university mark, linking out to christuniversity.in.
+            Moved to the left, before the Gateways logo.
+          */}
+          <a
+            href={FEST.host.universityUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`${FEST.host.university} — opens in a new tab`}
+            className="flex min-h-11 shrink-0 items-center"
+          >
+            {/* Below md, the seal alone. */}
+            <span aria-hidden className="block h-10 w-10 shrink-0 md:hidden">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={ART.brand.christSmallWhite.src}
+                alt=""
+                className="theme-only-dark h-full w-auto opacity-90"
+              />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={ART.brand.christSmallBlack.src}
+                alt=""
+                className="theme-only-light h-full w-auto opacity-90"
+              />
+            </span>
+            
+            {/* Desktop/Tablet (Medium/Large) Devices */}
+            <span aria-hidden className="hidden md:block">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={ART.brand.christWhite.src}
+                alt=""
+                className="theme-only-dark h-10 w-auto opacity-90 transition-opacity hover:opacity-100 md:h-12 min-[1320px]:h-14"
+              />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={ART.brand.christBlack.src}
+                alt=""
+                className="theme-only-light h-10 w-auto opacity-90 transition-opacity hover:opacity-100 md:h-12 min-[1320px]:h-14"
+              />
+            </span>
+          </a>
 
-        </a>
+          {/* Gateways Crest */}
+          <a
+            href="#top"
+            className="flex min-h-11 min-w-11 shrink-0 items-center gap-[calc(var(--mc-unit)*0.75)] no-underline"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={ART.brand.gatewaysColoured.src}
+              alt="Gateways 2026"
+              aria-hidden
+              className="theme-only-dark h-10 w-auto shrink-0 md:h-14 min-[1320px]:h-16"
+            />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={ART.brand.gatewaysBlackSvg.src}
+              alt="Gateways 2026"
+              aria-hidden
+              className="theme-only-light h-10 w-auto shrink-0 md:h-14 min-[1320px]:h-16"
+            />
+          </a>
+        </div>
 
         {/* Desktop nav. Hidden rather than unmounted on mobile so there is only
             one source of truth for the link list. */}
@@ -110,6 +161,18 @@ export function SiteNav({ onOpenEvents, onOpenSchedule }: SiteNavProps) {
         </nav>
 
         <div className="flex shrink-0 items-center gap-[calc(var(--mc-unit)*0.75)] md:gap-[calc(var(--mc-unit)*1.25)] min-[1320px]:justify-self-end">
+          <div className="hidden items-center md:flex">
+            {session ? (
+              <BlockButton variant="stone" size="sm" onClick={() => router.push("/dashboard/profile")}>
+                My Account
+              </BlockButton>
+            ) : (
+              <BlockButton variant="stone" size="sm" onClick={() => router.push("/login")}>
+                Get Started
+              </BlockButton>
+            )}
+          </div>
+
           {/* Below 1320px this leaves the bar so the university mark can take
               the slot. It is never absent from both places at once: the menu
               modal carries an "Appearance" row that is itself hidden above
@@ -117,58 +180,18 @@ export function SiteNav({ onOpenEvents, onOpenSchedule }: SiteNavProps) {
               one tap further in. */}
           <ThemeToggle className="hidden min-[1320px]:inline-flex" />
 
-          {/* Separates the toggle from the outbound university mark. Only
-              meaningful at full width, where both are in the bar. */}
-          <span aria-hidden className="hidden h-[20px] w-px bg-mc-border md:h-[26px] min-[1320px]:block" />
-
-          {/*
-            The university mark, linking out to christuniversity.in.
-
-            A plain <img>, deliberately NOT <PixelImage>: that component applies
-            `image-rendering: pixelated`, which would shred the logo's curves
-            and lettering. The path still comes from the manifest, so the
-            no-hardcoded-paths rule holds. Height-constrained with width auto so
-            the 1795×608 source scales without distortion.
-
-            `university-mark` is what the light theme hooks to darken these. The
-            source art is white-on-transparent, drawn for the dark nav; on the
-            light theme's pale sky it is all but gone. See globals.css.
-
-            The accessible name sits on the <a>, not on either <img>: only one
-            of the two renders at any width, so a name carried by `alt` would
-            disappear at whichever breakpoint hid that copy.
-          */}
-          <a
-            href={FEST.host.universityUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label={`${FEST.host.university} — opens in a new tab`}
-            className="flex min-h-11 shrink-0 items-center"
-          >
-            {/* Below sm, the seal alone — the same collapse the Gateways lockup
-                makes. That one is two elements, so its wordmark span simply
-                hides; this is a SINGLE png with the lettering baked in and
-                there is no seal-only file. So crop it: a square box with
-                overflow-hidden, and the image at w-auto/max-w-none overflows to
-                its natural 2.95:1, leaving only the leftmost square — the seal
-                — visible. No second asset to keep in sync, and it stays correct
-                if the wordmark is ever re-exported at a different width. */}
-            <span aria-hidden className="block h-8 w-8 shrink-0 overflow-hidden sm:hidden">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={ART.brand.christUniversity.src}
-                alt=""
-                className="university-mark h-full w-auto max-w-none object-left opacity-90"
-              />
-            </span>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={ART.brand.christUniversity.src}
-              alt=""
-              aria-hidden
-              className="university-mark hidden h-8 w-auto opacity-90 transition-opacity hover:opacity-100 sm:block md:h-10 min-[1320px]:h-12"
-            />
-          </a>
+          {/* Mobile Account Button (Icon Only) */}
+          <div className="md:hidden">
+            {session ? (
+              <BlockButton variant="stone" size="icon" onClick={() => router.push("/dashboard/profile")} aria-label="My Account">
+                <User aria-hidden size={20} strokeWidth={2.5} />
+              </BlockButton>
+            ) : (
+              <BlockButton variant="stone" size="icon" onClick={() => router.push("/login")} aria-label="Get Started">
+                <LogIn aria-hidden size={20} strokeWidth={2.5} />
+              </BlockButton>
+            )}
+          </div>
 
           {/* Last in the row. The hamburger belongs at the trailing edge on
               mobile, which is also where it was before the mark took the

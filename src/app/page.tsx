@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { MotionConfig } from "framer-motion";
 import { HomeScreen } from "@/frontend/screens/home/home-screen";
 import { PortalTransitionProvider } from "@/frontend/components/portal/portal-transition-overlay";
-import { FestChat } from "@/frontend/components/chat/fest-chat";
 import { FEST } from "@/frontend/lib/fest";
 
 export const metadata: Metadata = {
@@ -31,7 +30,6 @@ export default function Home() {
     <PortalTransitionProvider>
       <MotionConfig reducedMotion="user">
         <HomeScreen />
-        <FestChat />
       </MotionConfig>
     </PortalTransitionProvider>
   );

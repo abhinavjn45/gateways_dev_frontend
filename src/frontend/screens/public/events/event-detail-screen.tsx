@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   BackLink,
   BlockButton,
@@ -11,10 +12,7 @@ import {
   showToast,
 } from "@/frontend/components/mc";
 import { AchievementModal } from "@/frontend/components/achievements/achievement-modal";
-import {
-  GATEWAYS_ENTRY_PAYMENT_ID,
-  PaymentUploadModal,
-} from "@/frontend/components/registration/payment-upload-modal";
+
 import { ParticipantDetailsModal } from "@/frontend/components/registration/participant-details-modal";
 import { useSession } from "@/frontend/components/auth/session-provider";
 import { useAsync } from "@/frontend/hooks/use-async";
@@ -43,7 +41,7 @@ export function EventDetailScreen({
   const { session, character } = useSession();
   const userId = session?.userId;
   const [busy, setBusy] = useState(false);
-  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const router = useRouter();
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [teamName, setTeamName] = useState("");
   const [joinCode, setJoinCode] = useState("");
@@ -146,7 +144,7 @@ export function EventDetailScreen({
    */
   function requireEligibility(next: "register" | "create-team" | "join-team") {
     if (!paymentVerified) {
-      setPaymentModalOpen(true);
+      router.push("/dashboard/profile");
       return false;
     }
     if (!detailsComplete) {
@@ -223,7 +221,7 @@ export function EventDetailScreen({
   async function onRegister() {
     if (!userId || !event) return;
     if (!paymentVerified) {
-      setPaymentModalOpen(true);
+      router.push("/dashboard/profile");
       return;
     }
     setBusy(true);
@@ -266,15 +264,7 @@ export function EventDetailScreen({
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-[var(--mc-unit)] px-[calc(var(--mc-unit)*2)] py-[calc(var(--mc-unit)*1.5)] md:p-[calc(var(--mc-unit)*2)]">
       <AchievementModal />
-      {userId && (
-        <PaymentUploadModal
-          open={paymentModalOpen}
-          onOpenChange={setPaymentModalOpen}
-          eventId={GATEWAYS_ENTRY_PAYMENT_ID}
-          registrationId={GATEWAYS_ENTRY_PAYMENT_ID}
-          onSuccess={() => reloadReceipt()}
-        />
-      )}
+
       {userId && (
         <ParticipantDetailsModal
           open={detailsModalOpen}
@@ -389,13 +379,15 @@ export function EventDetailScreen({
               {userReceipt?.status === "pending" ? null : (
                 // Removed while pending so a second receipt can't be submitted
                 // for the same one-time pass.
-                <BlockButton
-                  variant={userReceipt?.status === "rejected" ? "emerald" : "gold"}
-                  size="lg"
-                  onClick={() => setPaymentModalOpen(true)}
-                >
-                  {userReceipt?.status === "rejected" ? "Re-upload Receipt" : "Make Payment"}
-                </BlockButton>
+                <Link href="/dashboard/profile" className="no-underline w-full block">
+                  <BlockButton
+                    variant={userReceipt?.status === "rejected" ? "emerald" : "gold"}
+                    size="lg"
+                    className="w-full"
+                  >
+                    {userReceipt?.status === "rejected" ? "Re-upload Receipt" : "Make Payment"}
+                  </BlockButton>
+                </Link>
               )}
             </div>
           ) : event.mode === "team" ? (
