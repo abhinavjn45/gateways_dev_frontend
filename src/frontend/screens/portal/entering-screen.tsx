@@ -31,7 +31,7 @@ export function EnteringScreen() {
   const [progress, setProgress] = useState(0);
 
   const destination =
-    status === "ready" ? "/travelling" : "/login";
+    status === "ready" ? "/dashboard/profile" : "/login";
 
   // Warm the destination while the animation plays, so the push is instant.
   useEffect(() => {

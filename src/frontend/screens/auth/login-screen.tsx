@@ -215,7 +215,7 @@ export function LoginScreen() {
     defaultValues: { email: "", username: "", password: "", confirm: "", remember: true },
   });
 
-  const requestedDestination = params.get("next") ?? "/dashboard";
+  const requestedDestination = "/dashboard/profile";
 
   const [usernameCheck, setUsernameCheck] = useState<{
     value: string;

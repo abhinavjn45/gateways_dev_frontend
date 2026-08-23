@@ -1,10 +1,10 @@
 "use client";
 
-import { useForm, useWatch } from "react-hook-form";
+import { useForm, useWatch, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useEffect, useState } from "react";
-import { BlockButton, BlockInput, BlockModal, BlockPanel, BlockSelect } from "@/frontend/components/mc";
+import { BlockButton, BlockInput, BlockModal, BlockPanel, BlockSelect, BlockCombobox } from "@/frontend/components/mc";
 import { repo } from "@/lib/data";
 import { DataError, type Character, type ParticipantDetails, type Profile } from "@/lib/data/types";
 import { useAsync } from "@/frontend/hooks/use-async";
@@ -183,14 +183,20 @@ export function ParticipantDetailsModal({
           })}
         />
 
-        <BlockSelect label="College" error={errors.collegeId?.message} {...register("collegeId")}>
-          <option value="">Select your college…</option>
-          {(colleges ?? []).map((college) => (
-            <option key={college.id} value={college.id}>
-              {college.name}
-            </option>
-          ))}
-        </BlockSelect>
+        <Controller
+          control={control}
+          name="collegeId"
+          render={({ field: { onChange, value } }) => (
+            <BlockCombobox
+              label="College"
+              placeholder="Search your college..."
+              error={errors.collegeId?.message}
+              options={(colleges ?? []).map(c => ({ id: c.id, name: c.name }))}
+              value={value}
+              onChange={onChange}
+            />
+          )}
+        />
 
         <BlockSelect
           label="Department"
