@@ -229,8 +229,7 @@ export const repo = new Proxy({} as Repository, {
           return await res.json();
         },
         departments: async (collegeId: string | null) => {
-          if (!collegeId) return [];
-          const res = await fetch(`${API_URL}/reference/departments?collegeId=${collegeId}`, { credentials: "include" });
+          const res = await fetch(`${API_URL}/reference/departments${collegeId ? `?collegeId=${collegeId}` : ''}`, { credentials: "include" });
           if (!res.ok) return [];
           return await res.json();
         },

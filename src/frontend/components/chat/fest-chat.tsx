@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import { BlockButton, BlockModal } from "@/frontend/components/mc";
 import { useReducedMotion } from "@/frontend/lib/animation/use-reduced-motion";
 import { cn } from "@/frontend/lib/utils";
@@ -63,6 +64,7 @@ export function FestChat() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const logRef = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
   /** Flips once the WebGL context exists, so bot and bubble arrive together. */
   const [ready, setReady] = useState(false);
   /** Session-only. Dismissing the bubble leaves the bot, which is the control. */
@@ -80,6 +82,18 @@ export function FestChat() {
   useEffect(() => {
     logRef.current?.scrollTo({ top: logRef.current.scrollHeight });
   }, [turns, busy]);
+
+  // Hide the widget entirely on dashboard, admin, and authentication pages.
+  if (
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/admin") ||
+    pathname === "/login" ||
+    pathname === "/register" ||
+    pathname === "/signup" ||
+    pathname === "/forgot-password"
+  ) {
+    return null;
+  }
 
   async function send(question: string) {
     const text = question.trim();
@@ -435,9 +449,9 @@ function stripMarkdown(text: string): string {
       .replace(/`([^`]+)`/g, "$1")
       // Leading # heading markers, which sometimes open a list.
       .replace(/^#{1,6}\s+/gm, "")
-      // A single * or _ used for italics, but ONLY when it wraps a word — a
-      // bare asterisk can be legitimate text, and 2 * 3 must not become 2 3.
-      .replace(/(^|\s)\*(\S[^*]*?\S|\S)\*(?=\s|[.,!?)]|$)/g, "$1$2")
+      // A single * or _ used for italics, but ONLY when it wraps a word.
+      // Uses strict greedy non-asterisk matching to prevent catastrophic backtracking (ReDoS).
+      .replace(/(^|\s)\*([^\s*][^*]*[^\s*]|[^\s*])\*(?=\s|[.,!?)]|$)/g, "$1$2")
   );
 }
 

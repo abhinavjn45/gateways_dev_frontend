@@ -115,6 +115,7 @@ export interface Profile {
   fullName: string | null;
   phone: string | null;
   collegeId?: string | null;
+  customCollegeName?: string | null;
   departmentId?: string | null;
   yearOfStudy?: string | null;
   gender: Gender | null;
@@ -141,6 +142,7 @@ export interface ParticipantDetails {
   fullName: string;
   phone: string;
   collegeId: string;
+  customCollegeName?: string | null;
   departmentId: string;
   yearOfStudy: string;
   gender: Gender;
@@ -177,6 +179,7 @@ export function isParticipantComplete(
       profile.emergencyPhone?.trim() &&
       profile.dietaryPref &&
       (profile.collegeId || character.collegeId) &&
+      (profile.collegeId === '9999' || character.collegeId === '9999' ? profile.customCollegeName?.trim() : true) &&
       (profile.departmentId || character.departmentId) &&
       (profile.yearOfStudy != null || character.yearOfStudy != null),
   );

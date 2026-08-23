@@ -58,9 +58,18 @@ export function BlockCombobox({
     }
   }, [value, options]);
 
-  const filteredOptions = options.filter((option) =>
-    option.name.toLowerCase().includes(query.toLowerCase())
+  // Extract the "Other" option (ID 9999) if it exists
+  const otherOption = options.find((o) => o.id === "9999");
+  
+  // Filter the regular options, excluding the "Other" option from the normal list
+  const filteredRegularOptions = options.filter((option) =>
+    option.id !== "9999" && option.name.toLowerCase().includes(query.toLowerCase())
   );
+
+  // Always append the "Other" option at the very end
+  const filteredOptions = otherOption
+    ? [...filteredRegularOptions, otherOption]
+    : filteredRegularOptions;
 
   return (
     <FieldShell
