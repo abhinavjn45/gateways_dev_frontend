@@ -28,7 +28,7 @@ interface FieldShellProps {
   className?: string;
 }
 
-function FieldShell({
+export function FieldShell({
   label,
   hint,
   error,
@@ -72,7 +72,7 @@ function FieldShell({
   );
 }
 
-const wellClasses = [
+export const wellClasses = [
   "w-full bg-mc-slot text-mc-text bevel-inset",
   "border-0 outline-none",
   "px-[calc(var(--mc-unit)*1)] py-[calc(var(--mc-unit)*0.85)]",

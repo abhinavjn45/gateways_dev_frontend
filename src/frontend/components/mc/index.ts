@@ -3,6 +3,7 @@ export { BlockButton, blockButton } from "./block-button";
 export { BackLink } from "./back-link";
 export { BlockPanel, blockPanel } from "./block-panel";
 export { BlockInput, BlockSelect, BlockCheckbox } from "./block-input";
+export { BlockCombobox } from "./block-combobox";
 export { BlockModal } from "./block-modal";
 export { BlockToast, BlockToaster, showToast } from "./block-toast";
 export type { ToastSeverity } from "./block-toast";

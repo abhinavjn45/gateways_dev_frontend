@@ -226,6 +226,35 @@ export function ProfileScreen() {
         </BlockPanel>
       ) : null}
 
+      {detailsComplete && (session?.paymentStatus === 'none' || !session?.paymentStatus || session?.paymentStatus === 'rejected') ? (
+        <BlockPanel variant="panel" padded="lg" className="flex flex-col gap-[var(--mc-unit)]">
+          <div className="flex flex-wrap items-baseline justify-between gap-[var(--mc-unit)]">
+            <h2 className="font-pixel text-[10px] uppercase tracking-[0.1em] text-mc-gold">
+              Payment details
+            </h2>
+            <span className="font-pixel text-[9px] uppercase text-mc-gold">
+              Incomplete
+            </span>
+          </div>
+          <div className="py-[var(--mc-unit)]">
+            <p className="text-[18px] text-mc-gold">
+              {session?.paymentStatus === 'rejected' 
+                ? "Your previous payment submission was rejected. Please submit valid payment details to unlock dashboard features."
+                : "Your payment details are missing. All dashboard features will remain locked until your payment is verified."}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-[var(--mc-unit)]">
+            <BlockButton
+              variant="gold"
+              size="sm"
+              onClick={() => setPaymentOpen(true)}
+            >
+              Submit Payment Details
+            </BlockButton>
+          </div>
+        </BlockPanel>
+      ) : null}
+
       {/*
         Same modal the event page uses, so there is ONE form and one set of
         validation rules for these fields. Filling them here means Register goes
@@ -277,15 +306,6 @@ export function ProfileScreen() {
           >
             {detailsComplete ? "Edit details" : "Complete your details"}
           </BlockButton>
-          {detailsComplete && (session?.paymentStatus === 'none' || !session?.paymentStatus) ? (
-            <BlockButton
-              variant="emerald"
-              size="sm"
-              onClick={() => setPaymentOpen(true)}
-            >
-              Submit Payment
-            </BlockButton>
-          ) : null}
         </div>
 
         {detailsComplete ? (
@@ -351,10 +371,10 @@ export function ProfileScreen() {
 
 function Detail({ label, value }: { label: string; value?: string | number | null }) {
   return (
-    <div>
+    <BlockPanel variant="slot" padded="sm">
       <dt className="font-pixel text-[9px] uppercase text-mc-text-dim">{label}</dt>
-      <dd className="mt-[2px] text-[19px] text-mc-text">{value || "—"}</dd>
-    </div>
+      <dd className="mt-[2px] text-[19px] text-mc-text break-words">{value || "—"}</dd>
+    </BlockPanel>
   );
 }
 

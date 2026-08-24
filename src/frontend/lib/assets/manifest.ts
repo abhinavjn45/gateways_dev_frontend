@@ -190,6 +190,12 @@ export const ART = {
    */
   brand: spec({
     christUniversity: { src: "/art/brand/christ-university.png", w: 1795, h: 608, kind: "sprite", note: "CHRIST wordmark, white" },
+    christWhite: { src: "/art/brand/Christ White.svg", w: 323, h: 96, kind: "sprite", note: "CHRIST wordmark, white SVG" },
+    christBlack: { src: "/art/brand/Christ Black.svg", w: 323, h: 96, kind: "sprite", note: "CHRIST wordmark, black SVG" },
+    christSmallWhite: { src: "/art/brand/Christ Small White.svg", w: 96, h: 96, kind: "sprite", note: "CHRIST seal, white SVG" },
+    christSmallBlack: { src: "/art/brand/Christ Small Black.svg", w: 96, h: 96, kind: "sprite", note: "CHRIST seal, black SVG" },
+    gatewaysColoured: { src: "/art/brand/Gateways Coloured.svg", w: 300, h: 100, kind: "sprite", note: "Gateways coloured SVG" },
+    gatewaysBlackSvg: { src: "/art/brand/Gateways Black.svg", w: 300, h: 100, kind: "sprite", note: "Gateways black SVG" },
     gatewaysCrest: { src: "/art/brand/Gateways_Pixel.png", w: 1254, h: 1254, kind: "sprite", note: "Gateways crest, gold" },
     gatewaysCrestBlack: { src: "/art/brand/gateways_black.png", w: 1254, h: 1254, kind: "sprite", note: "Gateways crest, black — light theme" },
     gatewaysCrestPixel: { src: "/art/brand/gateways-crest-pixel.png", w: 152, h: 152, kind: "sprite", note: "crest, pixel art" },

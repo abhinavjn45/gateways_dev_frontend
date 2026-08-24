@@ -1,10 +1,10 @@
 "use client";
 
-import { useForm, useWatch } from "react-hook-form";
+import { useForm, useWatch, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useEffect, useState } from "react";
-import { BlockButton, BlockInput, BlockModal, BlockPanel, BlockSelect } from "@/frontend/components/mc";
+import { BlockButton, BlockInput, BlockModal, BlockPanel, BlockSelect, BlockCombobox } from "@/frontend/components/mc";
 import { repo } from "@/lib/data";
 import { DataError, type Character, type ParticipantDetails, type Profile } from "@/lib/data/types";
 import { useAsync } from "@/frontend/hooks/use-async";
@@ -45,7 +45,7 @@ const schema = z.object({
   fullName: z.string().trim().min(3, "At least 3 characters."),
   phone: phone("mobile number"),
   collegeId: z.string().trim().min(1, "Select your college."),
-  departmentId: z.string().trim().min(1, "Select your department."),
+  departmentId: z.string().trim().min(1, "Select your course/programme."),
   yearOfStudy: z.string().trim().regex(/^(1st|2nd|3rd|4th|5th|6th)$/, "Select your year."),
   gender: z.enum(["Male", "Female", "Other"]),
   dateOfBirth: z
@@ -60,6 +60,17 @@ const schema = z.object({
   dietaryPref: z.enum(["Vegeterian", "Non-Vegeterian"]),
   emergencyName: z.string().trim().min(3, "Who should we call?"),
   emergencyPhone: phone("emergency number"),
+  customCollegeName: z.string().optional(),
+}).superRefine((data, ctx) => {
+  if (data.collegeId === "9999") {
+    if (!data.customCollegeName || data.customCollegeName.trim().length < 3) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["customCollegeName"],
+        message: "Please provide the full official name of your college/institute.",
+      });
+    }
+  }
 });
 
 type FormValues = z.infer<typeof schema>;
@@ -79,6 +90,7 @@ function defaultFormValues(profile: Profile | null, character: Character | null)
     dietaryPref: (profile?.dietaryPref as any) ?? "Vegeterian",
     emergencyName: profile?.emergencyName ?? "",
     emergencyPhone: profile?.emergencyPhone ?? "",
+    customCollegeName: profile?.customCollegeName ?? "",
   };
 }
 
@@ -183,21 +195,38 @@ export function ParticipantDetailsModal({
           })}
         />
 
-        <BlockSelect label="College" error={errors.collegeId?.message} {...register("collegeId")}>
-          <option value="">Select your college…</option>
-          {(colleges ?? []).map((college) => (
-            <option key={college.id} value={college.id}>
-              {college.name}
-            </option>
-          ))}
-        </BlockSelect>
+        <Controller
+          control={control}
+          name="collegeId"
+          render={({ field: { onChange, value } }) => (
+            <BlockCombobox
+              label="College"
+              placeholder="Search your college..."
+              error={errors.collegeId?.message}
+              options={(colleges ?? []).map(c => ({ id: c.id, name: c.name }))}
+              value={value}
+              onChange={onChange}
+            />
+          )}
+        />
+
+        {collegeId === "9999" && (
+          <BlockInput
+            label="Your College Name"
+            placeholder="e.g. CHRIST (Deemed to be University), Bangalore Central Campus"
+            hint="Please write the Full Official Name of the Institute/College/University with a comma and city/campus."
+            error={errors.customCollegeName?.message}
+            wrapperClassName="mb-[calc(var(--mc-unit)*1.5)]"
+            {...register("customCollegeName")}
+          />
+        )}
 
         <BlockSelect
-          label="Department"
+          label="Course/Programme"
           error={errors.departmentId?.message}
           {...register("departmentId")}
         >
-          <option value="">Select your department…</option>
+          <option value="">Select your course/programme...</option>
           {(departments ?? []).map((department) => (
             <option key={department.id} value={department.id}>
               {department.name}

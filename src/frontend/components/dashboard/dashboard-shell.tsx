@@ -201,33 +201,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         </main>
       </div>
 
-      {/* Mobile bottom tab bar (SCREEN 10). */}
-      <nav
-        aria-label="Main"
-        className="fixed inset-x-0 bottom-0 z-30 flex border-t-[length:var(--mc-bevel)] border-mc-border bg-mc-panel pb-[env(safe-area-inset-bottom)] md:hidden"
-      >
-        {TABS.map((t) => {
-          const active = pathname === t.href;
-          return (
-            <Link
-              key={t.href}
-              href={t.href}
-              aria-current={active ? "page" : undefined}
-              className={cn(
-                "flex flex-1 flex-col items-center gap-[2px] py-[calc(var(--mc-unit)*0.75)] no-underline",
-                // 44px minimum touch target.
-                "min-h-[56px] justify-center",
-                active ? "text-mc-eyebrow" : "text-mc-text-dim",
-              )}
-            >
-              <span aria-hidden className="text-[21px] leading-none">
-                {t.icon}
-              </span>
-              <span className="font-pixel text-[8px] uppercase">{t.label}</span>
-            </Link>
-          );
-        })}
-      </nav>
+      {/* Mobile bottom tab bar was removed per request. */}
     </div>
   );
 }
@@ -298,7 +272,7 @@ function SidebarContent({
             how the player arrived — history would make it land wherever the
             player happened to be a moment ago (e.g. Schedule) instead. */}
         <BackLink
-          href="/world?view=map"
+          href="/"
           onClick={onNavigate}
           className="w-full"
           preferHistory={false}
