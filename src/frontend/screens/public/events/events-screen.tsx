@@ -43,7 +43,7 @@ import { cn } from "@/frontend/lib/utils";
  * be thirteen dead ends. The modal shows the same `<EventDetails>` the
  * homepage does.
  */
-export function EventsScreen() {
+export function EventsScreen({ basePath = "/events", isDashboard = false }: { basePath?: string; isDashboard?: boolean }) {
   const params = useSearchParams();
   const categorySlug = params.get("category") ?? undefined;
   const [search, setSearch] = useState("");
@@ -83,43 +83,59 @@ export function EventsScreen() {
   const bannerScene = "portal-approach";
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-[calc(var(--mc-unit)*1.5)] px-[calc(var(--mc-unit)*2)] py-[calc(var(--mc-unit)*1.5)] md:p-[calc(var(--mc-unit)*2)]">
+    <div className={cn(
+      "mx-auto flex w-full flex-col gap-[calc(var(--mc-unit)*1.5)]",
+      isDashboard ? "" : "max-w-5xl px-[calc(var(--mc-unit)*2)] py-[calc(var(--mc-unit)*1.5)] md:p-[calc(var(--mc-unit)*2)]"
+    )}>
 
-      <BackLink
-        href={
-          !userId
-            ? "/"
-            : // Only deep-link to a marker that exists. The filter slugs are
-              // now `technical` / `non-technical`, which are not map keys —
-              // passing one would have asked the map to focus a location it has
-              // never heard of.
-              categorySlug && locationByKey(categorySlug)
-              ? `/world?view=map&location=${encodeURIComponent(categorySlug)}`
-              : "/world?view=map"
-        }
-      />
+      {!isDashboard && (
+        <BackLink
+          href={
+            !userId
+              ? "/"
+              : // Only deep-link to a marker that exists. The filter slugs are
+                // now `technical` / `non-technical`, which are not map keys —
+                // passing one would have asked the map to focus a location it has
+                // never heard of.
+                categorySlug && locationByKey(categorySlug)
+                ? `/world?view=map&location=${encodeURIComponent(categorySlug)}`
+                : "/world?view=map"
+          }
+        />
+      )}
 
-      <BiomeScene
-        scene={bannerScene}
-        className="min-h-[160px] border-[length:var(--mc-bevel)] border-mc-border bevel-inset"
-      >
-        <header className="mt-auto flex flex-col p-[calc(var(--mc-unit)*1.5)]">
-          <h1
-            className="text-mc-accent text-base md:text-lg"
-            style={{ textShadow: "3px 3px 0 rgba(0,0,0,0.7)" }}
-          >
-            {activeLabel ? activeLabel.toUpperCase() : "ALL EVENTS"}
+      {!isDashboard ? (
+        <BiomeScene
+          scene={bannerScene}
+          className="min-h-[160px] border-[length:var(--mc-bevel)] border-mc-border bevel-inset"
+        >
+          <header className="mt-auto flex flex-col p-[calc(var(--mc-unit)*1.5)]">
+            <h1
+              className="text-mc-accent text-base md:text-lg"
+              style={{ textShadow: "3px 3px 0 rgba(0,0,0,0.7)" }}
+            >
+              {activeLabel ? activeLabel.toUpperCase() : "ALL EVENTS"}
+            </h1>
+            <p
+              className="mt-[calc(var(--mc-unit)*0.5)] text-mc-text"
+              style={{ textShadow: "2px 2px 0 rgba(0,0,0,0.8)" }}
+            >
+              {events.length} {events.length === 1 ? "event" : "events"}
+            </p>
+          </header>
+        </BiomeScene>
+      ) : (
+        <header>
+          <h1 className="text-mc-accent text-base md:text-lg">
+            {activeLabel ? activeLabel.toUpperCase() : "EXPLORE EVENTS"}
           </h1>
-          <p
-            className="mt-[calc(var(--mc-unit)*0.5)] text-mc-text"
-            style={{ textShadow: "2px 2px 0 rgba(0,0,0,0.8)" }}
-          >
+          <p className="mt-[calc(var(--mc-unit)*0.5)] text-mc-text-dim">
             {events.length} {events.length === 1 ? "event" : "events"}
           </p>
         </header>
-      </BiomeScene>
+      )}
 
-      {!paymentLoading && userReceipt?.status !== "verified" ? (
+      {!isDashboard && !paymentLoading && userReceipt?.status !== "verified" ? (
         <BlockPanel
           variant="slot"
           className="flex flex-col items-start justify-between gap-[var(--mc-unit)] border-l-4 border-mc-gold p-[var(--mc-unit)] sm:flex-row sm:items-center"
@@ -132,7 +148,7 @@ export function EventsScreen() {
               {!userId
                 ? "Sign in to make the one-time payment and register for events."
                 : userReceipt?.status === "pending"
-                  ? "Your payment receipt is awaiting verification. Registration opens once it is approved."
+                  ? "You have submitted your Payment Details, our team will review it and you'll get the confirmation within 24 hours."
                   : userReceipt?.status === "rejected"
                     ? "Your receipt was rejected. Upload a new receipt before registering for events."
                     : "Make the one-time payment and upload your receipt. You can register after it is verified."}
@@ -155,7 +171,7 @@ export function EventsScreen() {
               </Link>
             )
           ) : (
-            <Link href="/login?next=/events" className="shrink-0 no-underline">
+            <Link href={`/login?next=${basePath}`} className="shrink-0 no-underline">
               <BlockButton variant="gold" size="sm">
                 Sign in
               </BlockButton>
@@ -173,14 +189,14 @@ export function EventsScreen() {
 
       <nav aria-label="Event tracks" className="flex flex-wrap gap-[calc(var(--mc-unit)*0.5)]">
         <CategoryChip
-          href="/events"
+          href={basePath}
           label={`All (${FEST_EVENTS.length})`}
           active={!activeTrack}
         />
         {EVENT_TRACKS.map((t) => (
           <CategoryChip
             key={t.id}
-            href={`/events?category=${t.id}`}
+            href={`${basePath}?category=${t.id}`}
             label={`${t.label} (${eventsForTrack(t.id).length})`}
             active={t.id === activeTrack}
           />
