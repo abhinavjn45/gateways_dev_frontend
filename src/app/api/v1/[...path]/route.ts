@@ -177,7 +177,13 @@ async function forward(request: Request) {
   let upstream: Response;
   try {
     upstream = await fetch(target, init);
-  } catch (error) {
+  } catch (error: any) {
+    console.error("==== PROXY FETCH ERROR ====");
+    console.error("Target:", target.toString());
+    console.error("Error Name:", error?.name);
+    console.error("Error Message:", error?.message);
+    console.error("Full Error:", error);
+    console.error("===========================");
     // Never surface `target` — it would leak the backend's address to the
     // browser, which is the one thing this indirection is meant to keep private.
     const timedOut = error instanceof Error && error.name === "TimeoutError";

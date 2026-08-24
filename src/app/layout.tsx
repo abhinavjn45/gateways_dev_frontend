@@ -3,6 +3,7 @@ import Script from "next/script";
 import { fontVariables } from "@/frontend/lib/fonts";
 import { PixelSplash } from "@/frontend/components/portal/pixel-splash";
 import { HistoryCursor } from "@/frontend/components/navigation/history-cursor";
+import { FestChat } from "@/frontend/components/chat/fest-chat";
 import { SPLASH_SEEN_KEY } from "@/frontend/lib/animation/splash-store";
 // From theme-store, NOT use-theme: the latter is a "use client" module, and a
 // value imported from one of those into this server component arrives as a
@@ -111,6 +112,7 @@ export default function RootLayout({
             in-app history from a cold arrival. Must be at the root to see every
             navigation. */}
         <HistoryCursor />
+        <FestChat />
         <PixelSplash />
       </body>
     </html>
