@@ -30,12 +30,11 @@ const NAV = [
   // Profile leads: it is where participant details are filled in, and that is
   // the one thing here a participant MUST do before they can register.
   { href: "/dashboard/profile", label: "Profile", icon: "◉" },
-  { href: "/dashboard/events", label: "My Events", icon: "▤" },
-  // The in-shell schedule, NOT the public /schedule route — that one lives
-  // outside the (realm) group, so it would drop the sidebar on the way there.
+  { href: "/dashboard/explore", label: "Explore Events", icon: "✦" },
   { href: "/dashboard/schedule", label: "Schedule", icon: "◷" },
+  { href: "/dashboard/events", label: "My Events", icon: "▤" },
   { href: "/dashboard/team", label: "Team", icon: "◍" },
-  { href: "/dashboard/notifications", label: "Notifications", icon: "◈" },
+  { href: "/dashboard/notifications", label: "Announcements", icon: "◈" },
   { href: "/dashboard/settings", label: "Settings", icon: "⚙" },
 ] as const;
 
@@ -64,7 +63,18 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   // Auto-redirect if locked out
   useEffect(() => {
     if (session && (!session.isProfileComplete || !session.isPaymentVerified)) {
-      if (pathname.startsWith("/dashboard") && pathname !== "/dashboard/profile" && pathname !== "/dashboard/settings") {
+      const allowedPaths = [
+        "/dashboard/profile",
+        "/dashboard/settings",
+        "/dashboard/guidelines",
+        "/dashboard/faq",
+        "/dashboard/terms",
+        "/dashboard/privacy",
+        "/dashboard/explore",
+        "/dashboard/schedule",
+        "/dashboard/notifications",
+      ];
+      if (pathname.startsWith("/dashboard") && !allowedPaths.includes(pathname)) {
         router.replace("/dashboard/profile");
       }
     }
@@ -119,7 +129,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       <div className="flex min-h-0 flex-1 overflow-hidden">
         {/* Desktop sidebar. No overflow-y-auto here on purpose: the menu stays
             put and never scrolls, independent of how tall <main> gets. */}
-        <aside className="hidden w-[220px] shrink-0 flex-col gap-[var(--mc-unit)] overflow-hidden border-r-[length:var(--mc-bevel)] border-mc-border p-[var(--mc-unit)] md:flex">
+        <aside className="hidden w-[220px] shrink-0 flex-col overflow-hidden border-r-[length:var(--mc-bevel)] border-mc-border p-[var(--mc-unit)] md:flex">
           <SidebarContent
             pathname={pathname}
             onNavigate={() => undefined}
@@ -144,9 +154,9 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 animate={{ x: 0 }}
                 exit={{ x: "-100%" }}
                 transition={{ type: "spring", stiffness: 380, damping: 34 }}
-                className="fixed inset-y-0 left-0 z-50 flex w-[min(86vw,320px)] flex-col gap-[var(--mc-unit)] overflow-y-auto bg-mc-panel px-[calc(var(--mc-unit)*1.5)] pb-[max(var(--mc-unit),env(safe-area-inset-bottom))] pt-[max(var(--mc-unit),env(safe-area-inset-top))] md:hidden"
+                className="fixed inset-y-0 left-0 z-50 flex w-[min(86vw,320px)] flex-col gap-[var(--mc-unit)] overflow-hidden bg-mc-panel px-[calc(var(--mc-unit)*1.5)] pb-[max(var(--mc-unit),env(safe-area-inset-bottom))] pt-[max(var(--mc-unit),env(safe-area-inset-top))] md:hidden"
               >
-                <div className="flex justify-end">
+                <div className="flex shrink-0 justify-end">
                   <BlockButton
                     size="sm"
                     variant="ghost"
@@ -221,52 +231,100 @@ function SidebarContent({
 
   return (
     <>
-      <Link
-        href="/world"
-        onClick={onNavigate}
-        className="font-pixel text-[12px] text-mc-eyebrow no-underline hover:text-mc-text"
-      >
-        PARALLAX
-      </Link>
+      <div className="shrink-0 pb-[var(--mc-unit)]">
+        <Link
+          href="/world"
+          onClick={onNavigate}
+          className="flex items-center gap-[calc(var(--mc-unit)*0.75)] text-mc-eyebrow hover:text-mc-text transition-transform hover:scale-[1.02] active:scale-[0.98] no-underline group"
+        >
+          <div className="w-8 shrink-0">
+            {/* Light theme: show black logo */}
+            <img 
+              src="/art/brand/Gateways Black.svg" 
+              alt="Gateways Logo" 
+              className="theme-only-light w-full h-auto opacity-90 group-hover:opacity-100 transition-opacity"
+            />
+            {/* Dark theme: show white logo */}
+            <img 
+              src="/art/brand/Gateways White.svg" 
+              alt="Gateways Logo" 
+              className="theme-only-dark w-full h-auto opacity-90 group-hover:opacity-100 transition-opacity"
+            />
+          </div>
+          <span className="font-pixel text-[11px] mt-1 tracking-wide">
+            Gateways '26
+          </span>
+        </Link>
+      </div>
 
-      <nav aria-label="Dashboard" className="flex flex-col gap-[2px]">
-        {NAV.map((item) => {
-          const active = pathname === item.href;
-          const isItemLocked = isLocked && item.href !== "/dashboard/profile" && item.href !== "/dashboard/settings";
-          
-          return (
+      <div className="flex-1 min-h-0 overflow-y-auto pr-1 -mr-1 flex flex-col gap-[2px]">
+        <nav aria-label="Dashboard" className="flex flex-col gap-[2px]">
+          {NAV.map((item) => {
+            const active = pathname === item.href;
+            const isItemLocked = isLocked && item.href !== "/dashboard/profile" && item.href !== "/dashboard/settings" && item.href !== "/dashboard/explore" && item.href !== "/dashboard/notifications" && item.href !== "/dashboard/schedule";
+            
+            return (
+              <Link
+                key={item.href}
+                href={isItemLocked ? "/dashboard/profile" : item.href}
+                onClick={(e) => {
+                  if (isItemLocked) {
+                    e.preventDefault();
+                  } else {
+                    onNavigate();
+                  }
+                }}
+                aria-disabled={isItemLocked}
+                aria-current={active ? "page" : undefined}
+                className={cn(
+                  "flex items-center gap-[calc(var(--mc-unit)*0.75)] no-underline",
+                  "px-[var(--mc-unit)] py-[calc(var(--mc-unit)*0.65)] min-h-[44px]",
+                  "text-[19px]",
+                  active
+                    ? "bg-mc-panel-light text-mc-text bevel-inset"
+                    : "text-mc-text-dim hover:bg-mc-panel-light/50 hover:text-mc-text",
+                  isItemLocked && "opacity-50 cursor-not-allowed"
+                )}
+              >
+                <span aria-hidden className="w-[18px] text-center flex items-center justify-center h-full">
+                  {isItemLocked ? <Lock size={14} /> : item.icon}
+                </span>
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
+
+        <div className="mt-1 flex flex-col gap-[2px]">
+          <h3 className="font-pixel text-[10px] uppercase text-mc-eyebrow px-[var(--mc-unit)] pb-1 pt-2">
+            Important
+          </h3>
+          {[
+            { href: "/dashboard/guidelines", label: "Guidelines", icon: "⚑" },
+            { href: "/dashboard/faq", label: "FAQs", icon: "⁇" },
+            { href: "/dashboard/terms", label: "Terms", icon: "§" },
+            { href: "/dashboard/privacy", label: "Privacy", icon: "◎" },
+          ].map((item) => (
             <Link
-              key={item.href}
-              href={isItemLocked ? "/dashboard/profile" : item.href}
-              onClick={(e) => {
-                if (isItemLocked) {
-                  e.preventDefault();
-                } else {
-                  onNavigate();
-                }
-              }}
-              aria-disabled={isItemLocked}
-              aria-current={active ? "page" : undefined}
+              key={item.label}
+              href={item.href}
+              onClick={onNavigate}
               className={cn(
                 "flex items-center gap-[calc(var(--mc-unit)*0.75)] no-underline",
-                "px-[var(--mc-unit)] py-[calc(var(--mc-unit)*0.65)] min-h-[44px]",
-                "text-[19px]",
-                active
-                  ? "bg-mc-panel-light text-mc-text bevel-inset"
-                  : "text-mc-text-dim hover:bg-mc-panel-light/50 hover:text-mc-text",
-                isItemLocked && "opacity-50 cursor-not-allowed"
+                "px-[var(--mc-unit)] py-[calc(var(--mc-unit)*0.5)] min-h-[36px]",
+                "text-[16px] text-mc-text-dim hover:bg-mc-panel-light/50 hover:text-mc-text"
               )}
             >
               <span aria-hidden className="w-[18px] text-center flex items-center justify-center h-full">
-                {isItemLocked ? <Lock size={14} /> : item.icon}
+                {item.icon}
               </span>
               {item.label}
             </Link>
-          );
-        })}
-      </nav>
+          ))}
+        </div>
+      </div>
 
-      <div className="mt-auto flex flex-col gap-[var(--mc-unit)] pt-[var(--mc-unit)]">
+      <div className="shrink-0 mt-auto flex flex-col gap-[var(--mc-unit)] pt-[var(--mc-unit)]">
         {/* preferHistory={false}: this is a persistent "return to the map"
             action shown on every dashboard page, not a one-off retracing of
             how the player arrived — history would make it land wherever the

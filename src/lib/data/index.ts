@@ -236,6 +236,17 @@ export const repo = new Proxy({} as Repository, {
         levels: async () => []
       };
     }
+
+    if (prop === "paymentReceipts") {
+      return {
+        getByUser: async (userId: string) => {
+          const res = await fetch(`${API_URL}/payment`, { credentials: "include" });
+          if (!res.ok) return null;
+          const data = await res.json();
+          return data ? data : null;
+        }
+      };
+    }
     
     // Return a dummy object where any method called returns an empty array/null
     return new Proxy({}, {
