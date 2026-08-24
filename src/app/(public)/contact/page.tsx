@@ -1,6 +1,19 @@
 import { ContactScreen } from "@/frontend/screens/public/contact/contact-screen";
 
-export const metadata = { title: "Contact Us — Parallax" };
+export const metadata = {
+  title: "Contact Us & Location",
+  description: "Get directions to CHRIST (Deemed to be University) Bangalore Central Campus and contact the Gateways 2026 organizing committee.",
+  keywords: [
+    "Contact Gateways 2026",
+    "Christ University Bangalore Central Campus",
+    "Gateways Organizing Committee",
+    "Tech Fest Contact",
+    "Hackathon Location Bangalore",
+    "IT Fest Venue",
+    "Reach Christ University",
+    "Gateways Support",
+  ],
+};
 
 /**
  * Contact.

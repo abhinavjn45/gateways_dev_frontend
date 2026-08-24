@@ -9,7 +9,7 @@ import { Countdown } from "./countdown";
 import { SkyAnnouncements } from "./sky-announcements";
 import { ScrollCue } from "./scroll-cue";
 import { usePortalTransition } from "@/frontend/components/portal/portal-transition-overlay";
-import { BlockButton } from "@/frontend/components/mc/block-button";
+import { BlockButton, blockButton } from "@/frontend/components/mc/block-button";
 
 const TITLE = "PARALLAX";
 
@@ -150,19 +150,28 @@ export function HeroSection() {
         </div>
 
         <div
-          className="landing-portal-btn gsap-hidden mt-[calc(var(--mc-unit)*4)] flex flex-col items-center gap-[var(--mc-unit)]"
+          className="landing-portal-btn gsap-hidden mt-[calc(var(--mc-unit)*4)] flex flex-wrap justify-center gap-[calc(var(--mc-unit)*2)]"
           style={{ transform: "translateY(12px)" }}
         >
           <BlockButton
-            size="xl"
+            size="lg"
             variant="portal"
             onClick={() => navigateWithPortal("/portal")}
           >
             Start the Journey
           </BlockButton>
-          {/* <p className="pixel-shadow text-center text-[18px] text-white/80 max-w-[40ch]">
-            Choose your name, register for events, and explore the realm.
-          </p> */}
+          <div className="relative inline-flex">
+            <BlockButton
+              size="lg"
+              variant="stone"
+              disabled
+            >
+              Read Brochure
+            </BlockButton>
+            <span className="absolute -top-[10px] -right-[10px] z-10 bg-mc-gold text-mc-obsidian border-[length:var(--mc-bevel)] border-mc-border px-[6px] py-[4px] font-pixel text-[8px] uppercase tracking-wider leading-none shadow-[2px_2px_0_rgba(0,0,0,0.5)] pointer-events-none">
+              Coming Soon
+            </span>
+          </div>
         </div>
 
         {/* Tells the visitor there is more below the fold. Decorative only —
