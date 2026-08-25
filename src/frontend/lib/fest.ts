@@ -243,8 +243,8 @@ export const FEST = {
 
   /** TODO — point these at the fest's own handles once they exist. */
   socials: [
-    { label: "Instagram", href: "https://www.instagram.com/christ_university_bangalore/" },
-    { label: "LinkedIn", href: "https://www.linkedin.com/school/christ-university-bangalore/" },
+    { label: "Instagram", href: "https://www.instagram.com/cucs_bangalore" },
+    { label: "LinkedIn", href: "https://www.linkedin.com/in/christ-university-computer-science-cucs-958aaa299/" },
     { label: "YouTube", href: "https://www.youtube.com/@gateways-2024" },
   ] as FestSocial[],
 
