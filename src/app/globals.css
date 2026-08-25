@@ -1088,3 +1088,47 @@ html[data-reduce-motion="true"] #pixel-splash {
 @media (prefers-reduced-motion: reduce) {
   #pixel-splash { display: none; }
 }
+
+/* =========================================================================
+   AMBIENT MINECRAFT BLOCKS
+   Floating decorative blocks that break when clicked.
+   Component: src/frontend/components/ambient/
+   ========================================================================= */
+
+/* Z-INDEX 0 PUTS THE BLOCKS BEHIND THE PAGE, and DOM order does the rest.
+   `layout.tsx` renders <AmbientBlocks /> as the first child of <body>: a
+   positioned element with z-index 0 paints in tree order against the other
+   positioned elements around it, so the nav, every section and the footer --
+   all of which come later -- render on top. Both halves are required; moving
+   the element after {children} puts the blocks back in front.
+
+   It cannot be z-index: -1. `body` carries `bg-mc-void`, and a negative-z
+   element paints beneath its parent's background, so the layer would vanish
+   entirely rather than sit behind the content.
+
+   pointer-events stays none forever. Hit testing is done by raycast against
+   window-level listeners in `use-block-pointer.ts`, because a full-screen
+   overlay that accepts pointer events will eventually eat a click that
+   mattered. */
+#ambient-blocks {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* The component makes the same call in JS and unmounts the canvas entirely;
+   these rules exist so the layer is hidden before hydration rather than after,
+   and so a print or a reduced-motion preference is honoured even if the JS
+   gate has not run yet. */
+@media (prefers-reduced-motion: reduce) {
+  #ambient-blocks { display: none; }
+}
+
+html[data-reduce-motion="true"] #ambient-blocks {
+  display: none;
+}
+
+@media print {
+  #ambient-blocks { display: none; }
+}

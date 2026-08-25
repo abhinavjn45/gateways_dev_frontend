@@ -26,8 +26,14 @@ export function SiteFooter() {
     //
     // No top border: the grass cap IS the edge, and a hard rule above it read
     // as a line drawn over the turf.
+    // `relative` carries no offset and changes nothing visually. It exists so
+    // the footer becomes a POSITIONED element and therefore paints above the
+    // ambient block layer (`#ambient-blocks`, z-index 0, first in the body).
+    // Without it the footer is in-flow content, which paints below that layer,
+    // and blocks rising out of the footer would slide over the turf instead of
+    // emerging from behind its edge.
     <footer
-      className="pixelated mt-[calc(var(--mc-unit)*2)]"
+      className="pixelated relative mt-[calc(var(--mc-unit)*2)]"
       style={GRASS_GROUND_STYLE}
     >
       {/* Top padding clears the grass cap, which is 10 art px tall and so
