@@ -3,11 +3,14 @@ import { seededRandom, svgDataUri } from "./placeholder";
 /**
  * Generated block textures.
  *
- * These are ORIGINAL tiles drawn in code, not sampled art. The reference for
- * the footer was a Minecraft grass-and-dirt texture, which the project's
- * originality rule rules out shipping (see the constraint in CLAUDE.md — no
- * Mojang textures), so the structure is reproduced and the pixels are our own:
- * a grass cap with a ragged blade fringe over a speckled dirt field.
+ * The footer's grass and dirt (`DIRT_TILE`, `GRASS_CAP`) are ORIGINAL tiles
+ * drawn in code. They predate the decision to ship real Minecraft textures and
+ * are kept as they are: they are colour-matched to the page gradient's meadow
+ * stop, which no stock texture would be.
+ *
+ * `DEEPSLATE_TILE` is different and the difference is deliberate — see its own
+ * comment. Real block PNGs now live in `public/art/textures/block/`; generate a
+ * tile here only when the pack does not have one.
  *
  * Data URIs rather than files in /public/art for the same reason
  * `placeholder.ts` uses them — zero network requests, nothing to deliver later,
@@ -146,3 +149,52 @@ export const GRASS_GROUND_STYLE = {
     `calc(var(--mc-unit) * 4) calc(var(--mc-unit) * 4)`,
   ].join(", "),
 } as const;
+
+/* ---------------------------------------------------------------------------
+   DEEPSLATE
+
+   The one strata tile that has to be generated. The vendored resource pack is
+   an OVERRIDE pack: it ships `deepslate_*_ore` for all eight ores but no plain
+   `deepslate.png`, because the base block is not one of the textures it
+   changes. Stone and dirt come from real PNGs; this one cannot.
+
+   THE PALETTE IS SAMPLED FROM `deepslate_coal_ore.png`, not invented, and that
+   is the whole point. Ore sprites are drawn ON a deepslate background, so if
+   this ramp drifts even slightly the ores stop reading as ore in a wall and
+   start reading as stickers on it. These six values ARE that background, in
+   frequency order.
+
+   Deepslate's real texture is streakier than dirt's speckle — it has short
+   vertical grain — so the generator biases runs vertically rather than
+   scattering isotropically the way `buildDirt` does.
+   --------------------------------------------------------------------------- */
+
+const DEEPSLATE_BASE = "#515151";
+const DEEPSLATE_SHADES = ["#646464", "#3d3d43", "#797979", "#2f2f37", "#2a2a2a"] as const;
+
+function buildDeepslate(): string {
+  const rand = seededRandom("gateways:strata-deepslate");
+  // Column-major so a run of the same shade stacks vertically into grain.
+  let body = "";
+  for (let x = 0; x < TILE; x++) {
+    let y = 0;
+    while (y < TILE) {
+      const r = rand();
+      const shade =
+        r < 0.3 ? DEEPSLATE_SHADES[0]
+        : r < 0.52 ? DEEPSLATE_SHADES[1]
+        : r < 0.68 ? DEEPSLATE_SHADES[2]
+        : r < 0.84 ? DEEPSLATE_SHADES[3]
+        : DEEPSLATE_SHADES[4];
+      // Runs of 1-3 px. Longer reads as planks, shorter as noise.
+      const run = 1 + Math.floor(rand() * 3);
+      for (let i = 0; i < run && y < TILE; i++, y++) {
+        // Leave roughly a third as base so the tile keeps a dominant tone.
+        if (rand() > 0.34) body += px(x, y, shade);
+      }
+    }
+  }
+  return svg(TILE, TILE, body, DEEPSLATE_BASE);
+}
+
+export const DEEPSLATE_TILE = buildDeepslate();
