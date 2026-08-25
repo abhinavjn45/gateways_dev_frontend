@@ -4,7 +4,7 @@ import { fontVariables } from "@/frontend/lib/fonts";
 import { PixelSplash } from "@/frontend/components/portal/pixel-splash";
 import { HistoryCursor } from "@/frontend/components/navigation/history-cursor";
 import { FestChat } from "@/frontend/components/chat/fest-chat";
-import { AmbientBlocks } from "@/frontend/components/ambient";
+import { AmbientBlocks, PageBackdrop } from "@/frontend/components/ambient";
 import { SPLASH_SEEN_KEY } from "@/frontend/lib/animation/splash-store";
 // From theme-store, NOT use-theme: the latter is a "use client" module, and a
 // value imported from one of those into this server component arrives as a
@@ -157,7 +157,15 @@ export default function RootLayout({
           <style>{`#pixel-splash{display:none}`}</style>
         </noscript>
       </head>
-      <body className="min-h-full flex flex-col bg-mc-void text-mc-text">
+      <body className="min-h-full flex flex-col text-mc-text">
+        {/* The mid-page backdrop, and then the floating blocks. Both are
+            FIRST children of <body>, deliberately, and both sit at z-index 0:
+            positioned elements at the same level paint in tree order, so the
+            backdrop goes behind the blocks and everything after this renders on
+            top of both. `bg-mc-void` was removed from <body> above so that the
+            html gradient — and this — can be seen at all; globals.css:566 spells
+            out why body must not carry a fill. */}
+        <PageBackdrop />
         {/* FIRST child of <body>, deliberately. The layer paints BEHIND the page,
             and with `z-index: 0` that is decided by DOM order: positioned
             elements at the same level paint in tree order, so everything after

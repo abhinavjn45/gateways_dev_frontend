@@ -1102,9 +1102,12 @@ html[data-reduce-motion="true"] #pixel-splash {
    all of which come later -- render on top. Both halves are required; moving
    the element after {children} puts the blocks back in front.
 
-   It cannot be z-index: -1. `body` carries `bg-mc-void`, and a negative-z
-   element paints beneath its parent's background, so the layer would vanish
-   entirely rather than sit behind the content.
+   It is not z-index: -1. That was once impossible — `body` carried
+   `bg-mc-void`, and a negative-z element paints beneath its parent's
+   background, so the layer vanished entirely. That fill has since been removed
+   (see layout.tsx and the note at `body` above), so negative-z would now work
+   — but tree order is used anyway, because it does not silently break the day
+   someone reinstates a background on body.
 
    pointer-events stays none forever. Hit testing is done by raycast against
    window-level listeners in `use-block-pointer.ts`, because a full-screen
@@ -1131,4 +1134,84 @@ html[data-reduce-motion="true"] #ambient-blocks {
 
 @media print {
   #ambient-blocks { display: none; }
+}
+
+/* =========================================================================
+   MID-PAGE BACKDROP
+   The rock wall you descend past between the hero and the footer.
+   Component: src/frontend/components/ambient/page-backdrop.tsx
+   ========================================================================= */
+
+/* Same z-index and the same reasoning as #ambient-blocks, which follows it in
+   the DOM and therefore paints in front of it. Both are below every piece of
+   page content. `overflow: hidden` matters: the wall inside is as tall as the
+   whole hero-to-footer band and would otherwise extend the page. */
+#page-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  /* Fallback for the first frame, before the scroll listener writes a real
+     value — without it `calc(var(--backdrop-y) * 0.85)` is invalid and every
+     layer drops its transform. */
+  --backdrop-y: 0px;
+
+  /* The REAL margin beside the content column, in pure CSS.
+
+     Sections are `max-w-6xl` = 1152px, so this is 384px at 1920, 144px at 1440
+     and only 64px at 1280. Ore is positioned as a fraction of THIS, not of the
+     viewport — placing it at "20% from the left edge" would sit it at 256px on
+     a 1280px screen, i.e. underneath the copy. `max()` keeps it from going
+     negative on narrow screens. */
+  --margin-w: max(0px, calc((100vw - 1152px) / 2));
+}
+
+/* Below this there is no margin worth putting a sprite in: at 1280px it is
+   64px a side, barely more than one block. The descent still reads without
+   them — it is the strata colour change that says "deeper", not the ore. */
+@media (max-width: 1399px) {
+  #page-backdrop .ore-vein { display: none; }
+}
+
+/* Keeps body copy readable over texture.
+
+   Horizontal pass first: it protects the centre column, which is where every
+   section's copy sits, while leaving the margins — where the ore and the
+   floating blocks live — untouched. Vertical pass second: it dissolves the wall
+   into the hero above and the footer below rather than letting it butt against
+   them.
+
+   `color-mix(… var(--color-mc-void) N%, transparent)` rather than a literal
+   colour, so one rule is correct in both themes — the same trick .splash-veil
+   uses. The scrim is never transformed, so contrast does not change as you
+   scroll. */
+.backdrop-scrim {
+  background-image:
+    linear-gradient(
+      to right,
+      transparent 0%,
+      color-mix(in srgb, var(--color-mc-void) 66%, transparent) 18%,
+      color-mix(in srgb, var(--color-mc-void) 66%, transparent) 82%,
+      transparent 100%
+    ),
+    linear-gradient(
+      to bottom,
+      var(--color-mc-void) 0%,
+      color-mix(in srgb, var(--color-mc-void) 24%, transparent) 10%,
+      color-mix(in srgb, var(--color-mc-void) 24%, transparent) 86%,
+      /* Not fully opaque at the foot. The wall ends in a lush-cave moss floor
+         that meets the footer's turf, and crushing the last band to black —
+         which an earlier pass did — hid it completely and left the descent
+         ending in a void instead of a biome. */
+      color-mix(in srgb, var(--color-mc-void) 68%, transparent) 100%
+    );
+}
+
+/* The backdrop STAYS under reduced motion — a textured wall is not motion.
+   What the component drops is the differential: every layer goes to speed 1.0,
+   so nothing moves relative to anything else and the page simply has a
+   background. Print gets nothing. */
+@media print {
+  #page-backdrop { display: none; }
 }
