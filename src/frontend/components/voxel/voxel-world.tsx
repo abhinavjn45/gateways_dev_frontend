@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { LoadingBlocks } from "@/frontend/components/mc";
+import { detectWebGL } from "@/frontend/lib/ambient/detect-webgl";
 import type { SkinId } from "@/lib/data/types";
 import type { PlayerPose } from "./player-controller";
 
@@ -38,26 +39,6 @@ const VillageScene = dynamic(
 );
 
 export type VoxelSupport = "checking" | "ready" | "unsupported" | "reduced-motion";
-
-/** Does this browser actually give us a usable WebGL context? */
-function detectWebGL(): boolean {
-  if (typeof window === "undefined") return false;
-  try {
-    const canvas = document.createElement("canvas");
-    const gl =
-      canvas.getContext("webgl2") ??
-      canvas.getContext("webgl") ??
-      canvas.getContext("experimental-webgl");
-    if (!gl) return false;
-    // Release it immediately — browsers cap simultaneous contexts, and leaking
-    // this one can make the real canvas fail to initialise later.
-    const lose = (gl as WebGLRenderingContext).getExtension("WEBGL_lose_context");
-    lose?.loseContext();
-    return true;
-  } catch {
-    return false;
-  }
-}
 
 export function useVoxelSupport(): VoxelSupport {
   const [state, setState] = useState<VoxelSupport>("checking");
