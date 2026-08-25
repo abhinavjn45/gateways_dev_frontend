@@ -4,6 +4,7 @@ import { fontVariables } from "@/frontend/lib/fonts";
 import { PixelSplash } from "@/frontend/components/portal/pixel-splash";
 import { HistoryCursor } from "@/frontend/components/navigation/history-cursor";
 import { FestChat } from "@/frontend/components/chat/fest-chat";
+import { AmbientBlocks } from "@/frontend/components/ambient";
 import { SPLASH_SEEN_KEY } from "@/frontend/lib/animation/splash-store";
 // From theme-store, NOT use-theme: the latter is a "use client" module, and a
 // value imported from one of those into this server component arrives as a
@@ -157,6 +158,12 @@ export default function RootLayout({
         </noscript>
       </head>
       <body className="min-h-full flex flex-col bg-mc-void text-mc-text">
+        {/* FIRST child of <body>, deliberately. The layer paints BEHIND the page,
+            and with `z-index: 0` that is decided by DOM order: positioned
+            elements at the same level paint in tree order, so everything after
+            this renders on top of it. Moving it below {children} would put the
+            blocks back in front of the content. See globals.css. */}
+        <AmbientBlocks />
         {children}
         {/* Renders nothing; numbers each history entry so <BackLink> can tell
             in-app history from a cold arrival. Must be at the root to see every

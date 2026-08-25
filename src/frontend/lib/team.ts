@@ -4,6 +4,20 @@
  * The /about page renders these lists directly — no component hardcodes a
  * name or title, matching the rule `fest.ts` already sets for every other fest
  * fact. Add or update a person here and every card updates with them.
+ *
+ * The three STUDENT lists below (core committee, committee heads, technical
+ * committee — 82 people) are transcribed from the organising committee's
+ * official roster sheet, "Our Team Gateways 2026". Anyone not on that sheet is
+ * not on this page; when the sheet is reissued, regenerate these three arrays
+ * from it rather than editing names by hand.
+ *
+ * Only the four fields the roster is published with are carried here: name,
+ * register number, class, and role. The sheet also holds personal email
+ * addresses and phone numbers for every student — those are deliberately NOT
+ * in this file, because everything in it is rendered on a public page.
+ *
+ * The ADVISORY and FACULTY lists are maintained separately and by hand; they
+ * are not part of that sheet.
  */
 
 import type { SkinId } from "./assets/manifest";
@@ -64,19 +78,25 @@ export const FACULTY_COORDINATORS: TeamMember[] = [
   { name: "Dr. Nizar Banu P K", subtitle: "Associate Professor", image: `${CLOUDINARY_PHOTOS}/v1787329591/Dr._Nizar_Banu_P_K_rit7vl.jpg` },
 ];
 
+/**
+ * `blurb` is the member's portfolio — the committees they oversee. It is the
+ * one piece of per-person information the roster carries that neither the
+ * section heading nor the subtitle already says, so it earns the third line on
+ * the card.
+ */
 export const CORE_COMMITTEE: TeamMember[] = [
-  { name: "Smitha M", subtitle: "4 MSC AIML (2548556)" },
-  { name: "Shambhavi Sinha", subtitle: "4 MCA A (2547151)" },
-  { name: "Aimee Susan Joseph", subtitle: "4 MCA B (2547204)" },
-  { name: "Hitesh Kumar", subtitle: "4 MSC AIML (2548525)" },
-  { name: "Joshua Joby", subtitle: "4 MCA A (2547125)" },
-  { name: "Abhinav Jain", subtitle: "4 MCA B (2547203)" },
-  { name: "Joseph Alicia Elias", subtitle: "1 MSC AIML (2648525)" },
-  { name: "Anooja Sreenivasan", subtitle: "1 MCA A (2647114)" },
-  { name: "Haniya Zehra Mody", subtitle: "1 MCA B (2647225)" },
-  { name: "Ronith Tharun Joshi", subtitle: "1 MSC AIML (2648545)" },
-  { name: "Iwin Jose", subtitle: "1 MCA A (2647126)" },
-  { name: "Shiva A Karthik", subtitle: "1 MCA B (2647247)" },
+  { name: "Shambhavi Sinha", subtitle: "4 MCA A (2547151)", blurb: "Decorations, Marketing & PR, Documentation" },
+  { name: "Joshua Joby", subtitle: "4 MCA A (2547125)", blurb: "Hospitality, Sponsorship, Culturals, Finance & Accounts" },
+  { name: "Aimee Susan Joseph", subtitle: "4 MCA B (2547204)", blurb: "Logistics, Technical, Registrations" },
+  { name: "Abhinav Jain", subtitle: "4 MCA B (2547203)", blurb: "Events, Logistics, Infobahn" },
+  { name: "Smitha M", subtitle: "4 MSC AIML (2548556)", blurb: "Social Media, Media, Registrations, Finance & Accounts" },
+  { name: "Hitesh Kumar", subtitle: "4 MSC AIML (2548525)", blurb: "Design & Graphics, Events, Culturals" },
+  { name: "Anooja Sreenivasan", subtitle: "1 MCA A (2647114)", blurb: "Decorations, Marketing & PR, Documentation" },
+  { name: "Iwin Jose", subtitle: "1 MCA A (2647126)", blurb: "Logistics, Technical, Registrations" },
+  { name: "Haniya Zehra Mody", subtitle: "1 MCA B (2647225)", blurb: "Events, Logistics, Infobahn" },
+  { name: "Shiva A Karthik", subtitle: "1 MCA B (2647247)", blurb: "Social Media, Media, Registrations, Finance & Accounts" },
+  { name: "Joseph Alicia Elias", subtitle: "1 MSC AIML (2648525)", blurb: "Hospitality, Sponsorship, Culturals, Finance & Accounts" },
+  { name: "Ronith Tharun Joshi", subtitle: "1 MSC AIML (2648545)", blurb: "Design & Graphics, Events, Culturals" },
 ];
 
 export interface CommitteeHead extends TeamMember {
@@ -84,47 +104,110 @@ export interface CommitteeHead extends TeamMember {
   team: string;
 }
 
+/**
+ * Grouped by team, teams in alphabetical order, and within a team the senior
+ * students first — which is the order `CommitteeHeadsSection` renders, since it
+ * buckets into a Map and Maps preserve insertion order.
+ *
+ * The role ("Committee Head") is the section heading and the team is the group
+ * heading, so neither is repeated on the cards; they carry the class and
+ * register number only.
+ */
 export const COMMITTEE_HEADS: CommitteeHead[] = [
-  { name: "Annie Neena A A", team: "Audi Management", subtitle: "3 MCA B" },
-  { name: "Binosh Sibi", team: "Audi Management", subtitle: "4 MSC AIML (2548515)" },
-  { name: "Shreya G", team: "Culturals (Dance)", subtitle: "3 MSC AIML" },
-  { name: "Jai Pareek", team: "Culturals (Dance)", subtitle: "3 MCA B" },
-  { name: "Aadharsh Krishnaa G", team: "Culturals (Music)", subtitle: "4 MCA B (2547201)" },
-  { name: "Omkaar Chakraborty", team: "Culturals (Music)", subtitle: "3 MCA B" },
-  { name: "Bhagyashree Roy", team: "Decorations", subtitle: "4 MCA A (2547118)" },
-  { name: "Sheethal T Kochery", team: "Decorations", subtitle: "3 MSC AIML" },
-  { name: "Kusum S", team: "Designs", subtitle: "4 MSC AIML (2548532)" },
-  { name: "Praneeth M", team: "Designs", subtitle: "4 MCA A (2547142)" },
-  { name: "Kanika Jain", team: "Documentation", subtitle: "3 MCA A" },
-  { name: "Sharon Mathew", team: "Documentation", subtitle: "4 MCA B (2547247)" },
-  { name: "JV Baarathi", team: "Events", subtitle: "3 MSC AIML" },
-  { name: "Abhinav Jain", team: "Events", subtitle: "4 MCA B (2547203)" },
-  { name: "Jariwala Mohit S", team: "Finance", subtitle: "3 MSC AIML" },
-  { name: "Nishit Daruwala", team: "Finance", subtitle: "3 MSC AIML" },
-  { name: "Ananya Pillai", team: "Hospitality", subtitle: "4 MSC AIML (2548511)" },
-  { name: "R Karan", team: "Hospitality", subtitle: "3 MCA B" },
-  { name: "Ekta Singh", team: "Infobahn", subtitle: "3 MCA B" },
-  { name: "Neha N", team: "Infobahn", subtitle: "4 MCA A (2547160)" },
+  { name: "Arden Savio Diago", team: "Culturals", subtitle: "4 MCA A (2547112)" },
+  { name: "Akhila Suresh", team: "Culturals", subtitle: "4 MSC AIML (2548507)" },
+  { name: "Aadharsh Krishnaa G", team: "Culturals", subtitle: "4 MCA B (2547201)" },
+  { name: "Janis Anup", team: "Culturals", subtitle: "1 MCA B (2647230)" },
+  { name: "Harinand A", team: "Culturals", subtitle: "1 MCA B (2647228)" },
 
-  { name: "Joshua V. Praveen", team: "Logistics", subtitle: "3 MSC AIML" },
+  { name: "Bhagyasree Roy", team: "Decorations", subtitle: "4 MCA A (2547118)" },
+  { name: "Noel Lalichan", team: "Decorations", subtitle: "4 MSC AIML (2548537)" },
+  { name: "Aksa Maria Thomas", team: "Decorations", subtitle: "1 MCA A (2647105)" },
+  { name: "Dixon Benoy", team: "Decorations", subtitle: "1 MCA B (2647220)" },
+
+  { name: "Praneeth M", team: "Design & Graphics", subtitle: "4 MCA A (2547142)" },
+  { name: "Hari Prasad B K", team: "Design & Graphics", subtitle: "4 MCA A (2547120)" },
+  { name: "Sarthak Behera", team: "Design & Graphics", subtitle: "1 MCA B (2647245)" },
+  { name: "Tanisha Singha", team: "Design & Graphics", subtitle: "1 MSC AIML (2648548)" },
+
+  { name: "Sharon Mathew", team: "Documentation", subtitle: "4 MCA B (2547247)" },
+  { name: "Alok Tayal", team: "Documentation", subtitle: "4 MCA B (2547210)" },
+  { name: "Palak Kashyap", team: "Documentation", subtitle: "1 MCA A (2647139)" },
+  { name: "Priscilla Philby Oommen", team: "Documentation", subtitle: "1 MSC AIML (2648541)" },
+
+  { name: "Sudeepa Santhanam", team: "Events", subtitle: "4 MCA B (2547252)" },
+  { name: "Sankhe Athashree Sanjay", team: "Events", subtitle: "4 MSC AIML (2548546)" },
+  { name: "Antony Chandy Douglas", team: "Events", subtitle: "1 MSC AIML (2648505)" },
+  { name: "Anugrahaa V", team: "Events", subtitle: "1 MSC AIML (2648506)" },
+  { name: "Adharsh Mohanan", team: "Events", subtitle: "1 MSC AIML (2648503)" },
+
+  { name: "B K Vishnu", team: "Finance & Accounts", subtitle: "4 MCA B (2547218)" },
+  { name: "Adarsh Gupta", team: "Finance & Accounts", subtitle: "4 MCA A (2547106)" },
+  { name: "Byrag Paul K B", team: "Finance & Accounts", subtitle: "1 MSC AIML (2648514)" },
+  { name: "Deepthi EK", team: "Finance & Accounts", subtitle: "1 MSC AIML (2648519)" },
+
+  { name: "Slaven Derick", team: "Hospitality", subtitle: "4 MCA B (2547249)" },
+  { name: "Sneha Varghese", team: "Hospitality", subtitle: "4 MCA B (2547250)" },
+  { name: "Keerthan Thomas", team: "Hospitality", subtitle: "1 MCA A (2647133)" },
+  { name: "Ann miya", team: "Hospitality", subtitle: "1 MCA B (2647210)" },
+
+  { name: "Neha N", team: "Infobahn", subtitle: "4 MCA A (2547160)" },
+  { name: "Nandini Singh", team: "Infobahn", subtitle: "4 MCA A (2547135)" },
+  { name: "Shawn Shiju Thomas", team: "Infobahn", subtitle: "1 MSC AIML (2648557)" },
+  { name: "Swastik Sahu", team: "Infobahn", subtitle: "1 MCA A (2647155)" },
+
+  { name: "Ananya Santosh Kumar Pillai", team: "Logistics", subtitle: "4 MSC AIML (2548511)" },
+  { name: "Vishwas Vashishtha", team: "Logistics", subtitle: "4 MCA B (2547255)" },
+  { name: "Marcus Cunnumpuram Thomas", team: "Logistics", subtitle: "1 MSC AIML (2648529)" },
+  { name: "Anvi Panwar", team: "Logistics", subtitle: "1 MSC AIML (2648564)" },
+
+  { name: "Bhavya Dhanuka", team: "Marketing & PR", subtitle: "4 MCA B (2547219)" },
+  { name: "Anamaya Saraogi", team: "Marketing & PR", subtitle: "4 MCA A (2547109)" },
+  { name: "Navin Jomi K", team: "Marketing & PR", subtitle: "1 MCA B (2647239)" },
+  { name: "Varshini R B", team: "Marketing & PR", subtitle: "1 MCA B (2647257)" },
+
+  { name: "S Kusum", team: "Media", subtitle: "4 MSC AIML (2548532)" },
+  { name: "Kapadia Ram Kalpesh", team: "Media", subtitle: "4 MSC AIML (2548530)" },
   { name: "Amogh Sahore", team: "Media", subtitle: "4 MCA A (2547108)" },
-  { name: "Deon Binny", team: "Media", subtitle: "4 MSC AIML (2548519)" },
+  { name: "Tharun Kumar", team: "Media", subtitle: "1 MCA B (2647255)" },
+  { name: "Surabhi Kumari", team: "Media", subtitle: "1 MCA B (2647253)" },
+  { name: "Dibam Ranjan Sinha", team: "Media", subtitle: "1 MCA A (2647120)" },
+
+  { name: "Reno Reji Matthew", team: "Registrations", subtitle: "4 MCA A (2547145)" },
+  { name: "Aditi Ahuja", team: "Registrations", subtitle: "4 MCA A (2547162)" },
+  { name: "Dhanashree Vishwajeet Dhavale", team: "Registrations", subtitle: "1 MCA B (2647219)" },
+  { name: "Rohans S Martin", team: "Registrations", subtitle: "1 MCA B (2647244)" },
+
+  { name: "Deon Thomas Binny", team: "Social Media", subtitle: "4 MSC AIML (2548519)" },
+  { name: "Evana Joseph", team: "Social Media", subtitle: "4 MCA B (2547225)" },
+  { name: "Ishita Minia", team: "Social Media", subtitle: "1 MSC AIML (2648565)" },
+  { name: "Susan Matilda H", team: "Social Media", subtitle: "1 MCA B (2647254)" },
+
+  { name: "S Vanshika", team: "Sponsorship", subtitle: "4 MSC AIML (2548544)" },
+  { name: "Yash Barjatya", team: "Sponsorship", subtitle: "4 MCA B (2547257)" },
+  { name: "Parthiv Sushil", team: "Sponsorship", subtitle: "4 MCA A (2547141)" },
+  { name: "Binosh Sibi", team: "Sponsorship", subtitle: "4 MSC AIML (2548515)" },
+  { name: "Chethan Raj L", team: "Sponsorship", subtitle: "1 MCA A (2647117)" },
+  { name: "Steve S Palakalam", team: "Sponsorship", subtitle: "1 MCA A (2647154)" },
+  { name: "Shebin John Bosco", team: "Sponsorship", subtitle: "1 MCA B (2647246)" },
+  { name: "Maegan Anna Jimmy", team: "Sponsorship", subtitle: "1 MSC AIML (2648558)" },
 ];
 
 /**
  * The people who build and run the website and application.
  *
- * `subtitle` is the class and register number, not the role — "Technical
- * (Website / Application)" is what the section itself says, so repeating it on
- * every card would be noise. Vishal B G and Gerard Nicholas Paul M used to
- * carry that role string as a placeholder because no class was on record for
- * them; the official roster supplies both, so every card now reads the same
- * way: "<year> <programme> <section> (<register number>)".
+ * On the roster sheet these six are committee heads like any other, filed
+ * under "Technical (Website / Application)". They keep a section of their own
+ * here because it is the group that carries personal blurbs, and because the
+ * page has always credited the builders separately.
+ *
+ * `subtitle` is the class and register number, not the role — the section
+ * heading already says what they do, so repeating it on every card would be
+ * noise.
  */
 export const TECHNICAL_COMMITTEE: TeamMember[] = [
   { name: "Yanish Rai", subtitle: "4 MCA A (2547158)", blurb: "Crafting portals to new worlds." },
   { name: "Kartik Dewnani", subtitle: "4 MCA A (2547128)", blurb: "Animating the Upside Down." },
-  { name: "Darshan Heble", subtitle: "4 MCA A", blurb: "Code, coffee, and curiosity." },
   { name: "Vishal B G", subtitle: "1 MCA A (2647158)" },
   { name: "Gerard Nicholas Paul M", subtitle: "1 MCA A (2647122)" },
   { name: "S Anand", subtitle: "1 MCA A (2647145)", blurb: "Code, coffee, and curiosity." },
