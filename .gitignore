@@ -37,6 +37,13 @@ Thumbs.db
 /assets/minecraft_3d_render_free.glb
 /assets/minecraft_village.glb
 
+# Vendored resource packs and any other unpacked asset bundle dropped in
+# /assets/. These are SOURCE material, not shipped files: the ~13 block
+# textures the ambient block layer actually serves are copied out into
+# public/art/textures/block/, which the negation on line 4 keeps tracked.
+# Without this, unpacking one pack here stages ~1,300 json/mcmeta files.
+/assets/*/
+
 # editors / IDE
 .vscode/
 .idea/
