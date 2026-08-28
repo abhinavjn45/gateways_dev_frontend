@@ -125,6 +125,7 @@ export interface Profile {
   emergencyName: string | null;
   emergencyPhone: string | null;
   dietaryPref: DietaryPref | null;
+  referredBy: string | null;
   isBanned: boolean;
   createdAt: string;
   updatedAt: string;
@@ -151,6 +152,7 @@ export interface ParticipantDetails {
   emergencyName: string;
   emergencyPhone: string;
   dietaryPref: DietaryPref;
+  referralCode?: string | null;
 }
 
 /**
@@ -322,6 +324,9 @@ export interface Registration {
   eventId: string;
   userId: string;
   teamId: string | null;
+  teamName?: string | null;
+  teamMemberCount?: number | null;
+  teamCode?: string | null;
   status: RegistrationStatus;
   registeredAt: string;
   cancelledAt: string | null;

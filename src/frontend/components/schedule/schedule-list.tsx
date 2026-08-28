@@ -1,7 +1,8 @@
 "use client";
 
 import { BlockPanel } from "@/frontend/components/mc";
-import { eventSchedule, eventTimeOrTba } from "@/frontend/lib/events";
+import { eventSchedule, eventTimeOrTba, fetchFestEvents } from "@/frontend/lib/events";
+import { useAsync } from "@/frontend/hooks/use-async";
 import { cn } from "@/frontend/lib/utils";
 
 /**
@@ -22,11 +23,20 @@ import { cn } from "@/frontend/lib/utils";
  * note on `ScheduleDay` for why there is nothing here to convert.
  */
 export function ScheduleList({ className }: { className?: string }) {
-  const days = eventSchedule();
+  const { data: allEventsData, loading } = useAsync(fetchFestEvents, []);
+  const days = eventSchedule(allEventsData || []);
 
   return (
     <div className={cn("flex flex-col gap-[calc(var(--mc-unit)*1.5)]", className)}>
-      {days.map((day) => (
+      {loading ? (
+        <BlockPanel variant="slot" className="text-center p-8">
+          <p className="text-mc-text-dim font-pixel text-[10px] uppercase">Loading schedule, please wait...</p>
+        </BlockPanel>
+      ) : days.length === 0 ? (
+        <BlockPanel variant="slot" className="text-center p-8">
+          <p className="text-mc-text-dim font-pixel text-[10px] uppercase">Schedule is empty.</p>
+        </BlockPanel>
+      ) : days.map((day) => (
         <section key={day.date}>
           {/* "Venue" is a COLUMN LABEL, not a value — it heads the right-hand
               column the rows below fill in. */}

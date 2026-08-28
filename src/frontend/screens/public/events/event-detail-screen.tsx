@@ -10,6 +10,7 @@ import {
   BlockPanel,
   LoadingScreen,
   showToast,
+  BlockModal,
 } from "@/frontend/components/mc";
 import { AchievementModal } from "@/frontend/components/achievements/achievement-modal";
 
@@ -19,6 +20,7 @@ import { useAsync } from "@/frontend/hooks/use-async";
 import { repo } from "@/lib/data";
 import { DataError, isParticipantComplete } from "@/lib/data/types";
 import { cn } from "@/frontend/lib/utils";
+import { XCircle, CheckCircle, Copy, Share2 } from "lucide-react";
 
 /**
  * Event detail with payment-first registration.
@@ -48,6 +50,8 @@ export function EventDetailScreen({
   const [teamBusy, setTeamBusy] = useState(false);
   const [teamError, setTeamError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [showTeamSuccessModal, setShowTeamSuccessModal] = useState(false);
+  const [createdTeamData, setCreatedTeamData] = useState<{ teamCode: string, teamName: string } | null>(null);
   /** Which action the participant-details modal should resume on save. */
   const [afterDetails, setAfterDetails] =
     useState<"register" | "create-team" | "join-team">("register");
@@ -170,10 +174,11 @@ export function EventDetailScreen({
     setTeamBusy(true);
     setTeamError(null);
     try {
-      await repo.teams.create(event.id, userId, teamName.trim());
+      const res = await repo.teams.create(event.id, userId, teamName.trim());
       await Promise.all([reloadTeams(), reloadMembers(), reloadReg(), reloadStats()]);
+      setCreatedTeamData({ teamCode: res.teamCode, teamName: teamName.trim() });
       setTeamName("");
-      showToast({ title: "Team created", body: "Share the join code with your teammates.", severity: "success" });
+      setShowTeamSuccessModal(true);
     } catch (e) {
       setTeamError(e instanceof DataError ? e.message : "Could not create the team.");
     } finally {
@@ -264,6 +269,64 @@ export function EventDetailScreen({
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-[var(--mc-unit)] px-[calc(var(--mc-unit)*2)] py-[calc(var(--mc-unit)*1.5)] md:p-[calc(var(--mc-unit)*2)]">
       <AchievementModal />
+
+      <BlockModal
+        open={showTeamSuccessModal}
+        onOpenChange={(open) => !open && setShowTeamSuccessModal(false)}
+        title="Team Created!"
+        variant="panel"
+        footer={
+          <div className="flex w-full justify-end">
+            <BlockButton variant="emerald" onClick={() => setShowTeamSuccessModal(false)}>
+              View Team Details
+            </BlockButton>
+          </div>
+        }
+      >
+        <div className="flex flex-col items-center justify-center py-[calc(var(--mc-unit)*2)] text-center gap-[var(--mc-unit)]">
+          <CheckCircle className="w-16 h-16 text-mc-success" /> 
+          <p className="text-[18px] text-mc-text-dim">
+            Team <span className="font-bold text-mc-text">{createdTeamData?.teamName}</span> successfully created for
+          </p>
+          <div className="text-mc-text">
+            <span className="block font-bold text-xl">{event.title}</span>
+            <span className="block text-md text-mc-gold">{event.mode === 'team' ? 'Team Event' : 'Individual Event'}</span>
+          </div>
+          
+          <div className="mt-4 w-full p-4 bg-mc-block border-2 border-mc-gold/20 rounded-md">
+            <p className="text-sm text-mc-text-dim uppercase tracking-widest mb-2">Team Join Code</p>
+            <p className="text-3xl font-bold tracking-[0.2em] text-mc-gold mb-4">{createdTeamData?.teamCode}</p>
+            <div className="flex gap-2 w-full">
+              <BlockButton variant="stone" size="sm" className="flex-1 whitespace-nowrap" onClick={() => onCopyJoinCode(createdTeamData?.teamCode ?? "")}>
+                <Copy className="w-4 h-4" /> Copy Code
+              </BlockButton>
+              <BlockButton variant="gold" size="sm" className="flex-1 whitespace-nowrap" onClick={async () => {
+                if (createdTeamData?.teamCode) {
+                  const msg = `Hello Teammates,\n\nPlease join our team '${createdTeamData.teamName}' for '${event.title}' at Gateways 2026 by using the code: ${createdTeamData.teamCode}.\n\nThank You`;
+                  if (navigator.share) {
+                    try {
+                      await navigator.share({
+                        title: `Join team ${createdTeamData.teamName}`,
+                        text: msg
+                      });
+                    } catch (err: any) {
+                      if (err.name !== "AbortError") {
+                        navigator.clipboard.writeText(msg);
+                        showToast({ title: "Copied!", body: "Invite message copied to clipboard.", severity: "success" });
+                      }
+                    }
+                  } else {
+                    navigator.clipboard.writeText(msg);
+                    showToast({ title: "Copied!", body: "Invite message copied to clipboard.", severity: "success" });
+                  }
+                }
+              }}>
+                <Share2 className="w-4 h-4" /> Share Invite
+              </BlockButton>
+            </div>
+          </div>
+        </div>
+      </BlockModal>
 
       {userId && (
         <ParticipantDetailsModal
@@ -368,8 +431,8 @@ export function EventDetailScreen({
               )}
               {userReceipt?.status === "rejected" && (
                 <BlockPanel variant="slot" className="border-l-4 border-mc-redstone p-[var(--mc-unit)]">
-                  <p className="text-[14px] text-mc-redstone-light font-pixel uppercase mb-1">
-                    ❌ Payment Rejected
+                  <p className="flex items-center gap-[calc(var(--mc-unit)*0.5)] text-[14px] text-mc-redstone-light font-pixel uppercase mb-1">
+                    <XCircle className="w-4 h-4" /> Payment Rejected
                   </p>
                   {userReceipt.reviewNote && (
                     <p className="text-[17px] text-mc-text-dim">Reason: {userReceipt.reviewNote}</p>
