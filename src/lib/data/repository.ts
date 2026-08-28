@@ -205,6 +205,7 @@ export interface ReferenceRepository {
   categories(): Promise<EventCategory[]>;
   levels(): Promise<Level[]>;
   sponsors(): Promise<Sponsor[]>;
+  validateReferral(code: string): Promise<{ valid: boolean; studentName?: string }>;
 }
 
 export interface PaymentReceiptRepository {
