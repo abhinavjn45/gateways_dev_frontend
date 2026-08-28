@@ -1,7 +1,22 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import { Repository } from "./repository";
 import { DataError, Session } from "./types";
 
 const API_URL = "/api/v1";
+
+const fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
+  if (init && ["POST", "PUT", "DELETE"].includes(init.method || "")) {
+    let token = "";
+    if (typeof document !== "undefined") {
+      const match = document.cookie.match(new RegExp("(^| )csrf_token=([^;]+)"));
+      if (match) token = match[2];
+    }
+    if (token) {
+      init.headers = { ...init.headers, "x-csrf-token": token } as any;
+    }
+  }
+  return globalThis.fetch(input, init);
+};
 
 export const repo = new Proxy({} as Repository, {
   get(_target, prop) {

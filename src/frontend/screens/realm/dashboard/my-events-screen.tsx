@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState } from "react";
@@ -82,7 +83,7 @@ export function MyEventsScreen() {
       ) : rows.length === 0 ? (
         <BlockPanel variant="slot" className="flex flex-col items-center justify-center p-8 text-center">
           <p className="text-[18px] text-mc-text-dim mb-[calc(var(--mc-unit)*1.5)]">
-            You haven't registered for any events yet.
+            You haven&apos;t registered for any events yet.
           </p>
           <Link href="/dashboard/explore" className="no-underline">
             <BlockButton variant="gold">

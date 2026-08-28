@@ -1132,3 +1132,7 @@ html[data-reduce-motion="true"] #ambient-blocks {
 @media print {
   #ambient-blocks { display: none; }
 }
+
+/* Hide MS Edge default password reveal icon */
+::-ms-reveal { display: none; }
+::-ms-clear { display: none; }
