@@ -15,6 +15,7 @@ export interface BlockComboboxProps {
   onChange: (value: string) => void;
   placeholder?: string;
   wrapperClassName?: string;
+  disabled?: boolean;
 }
 
 export function BlockCombobox({
@@ -27,6 +28,7 @@ export function BlockCombobox({
   onChange,
   placeholder,
   wrapperClassName,
+  disabled,
 }: BlockComboboxProps) {
   const auto = useId();
   const fieldId = auto;
@@ -87,9 +89,11 @@ export function BlockCombobox({
             type="text"
             className={cn(
               wellClasses,
-              "pr-[calc(var(--mc-unit)*4)] cursor-text",
+              "pr-[calc(var(--mc-unit)*4)]",
+              disabled ? "cursor-not-allowed opacity-75" : "cursor-text",
               error && "outline-[length:var(--mc-bevel)] outline-mc-redstone"
             )}
+            disabled={disabled}
             placeholder={placeholder}
             value={query}
             onChange={(e) => {

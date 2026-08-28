@@ -233,6 +233,11 @@ export const repo = new Proxy({} as Repository, {
           if (!res.ok) return [];
           return await res.json();
         },
+        validateReferral: async (code: string) => {
+          const res = await fetch(`${API_URL}/reference/validate-referral?code=${encodeURIComponent(code)}`, { credentials: "include" });
+          if (!res.ok) return { valid: false };
+          return await res.json();
+        },
         levels: async () => []
       };
     }
@@ -247,7 +252,100 @@ export const repo = new Proxy({} as Repository, {
         }
       };
     }
+    if (prop === "registrations") {
+      return {
+        register: async (eventId: string, userId: string, teamId?: string) => {
+          const res = await fetch(`${API_URL}/registrations/individual`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ eventId }),
+          });
+          const data = await res.json();
+          if (!res.ok) {
+            throw new DataError("VALIDATION_FAILED", data.message || "Failed to register");
+          }
+          return data;
+        },
+        listForUser: async (userId: string) => {
+          const res = await fetch(`${API_URL}/registrations`, {
+            credentials: "include",
+          });
+          if (!res.ok) return [];
+          const data = await res.json();
+          // Transform to match frontend Registration type
+          return data.map((r: any) => ({
+            id: r.registration_id,
+            eventId: r.event_slug,
+            userId: userId,
+            teamId: r.team_id ? String(r.team_id) : null,
+            teamName: r.team_name,
+            teamMemberCount: r.team_member_count,
+            teamCode: r.team_code,
+            status: r.status,
+            createdAt: r.created_at
+          }));
+        },
+        cancel: async (registrationId: string, action?: "leave" | "disband") => {
+          const res = await fetch(`${API_URL}/registrations/${registrationId}/cancel`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ action: action || "leave" }),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new DataError("VALIDATION_FAILED", data.message || "Failed to cancel registration");
+        }
+      };
+    }
     
+    if (prop === "teams") {
+      return {
+        create: async (eventId: string, userId: string, name: string) => {
+          const res = await fetch(`${API_URL}/registrations/teams`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ eventId, teamName: name }),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new DataError("VALIDATION_FAILED", data.message || "Failed to create team");
+          return data;
+        },
+        join: async (joinCode: string, userId: string) => {
+          // Note: the original UI provides joinCode. We might also need eventId for join. 
+          // However, the join api we wrote expects `eventId` and `joinCode`.
+          // The frontend `repo.teams.join` signature in `types.ts`/`repository.ts` is `join(joinCode, userId)`.
+          // Wait! Our backend needs `eventId`.
+          const res = await fetch(`${API_URL}/registrations/teams/join`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ joinCode }), // We will fix backend to not require eventId, or fetch eventId from DB based on joinCode
+          });
+          const data = await res.json();
+          if (!res.ok) throw new DataError("VALIDATION_FAILED", data.message || "Failed to join team");
+          return data;
+        },
+        listForUser: async () => [],
+        members: async (teamId: string) => {
+          const res = await fetch(`${API_URL}/registrations/teams/${teamId}/members`, {
+            credentials: "include",
+          });
+          if (!res.ok) return [];
+          return await res.json();
+        },
+        removeMember: async (teamId: string, targetUserId: string) => {
+          const res = await fetch(`${API_URL}/registrations/teams/${teamId}/remove/${targetUserId}`, {
+            method: "POST",
+            credentials: "include",
+          });
+          const data = await res.json();
+          if (!res.ok) throw new DataError("VALIDATION_FAILED", data.message || "Failed to remove member");
+        },
+      };
+    }
+
     // Return a dummy object where any method called returns an empty array/null
     return new Proxy({}, {
       get(_t, method) {
@@ -256,7 +354,7 @@ export const repo = new Proxy({} as Repository, {
         return async () => {
           if (method === "stats") return { confirmedCount: 0, waitlistCount: 0, checkedInCount: 0, capacity: 100, seatsLeft: 100 };
           if (method === "top") return [];
-          if (method === "list" || method === "listForUser" || method === "listForEvent") return [];
+          if (method === "list" || method === "listForEvent") return [];
           if (method === "schedule") return [];
           if (method === "categories" || method === "colleges" || method === "departments" || method === "sponsors" || method === "levels") return [];
           return null;

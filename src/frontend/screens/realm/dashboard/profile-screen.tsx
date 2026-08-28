@@ -295,6 +295,9 @@ export function ProfileScreen() {
             <Detail label="Dietary" value={profile?.dietaryPref} />
             <Detail label="Emergency contact" value={profile?.emergencyName} />
             <Detail label="Emergency number" value={profile?.emergencyPhone} />
+            {profile?.referredBy ? (
+              <Detail label="Referred by" value={profile.referredBy} />
+            ) : null}
           </dl>
         )}
 

@@ -5,8 +5,8 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
   BackLink,
-  blockButton,
   BlockButton,
+  blockButton,
   BlockInput,
   BlockModal,
   BlockPanel,
@@ -14,12 +14,13 @@ import {
 
 import { BiomeScene } from "@/frontend/components/scene";
 import { useSession } from "@/frontend/components/auth/session-provider";
+import { EventRegistrationButton } from "@/frontend/components/events/event-registration-button";
 import { EventDetails } from "@/frontend/components/events/event-details";
 import { useAsync } from "@/frontend/hooks/use-async";
 import {
   EVENT_TRACKS,
   eventsForTrack,
-  FEST_EVENTS,
+  fetchFestEvents,
   type FestEvent,
 } from "@/frontend/lib/events";
 import { repo } from "@/lib/data";
@@ -59,9 +60,12 @@ export function EventsScreen({ basePath = "/events", isDashboard = false }: { ba
    * away on their own ("24° Shift", "Deviation"), so a visitor looking for the
    * hackathon is far more likely to type its KIND than its name.
    */
+  const { data: allEventsData, loading: eventsLoading } = useAsync(fetchFestEvents, []);
+  const allEvents = allEventsData || [];
+
   const activeTrack = EVENT_TRACKS.find((t) => t.id === categorySlug)?.id;
   const query = search.trim().toLowerCase();
-  const events = (activeTrack ? eventsForTrack(activeTrack) : FEST_EVENTS).filter(
+  const events = (activeTrack ? eventsForTrack(allEvents, activeTrack) : allEvents).filter(
     (e) =>
       !query ||
       `${e.name} ${e.kind} ${e.description}`.toLowerCase().includes(query),
@@ -190,20 +194,24 @@ export function EventsScreen({ basePath = "/events", isDashboard = false }: { ba
       <nav aria-label="Event tracks" className="flex flex-wrap gap-[calc(var(--mc-unit)*0.5)]">
         <CategoryChip
           href={basePath}
-          label={`All (${FEST_EVENTS.length})`}
+          label={`All (${allEvents.length})`}
           active={!activeTrack}
         />
         {EVENT_TRACKS.map((t) => (
           <CategoryChip
             key={t.id}
             href={`${basePath}?category=${t.id}`}
-            label={`${t.label} (${eventsForTrack(t.id).length})`}
+            label={`${t.label} (${eventsForTrack(allEvents, t.id).length})`}
             active={t.id === activeTrack}
           />
         ))}
       </nav>
 
-      {events.length === 0 ? (
+      {eventsLoading ? (
+        <BlockPanel variant="slot" className="text-center p-8">
+          <p className="text-mc-text-dim">Loading events, please wait...</p>
+        </BlockPanel>
+      ) : events.length === 0 ? (
         <BlockPanel variant="slot" className="text-center">
           <p className="text-mc-text-dim">No events match that search.</p>
         </BlockPanel>
@@ -231,16 +239,14 @@ export function EventsScreen({ basePath = "/events", isDashboard = false }: { ba
                   <p className="mt-[calc(var(--mc-unit)*0.5)] text-[18px] text-mc-text-dim">
                     {e.kind}
                   </p>
-                  <dl className="mt-[var(--mc-unit)] flex flex-wrap gap-x-[var(--mc-unit)] text-[17px] text-mc-text-dim">
-                    <div>
-                      <dt className="sr-only">Date</dt>
-                      <dd>{e.date}</dd>
-                    </div>
-                    <div>
-                      <dt className="sr-only">Participation</dt>
-                      <dd className="text-mc-accent-strong">{e.participation}</dd>
-                    </div>
-                  </dl>
+                  <div className="mt-[var(--mc-unit)] flex flex-col gap-y-[calc(var(--mc-unit)*0.25)]">
+                    <p className="text-[16px] text-mc-text-dim">
+                      {e.date}
+                    </p>
+                    <p className="text-[17px] text-mc-accent-strong">
+                      {e.participation}
+                    </p>
+                  </div>
                 </BlockPanel>
               </button>
             </li>
@@ -258,15 +264,24 @@ export function EventsScreen({ basePath = "/events", isDashboard = false }: { ba
         variant="panel"
         className="max-w-2xl"
         footer={
-          selected?.rulesUrl ? (
-            <a
-              href={selected.rulesUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={cn(blockButton({ variant: "gold", size: "sm" }), "no-underline")}
-            >
-              Read the rules ↗
-            </a>
+          selected ? (
+            <div className="flex w-full flex-wrap items-center justify-between gap-[var(--mc-unit)]">
+              <div className="flex items-center">
+                {selected.rulesUrl ? (
+                  <a
+                    href={selected.rulesUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={cn(blockButton({ variant: "gold", size: "sm" }), "no-underline")}
+                  >
+                    Read the rules ↗
+                  </a>
+                ) : <div />}
+              </div>
+              <div className="flex-1 sm:flex-none sm:min-w-[200px]">
+                <EventRegistrationButton event={selected} />
+              </div>
+            </div>
           ) : null
         }
       >

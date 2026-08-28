@@ -1,5 +1,5 @@
 import { CHATBOT_FAQ } from "./chatbot-faq";
-import { eventSchedule, eventTime, FEST_EVENTS } from "./events";
+import { eventSchedule, eventTime, fetchFestEvents, type FestEvent } from "./events";
 import { FEST, inr } from "./fest";
 import { GALLERY_CHAPTERS } from "./gallery";
 import {
@@ -123,15 +123,15 @@ function festSection(): string {
     .join("\n");
 }
 
-function eventsSection(): string {
+function eventsSection(events: FestEvent[]): string {
   const lines = [
-    `## Events (${FEST_EVENTS.length} in total)`,
+    `## Events (${events.length} in total)`,
     `Each event is either Technical or Non-Technical. Event NAMES are deliberately`,
     `cryptic; the "kind" is what says what a participant actually does.`,
     ``,
   ];
 
-  for (const e of FEST_EVENTS) {
+  for (const e of events) {
     lines.push(
       `### ${e.name} — ${e.kind}`,
       `Track: ${e.track === "technical" ? "Technical" : "Non-Technical"}`,
@@ -145,7 +145,7 @@ function eventsSection(): string {
   }
 
   lines.push(`## Schedule`);
-  for (const day of eventSchedule()) {
+  for (const day of eventSchedule(events)) {
     lines.push(`${day.date}:`);
     for (const e of day.events) {
       lines.push(`- ${eventTime(e)} — ${e.name} (${e.kind})`);
@@ -203,10 +203,11 @@ function faqSection(): string {
  * basics and fees answer the most common questions, so they come first and stay
  * first. Reordering churns the whole string and throws away any prefix cache.
  */
-export function buildCorpus(): string {
+export async function buildCorpus(): Promise<string> {
+  const events = await fetchFestEvents();
   return [
     festSection(),
-    eventsSection(),
+    eventsSection(events),
     teamSection(),
     gallerySection(),
     faqSection(),
