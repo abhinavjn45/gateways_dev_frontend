@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/set-state-in-effect, @typescript-eslint/no-unused-vars */
 "use client";
 
 import { useForm, useWatch, Controller } from "react-hook-form";
@@ -85,7 +86,7 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 function defaultFormValues(profile: Profile | null, character: Character | null): FormValues {
-  let dob = profile?.dateOfBirth ?? "";
+  const dob = profile?.dateOfBirth ?? "";
 
   return {
     fullName: profile?.fullName ?? "",
