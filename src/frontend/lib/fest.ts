@@ -85,6 +85,31 @@ function istDate(at: Date): string {
 }
 
 /**
+ * A tier's validity window, formatted for display.
+ *
+ * Lives here beside the tier data rather than in a screen, because two screens
+ * render the same five windows — the homepage register section and
+ * `/registration-process`. They used to format them independently (one from
+ * hardcoded strings), which is exactly how the same fact ends up written two
+ * ways and then quietly stops agreeing.
+ *
+ * Fixed to UTC so a tier boundary does not render differently on the server and
+ * in a browser sitting in another timezone.
+ */
+export function feeWindow(opensOn: string, closesOn: string): string {
+  return `${festDate(opensOn)} — ${festDate(closesOn)}`;
+}
+
+export function festDate(iso: string): string {
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: "UTC",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(`${iso}T00:00:00Z`));
+}
+
+/**
  * Tiers open on a given day. Returns every tier if the fest has not opened yet
  * or has closed — an empty picker would leave someone who genuinely paid with
  * no way to say what they paid, which is worse than showing a stale option.

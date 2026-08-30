@@ -63,6 +63,25 @@ export interface SceneLayer extends AssetSpec {
    * layers, `center` otherwise.
    */
   anchor?: string;
+  /**
+   * Render this layer in ONE theme only.
+   *
+   * Compiles to the `.theme-only-dark` / `.theme-only-light` classes in
+   * globals.css, which key off the `data-theme` attribute THEME_BOOT stamps
+   * before first paint. That is deliberate and it is the only correct route
+   * above the fold: branching on `useTheme` resolves "dark" on the first
+   * client pass and corrects in an effect, so a light-theme visitor gets one
+   * frame of the dark scene — see the note on `BiomeScene`'s `lightScene`.
+   *
+   * Both variants sit in the DOM and one is hidden. Layers are `aria-hidden`
+   * already, so the hidden twin costs nothing to assistive tech.
+   */
+  theme?: "dark" | "light";
+  /**
+   * Extra classes on the layer element, for motion CSS cannot be expressed as
+   * `drift` (which is horizontal only). `rain-fall` is the one user.
+   */
+  className?: string;
 }
 
 export interface Scene {
@@ -72,6 +91,12 @@ export interface Scene {
   brief: string;
   /** Fallback CSS gradient painted under the layers — covers any gaps. */
   baseGradient: string;
+  /**
+   * Dark-theme counterpart to `baseGradient`. When set, both are rendered and
+   * swapped by the same `.theme-only-*` mechanism the layers use, so the
+   * fallback can never disagree with the layers stacked on top of it.
+   */
+  baseGradientNight?: string;
   /**
    * Placeholder palette for THIS scene: [near, far] hex pair.
    *
@@ -206,9 +231,15 @@ export const SCENES: Record<string, Scene> = {
    * photograph. Pointer parallax still applies on top, so moving the mouse and
    * simply waiting both produce depth.
    *
-   * Bright by design. This is the fest's front door and the theme is a daylight
-   * world being mirrored, not a portal in a dark valley — so there is no violet
-   * anywhere in the stack.
+   * Bright by design in the LIGHT theme. This is the fest's front door and the
+   * theme is a daylight world being mirrored, not a portal in a dark valley —
+   * so there is no violet anywhere in the stack.
+   *
+   * The DARK theme gets the same world at night: a storm sky, a drifting cloud
+   * bank, a wash over the landforms and rain in front. Those layers carry
+   * `theme: "dark"` and the daylight sky carries `theme: "light"`, so exactly
+   * one of the two is on screen and the choice is made in CSS before first
+   * paint. The landform painters are shared by both.
    */
   "overworld-panorama": buildScene({
     key: "overworld-panorama",
@@ -218,14 +249,26 @@ export const SCENES: Record<string, Scene> = {
       "clouds, hazed rolling hills, a treeline, and a vivid near meadow. " +
       "Seamlessly tileable horizontally. Original voxel style, no game logos.",
     baseGradient: "linear-gradient(180deg, #1b4a86 0%, #2064b4 38%, #5787bf 68%, #5fa73f 100%)",
+    // Same sky-to-grass shape, in night values, so the fallback matches the
+    // storm stack rather than flashing daylight behind it.
+    baseGradientNight:
+      "linear-gradient(180deg, #0a1020 0%, #131d33 40%, #1d2a41 70%, #1f3320 100%)",
     palette: ["#7ec850", "#2064b4"],
     layers: [
-      layer("sky", "sky", 0, { paint: "sky-day" }),
-      // NO decorative cloud layer here, deliberately. The homepage writes its
-      // announcements into pixel clouds of its own (`sky-announcements.tsx`),
-      // and a second set of painted clouds drifting behind them turned the sky
-      // into visual noise — two cloud systems at different speeds, one of them
-      // carrying text. The announcement clouds ARE this scene's clouds.
+      layer("sky", "sky", 0, { paint: "sky-day", theme: "light" }),
+      layer("sky-storm", "sky", 0, { paint: "sky-storm", theme: "dark" }),
+      // NO decorative cloud layer in DAYLIGHT, deliberately. The homepage
+      // writes its announcements into pixel clouds of its own
+      // (`sky-announcements.tsx`), and a second set of painted clouds drifting
+      // behind them turned the sky into visual noise — two cloud systems at
+      // different speeds, one of them carrying text. The announcement clouds
+      // ARE this scene's daytime clouds.
+      //
+      // The night stack DOES carry a bank (`storm-bank`, below) and that is not
+      // a contradiction: it is heavily darkened by `night-wash`, sits at a much
+      // lower contrast than the announcement clouds in front of it, and is what
+      // the rain has to fall out of. It reads as weather, not as a second set
+      // of objects competing for attention.
       layer("hills", "far", 0.16, {
         paint: "hills-tile",
         tile: true,
@@ -247,6 +290,39 @@ export const SCENES: Record<string, Scene> = {
         drift: -26,
         w: 1600,
         h: 900,
+      }),
+
+      /* ---- Dark theme only: the same world after nightfall ----------------
+         The three landform painters above are reused UNCHANGED. `night-wash`
+         darkens them instead, which is the rule `portal-threshold` already
+         follows below — one source of truth per landform, so a tweak to the
+         meadow cannot leave the night version behind.
+
+         Order is paint order: the cloud bank sits behind the wash so the wash
+         darkens it too, and the rain falls in front of everything. */
+      layer("storm-bank", "far", 0.12, {
+        paint: "storm-clouds",
+        theme: "dark",
+        tile: true,
+        drift: -11,
+        w: 1600,
+        h: 900,
+      }),
+      layer("night-wash", "overlay", 0, { paint: "night-wash", theme: "dark" }),
+      /* `fit` is NOT optional here. ParallaxLayer defaults a tiled layer to
+         `auto 100%`, which scales the tile to the ELEMENT's height — for a
+         full-bleed hero that stretches a 256px rain tile to the whole viewport
+         and draws five enormous bars instead of rain. Pinning it to its natural
+         256×256 also makes the `.rain-fall` keyframe's 256px travel exactly one
+         rendered tile, which is what hides the loop. Change one, change both. */
+      layer("rain", "overlay", 0.08, {
+        paint: "rain",
+        theme: "dark",
+        className: "rain-fall",
+        tile: true,
+        w: 256,
+        h: 256,
+        fit: "256px 256px",
       }),
     ],
   }),

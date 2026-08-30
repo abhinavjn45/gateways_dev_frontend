@@ -99,3 +99,33 @@ export function blockCountFor(band: PageBand, viewportWidth: number, viewportHei
   const spans = (band.bottom - band.top) / Math.max(1, viewportHeight);
   return Math.max(4, Math.min(18, Math.round(spans * perViewport)));
 }
+
+/**
+ * Is this the same band, geometrically?
+ *
+ * `measurePageBand()` builds a fresh object on every call, so `setBand(measure())`
+ * ALWAYS fails React's `Object.is` check and always re-renders — even when the
+ * page has not moved a pixel. Both ambient features observe
+ * `document.documentElement`, which fires whenever the document height changes:
+ * images decoding, fonts swapping, the countdown's text width ticking every
+ * second, a section revealing as you scroll. So the two heaviest subtrees on the
+ * page were re-rendering for no reason, repeatedly, during scrolling.
+ *
+ * Callers pair this with a functional update — `setBand(prev => sameBand(prev,
+ * next) ? prev : next)` — so an unchanged measurement keeps the old object
+ * identity and React stops there.
+ *
+ * The tolerance is deliberate. Sub-pixel and few-pixel drift is constant on a
+ * live page and moving the wall by 2px is not worth a re-render of ~45 elements.
+ */
+const BAND_EPSILON = 4;
+
+export function sameBand(a: PageBand | null, b: PageBand | null): boolean {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  return (
+    Math.abs(a.top - b.top) < BAND_EPSILON &&
+    Math.abs(a.bottom - b.bottom) < BAND_EPSILON &&
+    Math.abs(a.header - b.header) < BAND_EPSILON
+  );
+}

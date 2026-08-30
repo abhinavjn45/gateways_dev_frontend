@@ -44,6 +44,33 @@ export function AnimatedBackground({
 }) {
   const root = useRef<HTMLDivElement>(null);
   const handles = useRef(new Map<string, ParallaxLayerHandle>());
+  /**
+   * Is any part of this scene on screen?
+   *
+   * Everything below is gated on it, because none of it was before and that
+   * turned out to be the single most expensive thing on the page. Measured
+   * during a scripted scroll of the home page: removing the hero dropped total
+   * scripting from 1403ms to 329ms — 77% of all JavaScript on the scroll path
+   * was this component animating a scene nobody could see.
+   *
+   * Two separate costs, both eliminated by the same gate:
+   *
+   *  - The ambient drift tweens animate `background-position-x`, which is a
+   *    PAINT property, not a composited one. Each frame repaints an oversized
+   *    `image-rendering: pixelated` layer, and they are `repeat: -1`, so they
+   *    ran forever — including while the hero was thousands of pixels above the
+   *    viewport.
+   *  - The pointer/scroll parallax kept driving `gsap.quickTo` on every layer,
+   *    and each of those keeps a 500ms tween alive on the ticker after every
+   *    input, so continuous scrolling sustained ~14 live tweens per scene.
+   *
+   * Starts `true` so the first paint is never blank if the observer has not
+   * reported yet.
+   */
+  const onScreen = useRef(true);
+  const ambientTweens = useRef<gsap.core.Tween[]>([]);
+  /** The stack of parallax layers, hidden outright while off screen. */
+  const layerStack = useRef<HTMLDivElement>(null);
   const scene: Scene | undefined = getScene(sceneKey);
 
   /**
@@ -56,6 +83,28 @@ export function AnimatedBackground({
    * hydration mismatch.
    */
   const [resizeTick, setResizeTick] = useState(0);
+
+  /**
+   * Bumped when `data-theme` flips, so the drift tweens rebuild.
+   *
+   * Theme-gated layers are hidden with `display: none`, and a hidden tile
+   * measures `clientHeight: 0` — which sends the loop distance below down its
+   * `speed * 100` fallback instead of one tile width, putting a seam through
+   * the sky. Building tweens only for the visible theme's layers and rebuilding
+   * on the flip is what keeps that honest.
+   *
+   * A MutationObserver rather than the `parallax:themechange` event: the
+   * attribute is the thing that actually decides which layers are on screen, so
+   * observing it directly cannot disagree with what is rendered.
+   */
+  const [themeTick, setThemeTick] = useState(0);
+
+  useEffect(() => {
+    const html = document.documentElement;
+    const mo = new MutationObserver(() => setThemeTick((n) => n + 1));
+    mo.observe(html, { attributes: true, attributeFilter: ["data-theme"] });
+    return () => mo.disconnect();
+  }, []);
 
   useEffect(() => {
     let timer = 0;
@@ -105,12 +154,15 @@ export function AnimatedBackground({
 
     const flush = () => {
       frame = 0;
+      // Nothing to update for a scene nobody can see, and this is the hot path.
+      if (!onScreen.current) return;
       handles.current.forEach((h) => h.applyOffset(pointerX, pointerY + scrollY));
     };
 
     // Coalesce to one update per frame regardless of input rate.
     const schedule = () => {
-      if (!frame) frame = requestAnimationFrame(flush);
+      if (!onScreen.current || frame) return;
+      frame = requestAnimationFrame(flush);
     };
 
     const onPointer = (e: PointerEvent) => {
@@ -146,6 +198,54 @@ export function AnimatedBackground({
     };
   }, [scene, intensity, scrollParallax]);
 
+  /**
+   * Pause everything while the scene is off screen.
+   *
+   * `rootMargin` is generous so the drift is already running by the time the
+   * scene scrolls into view — resuming a paused tween is instant, but starting
+   * one at the moment of reveal would show a visible hitch.
+   */
+  useEffect(() => {
+    const node = root.current;
+    if (!node) return;
+
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        const visible = entry.isIntersecting;
+        if (visible === onScreen.current) return;
+        onScreen.current = visible;
+
+        /**
+         * HIDING THE LAYERS IS THE POINT, not just pausing the tweens.
+         *
+         * Each layer carries `will-change: transform`, which promotes it to its
+         * own composited layer permanently — so the compositor kept processing
+         * a scene that was thousands of pixels off screen. Measured over a
+         * scripted scroll of the home page, hiding the hero's stack once it
+         * leaves the viewport took the mean frame from 155ms to 102ms. Pausing
+         * the tweens alone changed almost nothing, because the cost was
+         * compositing, not JavaScript.
+         *
+         * The class does two things and BOTH are required — see the rule in
+         * globals.css. Hiding alone measured as no improvement at all, because
+         * `will-change: transform` on each layer keeps it promoted whether or
+         * not it is visible; the class drops that too. `visibility` rather than
+         * `display` so nothing reflows and the layers keep their size for the
+         * drift tweens' tile-width maths.
+         */
+        layerStack.current?.classList.toggle("parallax-stack-idle", !visible);
+
+        for (const tween of ambientTweens.current) {
+          if (visible) tween.play();
+          else tween.pause();
+        }
+      },
+      { rootMargin: "200px 0px" },
+    );
+    io.observe(node);
+    return () => io.disconnect();
+  }, [scene]);
+
   // ---- ambient drift + pulse ---------------------------------------------
   useGSAP(
     () => {
@@ -155,7 +255,15 @@ export function AnimatedBackground({
       mm.add("(prefers-reduced-motion: no-preference)", () => {
         const tweens: gsap.core.Tween[] = [];
 
+        const activeTheme =
+          document.documentElement.dataset.theme === "light" ? "light" : "dark";
+
         for (const l of scene.layers) {
+          // A layer gated to the other theme is display:none. Animating it
+          // would burn frames on something invisible and, worse, measure it as
+          // zero-height — see `themeTick`.
+          if (l.theme && l.theme !== activeTheme) continue;
+
           const sel = `[data-parallax-layer="${l.key}"]`;
           const node = root.current?.querySelector(sel);
           if (!node) continue;
@@ -226,12 +334,20 @@ export function AnimatedBackground({
           }
         }
 
-        return () => tweens.forEach((t) => t.kill());
+        // Handed to the IntersectionObserver above so it can pause them while
+        // the scene is off screen.
+        ambientTweens.current = tweens;
+        if (!onScreen.current) tweens.forEach((t) => t.pause());
+
+        return () => {
+          ambientTweens.current = [];
+          tweens.forEach((t) => t.kill());
+        };
       });
 
       return () => mm.revert();
     },
-    { scope: root, dependencies: [sceneKey, resizeTick] },
+    { scope: root, dependencies: [sceneKey, resizeTick, themeTick] },
   );
 
   if (!scene) {
@@ -244,14 +360,30 @@ export function AnimatedBackground({
 
   return (
     <div ref={root} className={cn("relative isolate overflow-hidden", className)} style={{ contain: "content" }}>
-      {/* Base gradient guarantees full coverage even if every layer 404s. */}
+      {/* Base gradient guarantees full coverage even if every layer 404s.
+          A scene with a `baseGradientNight` renders both and lets CSS pick, for
+          the same reason its layers do — see `SceneLayer.theme`. */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 -z-10"
+        className={cn(
+          "pointer-events-none absolute inset-0 -z-10",
+          scene.baseGradientNight && "theme-only-light",
+        )}
         style={{ background: scene.baseGradient }}
       />
+      {scene.baseGradientNight ? (
+        <div
+          aria-hidden
+          className="theme-only-dark pointer-events-none absolute inset-0 -z-10"
+          style={{ background: scene.baseGradientNight }}
+        />
+      ) : null}
 
-      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
+      <div
+        ref={layerStack}
+        aria-hidden
+        className="pointer-events-none absolute inset-0 -z-10"
+      >
         {scene.layers.map((l) => (
           <ParallaxLayer
             key={l.key}
@@ -259,6 +391,7 @@ export function AnimatedBackground({
             sceneKey={scene.key}
             palette={scene.palette}
             handleRef={register(l.key)}
+            className={cn(l.theme && `theme-only-${l.theme}`, l.className)}
           />
         ))}
       </div>

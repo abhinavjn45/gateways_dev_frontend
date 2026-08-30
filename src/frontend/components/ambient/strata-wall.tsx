@@ -1,5 +1,7 @@
 "use client";
 
+import { useMemo } from "react";
+
 import {
   buildCaveVoids,
   buildOreVeins,
@@ -13,13 +15,11 @@ import {
 /**
  * The dark theme's backdrop: a wall of rock you descend past.
  *
- * WHY THERE IS NO SCROLL LISTENER IN HERE. The parent writes a single custom
- * property, `--backdrop-y`, once per animation frame; every layer below reads it
- * through `calc(var(--backdrop-y) * <speed>)`. One property write moves the
- * whole scene, the multiplication happens on the compositor, and this component
- * never re-renders while scrolling. Giving each layer its own listener, or
- * threading a scroll value through props, would put React in the scroll path
- * for no gain.
+ * WHY THERE IS NO SCROLL LISTENER IN HERE. Each layer registers itself with the
+ * parent via `register(speed)`, and the parent's single rAF-throttled listener
+ * writes `el.style.transform` on all of them. This component never re-renders
+ * while scrolling. (It used to read a `--backdrop-y` custom property through
+ * `calc()` instead — see the parent for why that was quietly expensive.)
  *
  * SPEED 1.0 IS NOT PARALLAX. A layer at 1.0 moves exactly with the document, so
  * it behaves like an ordinary background that happens to be positioned by
@@ -36,19 +36,27 @@ export function StrataWall({
   height,
   parallax,
   oreCount,
+  register,
 }: {
   /** Band height in document pixels — the wall is exactly this tall. */
   height: number;
   parallax: boolean;
   oreCount: number;
+  register: (speed: number) => (el: HTMLDivElement | null) => void;
 }) {
-  const veins = buildOreVeins(oreCount);
-  const voids = buildCaveVoids(Math.max(4, Math.round(oreCount / 2)));
+  // Memoised because these are not cheap and this component re-renders whenever
+  // the measured band changes. Each walks a seeded LCG — 22 weighted ore picks
+  // and 11 voids — and returns fresh objects, so without this every re-render
+  // also re-diffed 33 spans' worth of inline gradient and calc() strings.
+  const veins = useMemo(() => buildOreVeins(oreCount), [oreCount]);
+  const voids = useMemo(
+    () => buildCaveVoids(Math.max(4, Math.round(oreCount / 2))),
+    [oreCount],
+  );
 
   // Under reduced motion every layer travels with the page, so nothing moves
   // relative to anything else and the depth cue simply goes away.
-  const at = (speed: number) =>
-    `translate3d(0, calc(var(--backdrop-y) * ${parallax ? speed : 1}), 0)`;
+  const at = (speed: number) => register(parallax ? speed : 1);
 
   const band = { position: "absolute" as const, insetInline: 0, top: 0, height };
 
@@ -56,7 +64,7 @@ export function StrataWall({
     <>
       {/* Cave voids sit furthest back and travel slowest, so they read as
           openings behind the wall rather than holes punched through it. */}
-      <div style={{ ...band, transform: at(0.85) }} aria-hidden>
+      <div ref={at(0.85)} style={band} aria-hidden>
         {voids.map((v) => (
           <span
             key={v.id}
@@ -73,7 +81,7 @@ export function StrataWall({
       </div>
 
       {/* The wall itself. */}
-      <div style={{ ...band, transform: at(1), background: STRATA_GRADIENT }} aria-hidden>
+      <div ref={at(1)} style={{ ...band, background: STRATA_GRADIENT }} aria-hidden>
         {STRATA_LAYERS.map((layer) => (
           <div
             key={layer.key}
@@ -123,7 +131,7 @@ export function StrataWall({
       </div>
 
       {/* Light sources, just ahead of the wall. */}
-      <div style={{ ...band, transform: at(0.92) }} aria-hidden>
+      <div ref={at(0.92)} style={band} aria-hidden>
         {GLOW_POOLS.map((g) => (
           <span
             key={g.key}
