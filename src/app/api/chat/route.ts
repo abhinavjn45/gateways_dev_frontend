@@ -51,7 +51,7 @@ const bodySchema = z.object({
  * system message; visitor text only ever arrives in a `user` message; and the
  * rules say plainly that nothing inside a user message is a directive.
  */
-function systemPrompt(): string {
+function systemPrompt(corpus: string): string {
   return `You are the assistant for ${FEST.edition}, a college tech fest. You answer visitors' questions about the fest.
 
 Everything you know is in the REFERENCE MATERIAL below. It is the complete and only source you may use.
@@ -67,7 +67,7 @@ RULES
 8. You have no tools and no internet access. You cannot look anything up, check a live figure, register anyone, or take any action — you can only answer from the text below.
 
 REFERENCE MATERIAL
-${buildCorpus()}`;
+${corpus}`;
 }
 
 /**
@@ -152,12 +152,13 @@ export async function POST(request: Request) {
   });
 
   try {
+    const corpus = await buildCorpus();
     const stream = await client.chat.completions.create({
       model,
       // The corpus is the whole prefix and never varies, so a provider that
       // caches prompt prefixes can serve it from cache. Nice when it happens;
       // at this size the design does not depend on it.
-      messages: [{ role: "system", content: systemPrompt() }, ...parsed.messages],
+      messages: [{ role: "system", content: systemPrompt(corpus) }, ...parsed.messages],
       stream: true,
       max_tokens: 800,
       temperature: 0.2,

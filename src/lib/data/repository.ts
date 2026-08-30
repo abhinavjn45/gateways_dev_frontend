@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type {
   Achievement,
   Announcement,
@@ -130,7 +131,7 @@ export interface RegistrationRepository {
    * Awards XP and evaluates achievements as part of the same call.
    */
   register(eventId: string, userId: string, teamId?: string): Promise<Registration>;
-  cancel(registrationId: string): Promise<void>;
+  cancel(registrationId: string, action?: "leave" | "disband"): Promise<void>;
 }
 
 export interface TeamRepository {
@@ -138,9 +139,10 @@ export interface TeamRepository {
   getById(teamId: string): Promise<Team | null>;
   getByJoinCode(code: string): Promise<Team | null>;
   members(teamId: string): Promise<TeamMember[]>;
-  create(eventId: string, leaderId: string, name: string): Promise<Team>;
+  create(eventId: string, leaderId: string, name: string): Promise<{ teamId: string; teamCode: string }>;
   join(code: string, userId: string): Promise<Team>;
   leave(teamId: string, userId: string): Promise<void>;
+  removeMember(teamId: string, targetUserId: string): Promise<void>;
 }
 
 export interface AttendanceRepository {
@@ -204,6 +206,7 @@ export interface ReferenceRepository {
   categories(): Promise<EventCategory[]>;
   levels(): Promise<Level[]>;
   sponsors(): Promise<Sponsor[]>;
+  validateReferral(code: string): Promise<{ valid: boolean; studentName?: string }>;
 }
 
 export interface PaymentReceiptRepository {

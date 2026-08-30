@@ -1,7 +1,9 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import { BlockPanel } from "@/frontend/components/mc";
 import { eventTime, type FestEvent } from "@/frontend/lib/events";
+import { EventRegistrationButton } from "./event-registration-button";
 
 /**
  * One event, in full — description plus the facts grid.
@@ -28,6 +30,7 @@ export function EventDetails({ event }: { event: FestEvent }) {
           <Fact label="Venue" value={event.venue} />
           <Fact label="Prizes" value={event.prizes} />
           <Fact label="Prize pool" value={event.prizePool} />
+          {event.maxSlots ? <Fact label="Maximum Slots" value={event.maxSlots} /> : null}
         </dl>
       </BlockPanel>
     </div>

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState } from "react";
@@ -146,18 +147,6 @@ export function ForgotPasswordScreen() {
             cannot arrive. Saying it here costs nothing, because it is the same
             sentence for every visitor and so leaks nothing about any account.
           */}
-          <BlockPanel variant="slot" padded="sm" className="text-[19px] text-mc-text-dim">
-            Signed up with Google? Use{" "}
-            <button
-              type="button"
-              className="cursor-pointer text-mc-eyebrow underline hover:text-mc-text"
-              onClick={() => router.replace("/login")}
-            >
-              Sign in with Google
-            </button>{" "}
-            instead — password reset only works for accounts that have a
-            password.
-          </BlockPanel>
           <button type="button" className="min-h-11 cursor-pointer text-[19px] text-mc-eyebrow hover:text-mc-text hover:underline" onClick={() => router.replace("/login")}>
             Back to login
           </button>
@@ -175,6 +164,7 @@ export function ForgotPasswordScreen() {
               label="6-Digit OTP"
               type="text"
               inputMode="numeric"
+              autoComplete="one-time-code"
               maxLength={6}
               placeholder="000000"
               error={resetErrors.otp?.message}

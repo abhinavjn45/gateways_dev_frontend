@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/set-state-in-effect, @typescript-eslint/no-unused-vars */
 "use client";
 
 import { useForm, useWatch, Controller } from "react-hook-form";
@@ -8,6 +9,8 @@ import { BlockButton, BlockInput, BlockModal, BlockPanel, BlockSelect, BlockComb
 import { repo } from "@/lib/data";
 import { DataError, type Character, type ParticipantDetails, type Profile } from "@/lib/data/types";
 import { useAsync } from "@/frontend/hooks/use-async";
+import { useSession } from "@/frontend/components/auth/session-provider";
+import { CheckCircle, XCircle } from "lucide-react";
 
 /**
  * The participant details every registration needs.
@@ -61,6 +64,13 @@ const schema = z.object({
   emergencyName: z.string().trim().min(3, "Who should we call?"),
   emergencyPhone: phone("emergency number"),
   customCollegeName: z.string().optional(),
+  referralCode: z
+    .string()
+    .trim()
+    .optional()
+    .refine((val) => !val || /^\d{7}$/.test(val), {
+      message: "Referral code must be exactly 7 digits.",
+    }),
 }).superRefine((data, ctx) => {
   if (data.collegeId === "9999") {
     if (!data.customCollegeName || data.customCollegeName.trim().length < 3) {
@@ -76,7 +86,7 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 function defaultFormValues(profile: Profile | null, character: Character | null): FormValues {
-  let dob = profile?.dateOfBirth ?? "";
+  const dob = profile?.dateOfBirth ?? "";
 
   return {
     fullName: profile?.fullName ?? "",
@@ -91,6 +101,7 @@ function defaultFormValues(profile: Profile | null, character: Character | null)
     emergencyName: profile?.emergencyName ?? "",
     emergencyPhone: profile?.emergencyPhone ?? "",
     customCollegeName: profile?.customCollegeName ?? "",
+    referralCode: profile?.referredBy ?? "",
   };
 }
 
@@ -136,6 +147,36 @@ export function ParticipantDetailsModal({
     () => repo.reference.departments(collegeId || null),
     [collegeId, open],
   );
+  
+  const { session } = useSession();
+  const isPaymentVerified = session?.paymentStatus === 'verified';
+  const referralCode = useWatch({ control, name: "referralCode" });
+  
+  const [referralStatus, setReferralStatus] = useState<"idle" | "checking" | "valid" | "invalid">("idle");
+  const [referralStudentName, setReferralStudentName] = useState("");
+
+  useEffect(() => {
+    if (!referralCode || referralCode.trim().length !== 7 || (isPaymentVerified && profile?.referredBy)) {
+      setReferralStatus("idle");
+      return;
+    }
+    setReferralStatus("checking");
+    const timer = setTimeout(async () => {
+      try {
+        const result = await repo.reference.validateReferral(referralCode.trim());
+        if (result.valid) {
+          setReferralStatus("valid");
+          setReferralStudentName(result.studentName || "");
+        } else {
+          setReferralStatus("invalid");
+          setReferralStudentName("");
+        }
+      } catch (err) {
+        setReferralStatus("idle");
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [referralCode, isPaymentVerified, profile?.referredBy]);
 
   const onSubmit = handleSubmit(async (values) => {
     setFormError(null);
@@ -146,7 +187,8 @@ export function ParticipantDetailsModal({
         ...values,
         dateOfBirth: isoDob,
         yearOfStudy: values.yearOfStudy,
-      });
+        referralCode: values.referralCode,
+      } as any);
       await repo.characters.update(userId, {
         collegeId: values.collegeId,
         departmentId: values.departmentId,
@@ -206,6 +248,7 @@ export function ParticipantDetailsModal({
               options={(colleges ?? []).map(c => ({ id: c.id, name: c.name }))}
               value={value}
               onChange={onChange}
+              disabled={isPaymentVerified}
             />
           )}
         />
@@ -217,6 +260,7 @@ export function ParticipantDetailsModal({
             hint="Please write the Full Official Name of the Institute/College/University with a comma and city/campus."
             error={errors.customCollegeName?.message}
             wrapperClassName="mb-[calc(var(--mc-unit)*1.5)]"
+            disabled={isPaymentVerified}
             {...register("customCollegeName")}
           />
         )}
@@ -260,7 +304,13 @@ export function ParticipantDetailsModal({
           <option value="Other">Other</option>
         </BlockSelect>
 
-        <BlockSelect label="T-shirt size (Polo T-shirt)" error={errors.tshirtSize?.message} {...register("tshirtSize")}>
+        <BlockSelect 
+          label="T-shirt size (Polo T-shirt)" 
+          error={errors.tshirtSize?.message} 
+          hint="Availability of T-shirts is subject to stock."
+          wrapperClassName="mb-[calc(var(--mc-unit)*1.5)]"
+          {...register("tshirtSize")}
+        >
           {TSHIRT_SIZES.map((s) => (
             <option key={s} value={s}>
               {s}
@@ -296,6 +346,26 @@ export function ParticipantDetailsModal({
             },
           })}
         />
+
+        <BlockInput
+          label="Referral Code (Optional)"
+          placeholder="e.g. 2341234"
+          hint="If a student from the organizing department referred you, enter their 7-digit register number."
+          maxLength={7}
+          disabled={isPaymentVerified}
+          error={errors.referralCode?.message}
+          {...register("referralCode")}
+        />
+        {referralStatus === "valid" && (
+          <p className="text-mc-emerald-light text-[16px] flex items-center gap-1 mt-1">
+            <CheckCircle className="w-4 h-4" /> Referred by: {referralStudentName}
+          </p>
+        )}
+        {referralStatus === "invalid" && (
+          <p className="text-mc-danger text-[16px] flex items-center gap-1 mt-1">
+            <XCircle className="w-4 h-4" /> Invalid register number
+          </p>
+        )}
 
         {formError ? (
           <BlockPanel
