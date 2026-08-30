@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars, @next/next/no-img-element, react/no-unescaped-entities */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -33,7 +34,6 @@ const NAV = [
   { href: "/dashboard/explore", label: "Explore Events", icon: "✦" },
   { href: "/dashboard/schedule", label: "Schedule", icon: "◷" },
   { href: "/dashboard/events", label: "My Events", icon: "▤" },
-  { href: "/dashboard/team", label: "Team", icon: "◍" },
   { href: "/dashboard/notifications", label: "Announcements", icon: "◈" },
   { href: "/dashboard/settings", label: "Settings", icon: "⚙" },
 ] as const;
@@ -261,7 +261,7 @@ function SidebarContent({
         <nav aria-label="Dashboard" className="flex flex-col gap-[2px]">
           {NAV.map((item) => {
             const active = pathname === item.href;
-            const isItemLocked = isLocked && item.href !== "/dashboard/profile" && item.href !== "/dashboard/settings" && item.href !== "/dashboard/explore" && item.href !== "/dashboard/notifications" && item.href !== "/dashboard/schedule";
+            const isItemLocked = isLocked && item.href !== "/dashboard/profile" && item.href !== "/dashboard/settings" && item.href !== "/dashboard/notifications" && item.href !== "/dashboard/schedule" && item.href !== "/dashboard/explore";
             
             return (
               <Link

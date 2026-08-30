@@ -6,10 +6,12 @@ import { blockButton, BlockButton, BlockModal, BlockPanel } from "@/frontend/com
 import {
   EVENT_TRACKS,
   eventsForTrack,
-  FEST_EVENTS,
+  fetchFestEvents,
   type EventTrack,
   type FestEvent,
 } from "@/frontend/lib/events";
+import { useAsync } from "@/frontend/hooks/use-async";
+import { EventRegistrationButton } from "@/frontend/components/events/event-registration-button";
 import { EventDetails } from "@/frontend/components/events/event-details";
 import { cn } from "@/frontend/lib/utils";
 
@@ -49,8 +51,8 @@ const EVENT_FILTERS: { id: EventFilter; label: string }[] = [
 /** The events one tab shows. "All" is sheet order — which runs the eight
  *  technical events and then the five non-technical ones, the organisers' own
  *  sequence rather than a re-sort into something tidier. */
-function eventsForFilter(filter: EventFilter): FestEvent[] {
-  return filter === "all" ? FEST_EVENTS : eventsForTrack(filter);
+function eventsForFilter(allEvents: FestEvent[], filter: EventFilter): FestEvent[] {
+  return filter === "all" ? allEvents : eventsForTrack(allEvents, filter);
 }
 
 export function EventsModal({
@@ -79,7 +81,10 @@ export function EventsModal({
     if (open) setSelected(null);
   }
 
-  const shown = eventsForFilter(filter);
+  const { data: allEventsData, loading } = useAsync(fetchFestEvents, []);
+  const allEvents = allEventsData || [];
+
+  const shown = eventsForFilter(allEvents, filter);
 
   return (
     <BlockModal
@@ -96,28 +101,28 @@ export function EventsModal({
       className="max-w-2xl"
       footer={
         selected ? (
-          // One full-width row rather than two footer children: BlockModal's
-          // footer is `justify-end`, which would stack these to the right and
-          // leave the back control chasing the rules button's width. `w-full`
-          // + `justify-between` pins back to the left rail and rules to the
-          // right, on a shared baseline, whether or not the rules link exists.
           <div className="flex w-full flex-wrap items-center justify-between gap-[var(--mc-unit)]">
-            <BlockButton variant="stone" size="sm" onClick={() => setSelected(null)}>
-              ← All events
-            </BlockButton>
-            {selected.rulesUrl ? (
-              <a
-                href={selected.rulesUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={cn(
-                  blockButton({ variant: "gold", size: "sm" }),
-                  "no-underline",
-                )}
-              >
-                Read the rules ↗
-              </a>
-            ) : null}
+            <div className="flex flex-wrap items-center gap-[var(--mc-unit)]">
+              <BlockButton variant="stone" size="sm" onClick={() => setSelected(null)}>
+                ← All events
+              </BlockButton>
+              {selected.rulesUrl ? (
+                <a
+                  href={selected.rulesUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={cn(
+                    blockButton({ variant: "gold", size: "sm" }),
+                    "no-underline",
+                  )}
+                >
+                  Read the rules ↗
+                </a>
+              ) : null}
+            </div>
+            <div className="flex-1 sm:flex-none sm:min-w-[200px]">
+              <EventRegistrationButton event={selected} />
+            </div>
           </div>
         ) : (
           // The cva function rather than <BlockButton>: this navigates, so it
@@ -135,6 +140,10 @@ export function EventsModal({
     >
       {selected ? (
         <EventDetails event={selected} />
+      ) : loading ? (
+        <div className="py-12 text-center text-mc-text-dim font-pixel text-[10px] uppercase">
+          Loading events, please wait...
+        </div>
       ) : (
         <>
           <nav
@@ -145,7 +154,7 @@ export function EventsModal({
               <FilterTab
                 key={f.id}
                 label={f.label}
-                count={eventsForFilter(f.id).length}
+                count={eventsForFilter(allEvents, f.id).length}
                 active={filter === f.id}
                 onClick={() => setFilter(f.id)}
               />
@@ -165,19 +174,24 @@ export function EventsModal({
                     padded="md"
                     className="transition-[filter] duration-75 hover:brightness-125"
                   >
-                    <div className="flex flex-wrap items-baseline justify-between gap-[var(--mc-unit)]">
-                      <h3 className="text-[10px] uppercase text-mc-accent md:text-[12px]">
-                        {e.name}
-                      </h3>
-                      {/* The kind, not the name, is what tells a visitor what
-                          they would be doing — these names give nothing away. */}
-                      <span className="event-kind font-pixel text-[8px] uppercase tracking-[0.1em] text-mc-success">
-                        {e.kind}
-                      </span>
+                    <div className="flex flex-col gap-[calc(var(--mc-unit)*0.25)]">
+                      <div className="flex flex-wrap items-baseline justify-between gap-[var(--mc-unit)]">
+                        <h3 className="text-[10px] uppercase text-mc-accent md:text-[12px]">
+                          {e.name}
+                        </h3>
+                        {/* The kind, not the name, is what tells a visitor what
+                            they would be doing — these names give nothing away. */}
+                        <span className="event-kind font-pixel text-[8px] uppercase tracking-[0.1em] text-mc-success">
+                          {e.kind}
+                        </span>
+                      </div>
+                      <p className="mt-[calc(var(--mc-unit)*0.5)] text-[16px] text-mc-text-dim">
+                        {e.date}
+                      </p>
+                      <p className="text-[17px] text-mc-text-dim/80">
+                        {e.participation}
+                      </p>
                     </div>
-                    <p className="mt-[calc(var(--mc-unit)*0.5)] text-[18px] text-mc-text-dim/80">
-                      {e.participation}
-                    </p>
                   </BlockPanel>
                 </button>
               </li>
