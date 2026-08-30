@@ -57,6 +57,19 @@ export interface BlockPanelProps
   title?: React.ReactNode;
   /** Right-aligned content in the header strip. */
   action?: React.ReactNode;
+  /**
+   * Classes for the padded body wrapper that a `title` introduces.
+   *
+   * Without this the body is a plain block and sits at its natural height, so
+   * a panel stretched by a grid row (or by a taller sibling) leaves dead space
+   * underneath it that nothing inside can reach. Pass `flex flex-1 flex-col`
+   * alongside `className="flex flex-col"` when the content needs to own the
+   * full height — e.g. to pin a footer with `mt-auto`.
+   *
+   * Ignored when there is no `title`: without one, `children` are placed
+   * directly in the padded root and `className` already controls it.
+   */
+  bodyClassName?: string;
 }
 
 export function BlockPanel({
@@ -65,6 +78,7 @@ export function BlockPanel({
   padded,
   title,
   action,
+  bodyClassName,
   children,
   ...props
 }: BlockPanelProps) {
@@ -92,7 +106,12 @@ export function BlockPanel({
             </h2>
             {action}
           </div>
-          <div className={cn(blockPanel({ variant: "ghost", padded: padded ?? "md" }))}>
+          <div
+            className={cn(
+              blockPanel({ variant: "ghost", padded: padded ?? "md" }),
+              bodyClassName,
+            )}
+          >
             {children}
           </div>
         </>

@@ -106,10 +106,24 @@ export function useBlockPointer(handlers: BlockPointerHandlers): void {
       return !under.closest(INTERACTIVE);
     };
 
+    /**
+     * Order matters here, and it is the opposite of the obvious one.
+     *
+     * `pageIsInert` calls `document.elementFromPoint`, which forces a synchronous
+     * style and layout flush of the whole document, plus a `querySelector` for an
+     * open dialog. Running that first meant paying a forced reflow on EVERY
+     * pointer frame — including while scrolling, which is when it hurts most.
+     *
+     * The raycast is pure maths against a handful of meshes and touches no DOM.
+     * Doing it first means the expensive check only runs when the cursor is
+     * genuinely over a block, which is rare: blocks are small and live in the
+     * page margins. Same answer, a tiny fraction of the cost.
+     */
     const resolve = (x: number, y: number): number | null => {
       if (!ref.current.enabled) return null;
-      if (!pageIsInert(x, y)) return null;
-      return ref.current.hitTest(x, y);
+      const hit = ref.current.hitTest(x, y);
+      if (hit === null) return null;
+      return pageIsInert(x, y) ? hit : null;
     };
 
     const flushMove = () => {

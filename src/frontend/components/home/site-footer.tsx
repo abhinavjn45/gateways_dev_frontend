@@ -1,6 +1,5 @@
 "use client";
 
-import { BlockPanel } from "@/frontend/components/mc";
 import { blockButton } from "@/frontend/components/mc/block-button";
 import { GRASS_GROUND_STYLE } from "@/frontend/lib/assets/textures";
 import { FEST } from "@/frontend/lib/fest";
@@ -72,9 +71,15 @@ export function SiteFooter() {
           otherwise start in the turf. */}
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-[calc(var(--mc-unit)*2)] px-[calc(var(--mc-unit)*2)] pb-[calc(var(--mc-unit)*3)] pt-[calc(var(--mc-unit)*10)] md:px-[calc(var(--mc-unit)*1.5)]">
         
-        <div className="grid grid-cols-1 md:grid-cols-10 gap-[calc(var(--mc-unit)*3)] md:gap-[calc(var(--mc-unit)*2)]">
-          {/* Column 1: Brand & Legacy (40%) */}
-          <div className="md:col-span-4 flex flex-col gap-[calc(var(--mc-unit)*1.5)]">
+        {/* Brand on the left, link columns pushed to the right edge.
+            This was a 4/3/3 ten-column grid, where each link column was far
+            wider than its longest link — so both lists floated in the middle of
+            the footer with a dead band of soil to their right. Sized to their
+            content and flushed right instead, the lists sit against the
+            container edge and the brand block takes the slack. */}
+        <div className="flex flex-col gap-[calc(var(--mc-unit)*3)] md:flex-row md:items-start md:justify-between md:gap-[calc(var(--mc-unit)*3)]">
+          {/* Column 1: Brand & Legacy */}
+          <div className="flex flex-col gap-[calc(var(--mc-unit)*1.5)] md:max-w-[46%]">
             <div className="flex items-center gap-[calc(var(--mc-unit)*1.5)]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -113,8 +118,11 @@ export function SiteFooter() {
             </ul>
           </div>
 
-          {/* Column 2: Useful Links (30%) */}
-          <div className="md:col-span-3 flex flex-col gap-[calc(var(--mc-unit)*1.5)]">
+          {/* Columns 2 & 3, kept together so they travel to the edge as a pair
+              and stack as a pair on a narrow screen. */}
+          <div className="flex flex-col gap-[calc(var(--mc-unit)*3)] sm:flex-row sm:gap-[calc(var(--mc-unit)*5)]">
+          {/* Column 2: Useful Links */}
+          <div className="flex flex-col gap-[calc(var(--mc-unit)*1.5)]">
             <h3 className="font-pixel text-[12px] uppercase text-mc-gold-light">Useful Links</h3>
             <ul className="flex flex-col gap-[calc(var(--mc-unit)*0.75)]">
               <li>
@@ -123,20 +131,20 @@ export function SiteFooter() {
                 </a>
               </li>
               <li>
-                <a href="#" className="inline-flex min-h-8 items-center font-pixel text-[9px] uppercase tracking-[0.1em] text-mc-cloud no-underline transition-colors hover:text-mc-gold-light">
+                <a href="/registration-process" className="inline-flex min-h-8 items-center font-pixel text-[9px] uppercase tracking-[0.1em] text-mc-cloud no-underline transition-colors hover:text-mc-gold-light">
                   Registration Process
                 </a>
               </li>
               <li>
                 <a href="/guidelines" className="inline-flex min-h-8 items-center font-pixel text-[9px] uppercase tracking-[0.1em] text-mc-cloud no-underline transition-colors hover:text-mc-gold-light">
-                  Participant's Guidelines
+                  Participant&apos;s Guidelines
                 </a>
               </li>
             </ul>
           </div>
 
-          {/* Column 3: Policies (30%) */}
-          <div className="md:col-span-3 flex flex-col gap-[calc(var(--mc-unit)*1.5)]">
+          {/* Column 3: Policies */}
+          <div className="flex flex-col gap-[calc(var(--mc-unit)*1.5)]">
             <h3 className="font-pixel text-[12px] uppercase text-mc-gold-light">Policies</h3>
             <ul className="flex flex-col gap-[calc(var(--mc-unit)*0.75)]">
               <li>
@@ -150,11 +158,12 @@ export function SiteFooter() {
                 </a>
               </li>
               <li>
-                <a href="#" className="inline-flex min-h-8 items-center font-pixel text-[9px] uppercase tracking-[0.1em] text-mc-cloud no-underline transition-colors hover:text-mc-gold-light">
+                <a href="/rules" className="inline-flex min-h-8 items-center font-pixel text-[9px] uppercase tracking-[0.1em] text-mc-cloud no-underline transition-colors hover:text-mc-gold-light">
                   Rules & Regulations
                 </a>
               </li>
             </ul>
+          </div>
           </div>
         </div>
 

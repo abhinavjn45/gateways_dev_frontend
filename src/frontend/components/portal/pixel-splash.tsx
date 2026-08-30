@@ -93,8 +93,10 @@ export function PixelSplash() {
    * repeat load the component has already unmounted itself and the art is never
    * generated at all.
    *
-   * The cost is one frame of flat `--void` before the landscape appears, which
-   * `.splash-scene`'s fade turns into the intended opening beat rather than a pop.
+   * The cost is one frame of flat `--void` before the landscape appears, plus
+   * the rasterisation of four generated layers under a 22px blur. `.splash-scene`
+   * fades in over 0.55s so that lands as the opening beat it was meant to be
+   * rather than a hard cut a frame into the assembly.
    */
   const [sceneReady, setSceneReady] = useState(false);
   useEffect(() => {
@@ -329,8 +331,11 @@ export function PixelSplash() {
               backgroundPosition: `calc(var(--splash-tile) * -${col}) calc(var(--splash-tile) * -${row})`,
             }}
           >
-            {/* The solid cube face worn during flight, faded on landing. */}
-            <i className="splash-face absolute inset-0 block bg-mc-gold bevel" />
+            {/* The solid cube face worn during flight, faded on landing. Its
+                bevel is a contained gradient in globals.css, NOT the `bevel`
+                utility — see the note there; a box-shadow on 639 flying
+                elements is what made this stutter. */}
+            <i className="splash-face absolute inset-0 block bg-mc-gold" />
           </span>
         ))}
       </div>

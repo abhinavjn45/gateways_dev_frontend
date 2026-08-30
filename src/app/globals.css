@@ -287,6 +287,19 @@
   --mc-inset-hi: rgb(255 255 255 / 0.12);
   --mc-scrim: rgb(0 0 0 / 0.7);
   --mc-focus-ring: var(--color-mc-gold);
+
+  /* Announcement-cloud faces. Semantic, NOT material — which is why they live
+     here and flip with the theme, while --color-mc-cloud does not.
+     globals.css keeps material colours out of the theme flip on purpose ("a
+     block's colour is its identity"), and cloud is a material. Weather is not:
+     the same cloud is pale at noon and slate in a storm, so the WEATHER gets
+     its own vars and the material token is left alone.
+     Dark = storm, matching the C.stormCloud* values in scene-art.ts that paint
+     the bank drifting behind these. Keep the two in sync. */
+  --cloud-lit: #5b6785;
+  --cloud-face: #454f6b;
+  --cloud-shade: #333b53;
+  --cloud-ink: #e8eefb;
 }
 
 /* ---- Light theme -----------------------------------------------------------
@@ -325,15 +338,31 @@
    The sky's lightness is what caps saturation — pushing it past this starts
    failing AA for accent text sitting directly on the page. */
 html[data-theme="light"] {
+  /* Daylight clouds are the material colour exactly — see the note in :root
+     for why this is an override on a semantic var rather than on the token. */
+  --cloud-lit: var(--color-mc-cloud-light);
+  --cloud-face: var(--color-mc-cloud);
+  --cloud-shade: var(--color-mc-cloud-dark);
+  --cloud-ink: var(--color-mc-obsidian);
+
   /* ATMOSPHERIC PERSPECTIVE is the whole idea of this theme.
      The page used to be saturated sky (#7ecdf5) the entire way down, which left
      nowhere on the page at rest: cream panels read dirty against that much
      chroma, and every material that GLOWS against the dark theme's near-black
      was instead competing with a backdrop as loud as itself.
-     Distance desaturates. So the page is now the pale HAZE you see a landscape
+     Distance desaturates. So the page is the pale HAZE you see a landscape
      through, and full-strength sky and soil are left to the two places that are
      authored art and already earn them — the hero at the top, the dirt
-     cross-section in the footer. The middle of the page is air. */
+     cross-section in the footer.
+
+     AMENDED: this used to end "the middle of the page is air", and that was
+     read as "the middle of the page is empty" — including by the first version
+     of the light backdrop, which capped itself at 0.28 opacity on the strength
+     of this sentence and left the band looking exactly as blank as before.
+     There is now a landscape in the middle of the page. It obeys the rule above
+     rather than breaking it: each band is fainter the further away it is, so
+     distance still desaturates. Air, with things visible at different distances
+     in it — not nothing. See `components/ambient/sky-backdrop.tsx`. */
   --color-mc-void: #cfe8f7;
   --color-mc-panel: #fbf4e4;
   --color-mc-panel-light: #fffdf6;
@@ -835,6 +864,43 @@ textarea,
   100% { transform: translate(0, 0); }
 }
 
+/* ---- Rain -----------------------------------------------------------------
+   The hero's dark theme only. CSS rather than a GSAP tween because the scene's
+   `drift` animates background-position-X and rain has to fall: adding a
+   vertical axis to that tween engine to serve one layer is more machinery than
+   the effect is worth, and this is a single looping animation on a single
+   element with nothing to coordinate — the case the animation ruleset assigns
+   to CSS, same as `sky-float` above.
+
+   TRAVEL IS EXACTLY ONE TILE HEIGHT (256px, matching the `rain` layer's `h`
+   AND its explicit `fit` in scenes.ts — the layer is pinned to its natural size
+   precisely so those two numbers can be the same one). Any other distance puts a visible jump in the rain every cycle,
+   for the same reason the drift tweens travel exactly one tile width. Change
+   one and you must change the other.
+
+   `background-repeat` is overridden because ParallaxLayer sets `repeat-x` for
+   every tiled layer, and rain scrolling vertically through a strip that does
+   not repeat downward would run out of tile.
+
+   Reduced motion needs no branch here, but NOT for the reason `sky-float` gets
+   away with it. That one literally returns to its origin; this one ends a full
+   tile DOWN. It survives anyway because the override also pins
+   `animation-iteration-count: 1`, so the rain snaps to the 100% frame — and at
+   exactly one tile of travel those pixels are the pixels it started on. The
+   rain is then visible and completely still, which is what was wanted.
+
+   This is why the travel distance must stay exactly one tile. Any other value
+   would leave reduced-motion users looking at a half-scrolled tile. */
+@keyframes rain-fall {
+  from { background-position: 0 0; }
+  to   { background-position: 0 256px; }
+}
+
+.rain-fall {
+  background-repeat: repeat !important;
+  animation: rain-fall 0.55s linear infinite;
+}
+
 /* The scroll cue's up-and-down. Bigger travel than `float` because this one has
    a job to do — it is telling the visitor the page continues below the fold,
    and a 6px nudge does not read as an instruction. */
@@ -945,6 +1011,11 @@ textarea,
   inset: -12%;
   filter: blur(var(--splash-blur)) brightness(0.55) saturate(0.9);
   transform: translateZ(0);
+  animation: splash-scene-in 0.55s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .splash-scene { animation: none; }
 }
 
 /* Light keeps the landscape bright: the veil below it mixes toward the light
@@ -967,10 +1038,21 @@ html[data-theme="light"] .splash-scene {
   );
 }
 
-/* No fade-in on the scene, deliberately. It mounts about two frames after first
-   paint, which is not a gap worth covering, and an `opacity: 0` resting state
-   would make the entire backdrop depend on an animation actually running — the
-   same failure mode `.gsap-hidden` carries an explicit escape hatch for below. */
+/* The scene FADES IN, and the reason is not polish.
+   It mounts a frame after first paint, and mounting it means rasterising four
+   generated layers — about 100KB of SVG — at 1600x900 and running a 22px blur
+   over the result. That landed as a hard cut from flat --void to a full
+   landscape, one frame into the assembly: the flash at the start of the splash.
+
+   A CSS animation rather than an `opacity: 0` resting state, so the layer is
+   never left invisible if the animation does not run — the same failure mode
+   `.gsap-hidden` carries an escape hatch for. `backwards` holds it transparent
+   through the delay; the element is already promoted by `translateZ(0)` above,
+   so the fade composites and costs nothing. */
+@keyframes splash-scene-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
 
 .splash-tile {
   width: var(--splash-tile);
@@ -981,6 +1063,33 @@ html[data-theme="light"] .splash-scene {
      it keeps the art's pixel edges hard. (The full-detail 1254px crest is the
      opposite case and must never be pixelated; see the manifest's brand note.) */
   image-rendering: pixelated;
+}
+
+/* The cube face worn during flight.
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   A GRADIENT, not the `bevel` utility, and the difference is worth 639 repaints
+   a frame. `bevel` is a three-part box-shadow, two inset and one cast OUTSIDE
+   the element. A box-shadow cannot be composited, so every one of these faces
+   forced a paint on every frame of the assembly — and because the outer part
+   falls outside the box, each face also dirtied its neighbours' rectangles,
+   which is the specific reason the flight stuttered rather than merely being
+   busy.
+
+   It was also drawn at the wrong size. `--mc-bevel` is an absolute 3px (2px on
+   mobile) tuned for buttons and panels, but a tile here is only --splash-size/38
+   — 8px on a phone. A 2px inset from each side left a 4px core, so half of each
+   flying block was bevel, and the outer drop smeared onto the block below it.
+
+   Percentages fix both problems at once: contained inside the box, so no
+   neighbour is touched, and proportional, so the step reads the same at 8px as
+   at 20px. */
+.splash-face {
+  background-image: linear-gradient(
+    135deg,
+    var(--mc-edge-hi) 0 14%,
+    transparent 14% 86%,
+    var(--mc-edge-lo) 86% 100%
+  );
 }
 
 /* Faint buildable-space grid behind the crest. */
@@ -1152,10 +1261,11 @@ html[data-reduce-motion="true"] #ambient-blocks {
   z-index: 0;
   overflow: hidden;
   pointer-events: none;
-  /* Fallback for the first frame, before the scroll listener writes a real
-     value — without it `calc(var(--backdrop-y) * 0.85)` is invalid and every
-     layer drops its transform. */
-  --backdrop-y: 0px;
+  /* No --backdrop-y here any more. Layers used to position themselves with
+     `calc(var(--backdrop-y) * <speed>)`, which meant one property write per
+     scroll frame invalidated style for this whole subtree and forced a repaint
+     — a custom property cannot be composited. The scroll listener in
+     page-backdrop.tsx now writes each layer's `transform` directly instead. */
 
   /* The REAL margin beside the content column, in pure CSS.
 
@@ -1208,10 +1318,49 @@ html[data-reduce-motion="true"] #ambient-blocks {
     );
 }
 
+/* LIGHT MODE HAS NO BACKDROP.
+
+   There was an above-ground sky-and-hills scene here for the light theme; it
+   has been removed while a different direction is decided. Hiding the host
+   rather than conditionally rendering it keeps the theme swap pure CSS — no
+   flash of the wrong scene on first paint — and costs light mode nothing at
+   all: a `display: none` subtree is not painted, not composited, and holds no
+   layers. The dark scene is the only one left, so its wrapper no longer needs
+   a `theme-only-dark` class. */
+html[data-theme="light"] #page-backdrop {
+  display: none;
+}
+
 /* The backdrop STAYS under reduced motion — a textured wall is not motion.
    What the component drops is the differential: every layer goes to speed 1.0,
    so nothing moves relative to anything else and the page simply has a
    background. Print gets nothing. */
 @media print {
   #page-backdrop { display: none; }
+}
+
+/* =========================================================================
+   OFF-SCREEN PARALLAX SCENES
+   Applied by the IntersectionObserver in scene/animated-background.tsx.
+   ========================================================================= */
+
+/* `visibility: hidden` ALONE DOES NOT HELP, and that is the whole reason this
+   class exists rather than an inline style.
+
+   Every parallax layer sets `will-change: transform` (parallax-layer.tsx), which
+   promotes it to its own composited layer PERMANENTLY — independent of whether
+   it is visible. So a hero scrolled thousands of pixels away still cost the
+   compositor real time every frame. Hiding it changed nothing; only removing
+   the elements did. Dropping `will-change` is what actually releases the layer.
+
+   `!important` because `will-change` is set inline by the component, and inline
+   wins over a class otherwise. It goes back to `transform` the moment the scene
+   is near the viewport again, so the promotion is there whenever it is doing
+   any animating. */
+.parallax-stack-idle {
+  visibility: hidden;
+}
+
+.parallax-stack-idle > * {
+  will-change: auto !important;
 }

@@ -1,11 +1,10 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { isAmbientRoute } from "@/frontend/lib/ambient/ambient-routes";
-import { measurePageBand, type PageBand } from "@/frontend/lib/ambient/page-band";
+import { measurePageBand, sameBand, type PageBand } from "@/frontend/lib/ambient/page-band";
 import { useReducedMotion } from "@/frontend/lib/animation/use-reduced-motion";
-import { SkyBackdrop } from "./sky-backdrop";
 import { StrataWall } from "./strata-wall";
 
 /**
@@ -18,12 +17,22 @@ import { StrataWall } from "./strata-wall";
  * class is gone (see `layout.tsx`); this component is what now occupies the
  * space it was wasting.
  *
- * ONE PROPERTY DRIVES EVERYTHING. A single rAF-throttled scroll listener writes
- * `--backdrop-y` on this container; every layer positions itself with
- * `calc(var(--backdrop-y) * <speed>)`. React is never in the scroll path, the
- * multiplication is the compositor's problem, and adding a layer costs one line
- * rather than another subscription. The handler only ever READS `scrollY` and
- * WRITES a custom property — it never touches layout, so it cannot thrash.
+ * HOW THE LAYERS MOVE, and why not the obvious way. Each layer registers itself
+ * with a parallax speed; one rAF-throttled scroll listener writes
+ * `el.style.transform` on each of them directly.
+ *
+ * The obvious version — write one `--backdrop-y` custom property on this host
+ * and let every layer read it through `calc(var(--backdrop-y) * <speed>)` — is
+ * what this used to do, and it is a performance trap dressed as elegance. A
+ * custom-property write CANNOT be composited: it invalidates style for every
+ * descendant that references the variable, so each scroll frame paid a style
+ * recalculation across the whole ~45-element subtree and a repaint, which is
+ * precisely the work `translate3d` exists to avoid. Writing the transform
+ * straight onto each element skips style resolution entirely and lands on the
+ * compositor. Same one listener, same arithmetic, no variable.
+ *
+ * The handler only READS `scrollY` and WRITES transforms — it never touches
+ * layout, so it cannot force a reflow.
  *
  * STACKING. Rendered as the first child of `<body>`, before `<AmbientBlocks />`,
  * at `z-index: 0` (`globals.css`). Both are z-index 0, so DOM order decides:
@@ -43,8 +52,27 @@ export function PageBackdrop() {
   const pathname = usePathname();
   const reducedMotion = useReducedMotion();
   const hostRef = useRef<HTMLDivElement>(null);
+  /**
+   * Every moving layer, with the speed it travels at. Populated by ref
+   * callbacks, so the set is always exactly what is mounted — including the
+   * theme subtree that is currently `display: none`, which costs one wasted
+   * transform write per frame and saves re-wiring on every theme toggle.
+   */
+  const layers = useRef(new Map<HTMLElement, number>());
   const [band, setBand] = useState<PageBand | null>(null);
   const [narrow, setNarrow] = useState(false);
+
+  /** `register(speed)` returns a ref callback. React 19 cleans up on unmount. */
+  const register = useCallback(
+    (speed: number) => (el: HTMLDivElement | null) => {
+      if (!el) return;
+      layers.current.set(el, speed);
+      return () => {
+        layers.current.delete(el);
+      };
+    },
+    [],
+  );
 
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -53,7 +81,10 @@ export function PageBackdrop() {
     const evaluate = () => {
       if (cancelled) return;
       setNarrow(window.innerWidth < NARROW);
-      setBand(measurePageBand());
+      // Keep the previous object when nothing moved — see `sameBand`. Without
+      // this every ResizeObserver fire re-renders the whole backdrop.
+      const next = measurePageBand();
+      setBand((prev) => (sameBand(prev, next) ? prev : next));
     };
 
     evaluate();
@@ -87,9 +118,13 @@ export function PageBackdrop() {
     let raf = 0;
     const write = () => {
       raf = 0;
-      // Negative: as the page scrolls down, the wall travels up past the
-      // viewport. At scrollY === band.top the wall's own top sits at y=0.
-      host.style.setProperty("--backdrop-y", `${band.top - window.scrollY}px`);
+      // Negative once you are into the band: as the page scrolls down the wall
+      // travels up past the viewport. At scrollY === band.top the wall's own
+      // top sits at y=0.
+      const y = band.top - window.scrollY;
+      for (const [el, speed] of layers.current) {
+        el.style.transform = `translate3d(0, ${(y * speed).toFixed(1)}px, 0)`;
+      }
     };
 
     // Write once immediately rather than waiting for the first scroll event.
@@ -117,18 +152,20 @@ export function PageBackdrop() {
   return (
     <div id="page-backdrop" ref={hostRef} aria-hidden="true">
       {/*
-        The theme swap is CSS, not JS, and that is load-bearing. `data-theme` is
-        stamped on <html> before first paint by THEME_BOOT in layout.tsx, so
-        `.theme-only-*` (globals.css) resolves on the very first frame. Reading
-        the theme in an effect — the way `BiomeScene`'s `lightScene` prop does —
-        flashes one dark frame, which is tolerable below the fold and very much
-        not for a full-page backdrop.
+        DARK THEME ONLY. There was a light-theme counterpart here — an
+        above-ground sky-and-hills scene — and it has been removed at the
+        designer's request; light mode now shows the plain `html` gradient while
+        a different direction is decided. `globals.css` hides this whole host
+        under `[data-theme="light"]`, so light mode pays nothing for it: no
+        paint, no compositing, no second scene to keep in sync.
       */}
-      <div className="theme-only-dark absolute inset-0 overflow-hidden">
-        <StrataWall height={height} parallax={parallax} oreCount={oreCount} />
-      </div>
-      <div className="theme-only-light absolute inset-0 overflow-hidden">
-        <SkyBackdrop height={height} parallax={parallax} />
+      <div className="absolute inset-0 overflow-hidden">
+        <StrataWall
+          height={height}
+          parallax={parallax}
+          oreCount={oreCount}
+          register={register}
+        />
       </div>
 
       {/*

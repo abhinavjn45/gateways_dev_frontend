@@ -57,10 +57,25 @@ export function SiteNav({ onOpenEvents, onOpenSchedule }: SiteNavProps) {
   useEffect(() => {
     // passive: this listener never calls preventDefault, and saying so lets the
     // browser keep scrolling on the compositor thread.
-    const onScroll = () => setScrolled(window.scrollY > 24);
-    onScroll();
+    //
+    // rAF-coalesced as well: a scroll gesture fires this far more often than
+    // once a frame, and each call read `scrollY` — a layout read — on the main
+    // thread. React bailed out of the repeated `setScrolled(true)`, but the read
+    // itself still happened every event.
+    let frame = 0;
+    const read = () => {
+      frame = 0;
+      setScrolled(window.scrollY > 24);
+    };
+    const onScroll = () => {
+      if (!frame) frame = requestAnimationFrame(read);
+    };
+    read();
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    return () => {
+      if (frame) cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", onScroll);
+    };
   }, []);
 
   return (

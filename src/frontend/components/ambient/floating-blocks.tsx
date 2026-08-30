@@ -29,12 +29,15 @@ import { useBlockPointer } from "./use-block-pointer";
  * This is the rule `voxel/village-scene.tsx` states explicitly: React is never
  * in the hot loop.
  *
- * BLOCKS LIVE IN DOCUMENT SPACE, NOT VIEWPORT SPACE. Each block owns a `docY`
- * measured from the top of the document; the frame loop subtracts `scrollY` to
- * find where it belongs on screen. The canvas itself stays fixed and
- * viewport-sized, so a 6000px page costs exactly what a 2000px one does -- only
- * the coordinate space is the page's. Blocks rise out of the footer, travel up
- * behind the content, and retire at the hero's lower edge (`page-band.ts`).
+ * BLOCKS LIVE IN VIEWPORT SPACE AND IGNORE SCROLL ENTIRELY. Each block owns a
+ * `screenY` in viewport pixels; it drifts upward on its own clock and wraps at
+ * the top. Nothing here reads `scrollY`.
+ *
+ * They used to be document-anchored — rising out of the footer and retiring at
+ * the hero — so scrolling carried them past you. That tied every block to the
+ * scroll path and made the field's density a function of page length. Detaching
+ * them means the blocks simply hang in the air in front of whatever you have
+ * scrolled to, and the frame loop no longer touches the document at all.
  *
  * SPAWN BANDS. Horizontally, blocks are confined to the outer margins, never
  * the centre column where the site's copy and CTAs live. That is the same
@@ -65,11 +68,11 @@ interface BlockMotion {
   assetIndex: number;
   /** Horizontal position, in world units. */
   x: number;
-  /** Vertical position, in DOCUMENT pixels from the top of the page. */
-  docY: number;
+  /** Vertical position, in VIEWPORT pixels from the top of the screen. */
+  screenY: number;
   z: number;
   size: number;
-  /** Document pixels per second, upward. */
+  /** Viewport pixels per second, upward. */
   rise: number;
   swayAmp: number;
   swayFreq: number;
@@ -87,7 +90,7 @@ interface BlockMotion {
 
 export function FloatingBlocks({ count, band }: { count: number; band: PageBand }) {
   const pack = use(loadAmbientPack());
-  const { viewport, size, camera, gl } = useThree();
+  const { viewport, size, camera } = useThree();
 
   const meshes = useRef<Array<THREE.Mesh | null>>([]);
   const overlays = useRef<Array<THREE.Mesh | null>>([]);
@@ -154,15 +157,13 @@ export function FloatingBlocks({ count, band }: { count: number; band: PageBand 
 
   const buildMotion = useCallback((): BlockMotion[] => {
     const halfW = viewport.width / 2;
-    const b = bandRef.current;
-    const span = b.bottom - b.top;
+    const vh = size.height;
     return seeds.map((seed, i) => ({
       assetIndex: seed.assetIndex,
       x: pickX(halfW, i % 2 === 0 ? -1 : 1),
-      // Spread evenly down the band with a little jitter, so the field is
-      // already populated on first paint instead of trickling up from the
-      // footer over the next few minutes.
-      docY: b.top + ((i + 0.5) / seeds.length) * span + (rnd() - 0.5) * (span / seeds.length),
+      // Spread evenly down the viewport with a little jitter, so the field is
+      // already populated on first paint instead of drifting in from below.
+      screenY: ((i + 0.5) / seeds.length) * vh + (rnd() - 0.5) * (vh / seeds.length),
       z: -rnd() * 4,
       size: 0.68 + rnd() * 0.18,
       rise: RISE_MIN + rnd() * (RISE_MAX - RISE_MIN),
@@ -176,20 +177,21 @@ export function FloatingBlocks({ count, band }: { count: number; band: PageBand 
       respawnAt: 0,
       popT: 1,
     }));
-  }, [pickX, rnd, seeds, viewport.width]);
+  }, [pickX, rnd, seeds, size.height, viewport.width]);
 
   /** Which block, if any, sits under these client coordinates. */
   const hitTest = useCallback(
     (clientX: number, clientY: number): number | null => {
       const live = motion.current;
       if (!live) return null;
-      const rect = gl.domElement.getBoundingClientRect();
-      // Allocated per call rather than reused from a memo: this runs at most
-      // once per animation frame, so one Vector2 is noise, and a shared scratch
-      // vector is a mutable value captured by a hook argument.
+      // `size` rather than `getBoundingClientRect()`: the canvas is
+      // `position: fixed; inset: 0` (see #ambient-blocks in globals.css), so its
+      // box is the viewport and its origin is 0,0. R3F already tracks that size
+      // and updates it on resize, so using it turns a forced layout read on the
+      // pointer path into a property lookup.
       const ndc = new THREE.Vector2(
-        ((clientX - rect.left) / rect.width) * 2 - 1,
-        -((clientY - rect.top) / rect.height) * 2 + 1,
+        (clientX / size.width) * 2 - 1,
+        -(clientY / size.height) * 2 + 1,
       );
       raycaster.setFromCamera(ndc, camera);
 
@@ -203,7 +205,7 @@ export function FloatingBlocks({ count, band }: { count: number; band: PageBand 
       if (!hit) return null;
       return meshes.current.findIndex((m) => m === hit.object);
     },
-    [camera, gl, raycaster],
+    [camera, size.width, size.height, raycaster],
   );
 
   const onHover = useCallback((id: number | null) => {
@@ -264,7 +266,6 @@ export function FloatingBlocks({ count, band }: { count: number; band: PageBand 
     // Pixels per world unit, derived rather than hard-coded so it stays correct
     // if the camera zoom is ever retuned.
     const ppu = size.height / viewport.height;
-    const scrollY = window.scrollY;
 
     // Drain input commands before stepping, so a click is honoured on the very
     // next frame rather than the one after.
@@ -298,9 +299,8 @@ export function FloatingBlocks({ count, band }: { count: number; band: PageBand 
         if (t >= b.respawnAt) {
           b.assetIndex = pickAsset();
           b.x = pickX(halfW);
-          // Broken blocks come back at the foot of the band, so the page
-          // always refills from the footer rather than popping in mid-column.
-          b.docY = band.bottom + halfPx;
+          // Broken blocks re-enter from just below the fold.
+          b.screenY = size.height + halfPx;
           b.state = "alive";
           b.crackT = 0;
           b.popT = 0;
@@ -309,24 +309,19 @@ export function FloatingBlocks({ count, band }: { count: number; band: PageBand 
         continue;
       }
 
-      b.docY -= b.rise * dt;
-      // Retired at the hero's lower edge and sent back to the footer. The
-      // extra half-block on each end means the wrap happens fully out of
-      // sight, behind the hero and behind the footer respectively.
-      if (b.docY + halfPx < band.top) {
-        b.docY = band.bottom + halfPx;
+      b.screenY -= b.rise * dt;
+      // Wraps a half-block clear of the header so the reset happens out of
+      // sight rather than popping in under the nav.
+      if (b.screenY + halfPx < band.header) {
+        b.screenY = size.height + halfPx;
         b.x = pickX(halfW);
       }
 
-      const screenY = b.docY - scrollY;
-      // Hidden under the sticky header and below the fold. The header clause is
-      // what keeps blocks out of the chrome now that they scroll with the page.
-      const onScreen = screenY + halfPx > band.header && screenY - halfPx < size.height;
-      mesh.visible = onScreen;
+      // Still hidden while passing behind the sticky header — that is the one
+      // piece of page chrome the blocks must not appear over.
+      mesh.visible = b.screenY + halfPx > band.header;
 
-      // World Y from screen Y: the canvas is fixed, so this is the only place
-      // the page's scroll position enters the scene.
-      const worldY = viewport.height / 2 - screenY / ppu;
+      const worldY = viewport.height / 2 - b.screenY / ppu;
       mesh.position.set(b.x + Math.sin(t * b.swayFreq + b.swayPhase) * b.swayAmp, worldY, b.z);
       mesh.rotation.x += b.spinX * dt;
       mesh.rotation.y += b.spinY * dt;
