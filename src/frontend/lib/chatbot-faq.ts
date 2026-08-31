@@ -39,7 +39,6 @@
  * Ordered by what a first-time visitor needs first; "Still to be announced"
  * sits last because every answer in it is a deferral.
  */
-import { FEST_EVENTS } from "./events";
 import { FEST, inr } from "./fest";
 
 /**
@@ -221,10 +220,10 @@ export const CHATBOT_FAQ: FaqEntry[] = [
     question: "Do I need a team, or can I enter on my own?",
     category: "Events",
     answer:
-      `Both exist. Several events are individual entries, others run in teams of two, ` +
-      `and the hackathon takes teams of two to four. Each of the ${FEST_EVENTS.length} events states ` +
-      `its own participation format on its event page — check it before you register, ` +
-      `because the format is fixed per event and not negotiable on the day.`,
+      "Both exist. Several events are individual entries, others run in teams of two, " +
+      "and the hackathon takes teams of two to four. Every event states its own " +
+      "participation format on its event page — check it before you register, " +
+      "because the format is fixed per event and not negotiable on the day.",
   },
   {
     question: "Where do I find the rules for an event?",
