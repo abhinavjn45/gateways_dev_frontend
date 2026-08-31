@@ -2,18 +2,28 @@
 
 import Link from "next/link";
 import { BackLink, BlockPanel } from "@/frontend/components/mc";
-import { EVENT_TRACKS, eventsForTrack } from "@/frontend/lib/events";
+import { EVENT_TRACKS, eventsForTrack, fetchFestEvents } from "@/frontend/lib/events";
+import { useAsync } from "@/frontend/hooks/use-async";
 
 /**
  * Rules & Regulations.
  *
  * Two layers, because that is how the fest actually works: a short set of
  * fest-wide rules that bind every participant, and then each event's own rules
- * document. The per-event links are read straight off `FEST_EVENTS` rather than
- * being listed here, so an event added to the sheet appears on this page
+ * document. The per-event links are read straight off the events sheet rather
+ * than being listed here, so an event added to the sheet appears on this page
  * without anyone remembering to update it.
+ *
+ * Events are FETCHED, not imported: they come from a CSV at runtime, so this
+ * renders the fest-wide rules immediately and fills the per-event grids in when
+ * they arrive. Those rules are the half a visitor most often came for and they
+ * do not depend on the sheet, so blocking the whole page on the fetch would be
+ * the wrong trade.
  */
 export function RulesScreen() {
+  const { data: allEventsData, loading: eventsLoading } = useAsync(fetchFestEvents, []);
+  const allEvents = allEventsData || [];
+
   const festWide = [
     "Registration is through this website only. A pass bought at one tier cannot be claimed at another.",
     "Carry your institution ID card and an undertaking letter from your institution to every event.",
@@ -52,8 +62,16 @@ export function RulesScreen() {
           <h2 className="font-pixel text-[11px] uppercase text-mc-text-dim">
             {track.label} — event rules
           </h2>
+          {/* Says which of the two empty states this is. A bare empty grid
+              reads as "this track has no events", which is wrong while the
+              sheet is still in flight and would send a visitor away. */}
+          {eventsLoading ? (
+            <p className="mt-[var(--mc-unit)] text-[17px] text-mc-text-dim">
+              Loading events…
+            </p>
+          ) : null}
           <ul className="mt-[var(--mc-unit)] grid gap-[var(--mc-unit)] sm:grid-cols-2 lg:grid-cols-3">
-            {eventsForTrack(track.id).map((event) => (
+            {eventsForTrack(allEvents, track.id).map((event) => (
               <li key={event.slug}>
                 <BlockPanel
                   variant="panel"
