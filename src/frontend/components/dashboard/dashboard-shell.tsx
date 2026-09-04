@@ -240,13 +240,13 @@ function SidebarContent({
           <div className="w-8 shrink-0">
             {/* Light theme: show black logo */}
             <img 
-              src="/art/brand/Gateways Black.svg" 
+              src="https://cdn.jsdelivr.net/gh/abhinavjn45/gateways2026-assets@main/art/brand/gateways-black.svg" 
               alt="Gateways Logo" 
               className="theme-only-light w-full h-auto opacity-90 group-hover:opacity-100 transition-opacity"
             />
             {/* Dark theme: show white logo */}
             <img 
-              src="/art/brand/Gateways White.svg" 
+              src="https://cdn.jsdelivr.net/gh/abhinavjn45/gateways2026-assets@main/art/brand/gateways-white.svg" 
               alt="Gateways Logo" 
               className="theme-only-dark w-full h-auto opacity-90 group-hover:opacity-100 transition-opacity"
             />
