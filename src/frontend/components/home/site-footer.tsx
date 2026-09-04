@@ -161,25 +161,21 @@ export function SiteFooter() {
           {/* Column 4: App Download */}
           <div className="md:col-span-2 flex flex-col gap-[calc(var(--mc-unit)*1.5)]">
             <h3 className="font-pixel text-[12px] uppercase text-mc-gold-light">Get The App</h3>
-            <div className="flex flex-col gap-3 items-start">
-              <a 
-                href="#" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="inline-flex transition-transform hover:scale-105"
+            <div className="flex flex-col gap-3 items-start relative">
+              <div 
+                className="inline-flex opacity-50 grayscale cursor-not-allowed"
+                title="Coming Soon"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg" alt="Download on App Store" className="h-10 object-contain" />
-              </a>
-              <a 
-                href="#" 
-                target="_blank" 
-                rel="noopener noreferrer" 
-                className="inline-flex transition-transform hover:scale-105 mt-1"
+              </div>
+              <div 
+                className="inline-flex opacity-50 grayscale cursor-not-allowed mt-1"
+                title="Coming Soon"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Get it on Google Play" className="h-[2.8rem] object-contain" />
-              </a>
+              </div>
             </div>
           </div>
         </div>
