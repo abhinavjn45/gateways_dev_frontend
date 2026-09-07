@@ -367,14 +367,14 @@ export function AnimatedBackground({
         aria-hidden
         className={cn(
           "pointer-events-none absolute inset-0 -z-10",
-          scene.baseGradientNight && "theme-only-light",
+          scene.baseGradientNight && "scene-only-light",
         )}
         style={{ background: scene.baseGradient }}
       />
       {scene.baseGradientNight ? (
         <div
           aria-hidden
-          className="theme-only-dark pointer-events-none absolute inset-0 -z-10"
+          className="scene-only-dark pointer-events-none absolute inset-0 -z-10"
           style={{ background: scene.baseGradientNight }}
         />
       ) : null}
@@ -391,7 +391,7 @@ export function AnimatedBackground({
             sceneKey={scene.key}
             palette={scene.palette}
             handleRef={register(l.key)}
-            className={cn(l.theme && `theme-only-${l.theme}`, l.className)}
+            className={l.theme ? `scene-only-${l.theme}` : undefined}
           />
         ))}
       </div>
@@ -430,7 +430,7 @@ export function BiomeScene({
   // and this is not: every current caller sits well down the page, so the
   // correction lands long before the element is on screen. If a `lightScene`
   // is ever wanted above the fold, render both and swap with the
-  // `theme-only-dark` / `theme-only-light` classes in globals.css.
+  // `scene-only-dark` / `scene-only-light` classes in globals.css.
   const { resolved } = useTheme();
   const key = lightScene && resolved === "light" ? lightScene : scene;
 

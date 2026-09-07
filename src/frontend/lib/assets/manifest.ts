@@ -175,10 +175,13 @@ export const ART = {
    *   so it must only be pixelated at an integer multiple of its own size —
    *   which in practice means never; render it at a CSS size and leave sampling
    *   alone.
-   * - `gatewaysCrestPixel` IS pixel art: the crest redrawn at 152px against the
-   *   gold token ramp by `scripts/gen-splash-mask.mjs`. Draw it ONLY at integer
-   *   multiples of 152 (304/456/608/760) and always with `pixelated`. It is what
-   *   the splash screen assembles out of flying blocks.
+   * - `gatewaysCrestPixel` IS pixel art: `gatewaysColoured` — the nav's mark —
+   *   rasterised to 152px against the gold token ramp by
+   *   `scripts/gen-splash-mask.mjs`. Draw it ONLY at integer multiples of 152
+   *   (304/456/608/760) and always with `pixelated`. It is what the splash
+   *   screen resolves into, which is why it is baked from the SAME source the
+   *   header uses: two different drawings of the logo seconds apart reads as a
+   *   mistake. Regenerate it whenever that SVG changes.
    * - `gatewaysCrestAperture` is not artwork at all — it is the crest's filled
    *   silhouette, used only as a CSS mask so the splash can zoom into the logo
    *   and reveal the page through it. Never render it directly.
@@ -194,9 +197,13 @@ export const ART = {
     christBlack: { src: "/art/brand/Christ Black.svg", w: 323, h: 96, kind: "sprite", note: "CHRIST wordmark, black SVG" },
     christSmallWhite: { src: "/art/brand/Christ Small White.svg", w: 96, h: 96, kind: "sprite", note: "CHRIST seal, white SVG" },
     christSmallBlack: { src: "/art/brand/Christ Small Black.svg", w: 96, h: 96, kind: "sprite", note: "CHRIST seal, black SVG" },
-    gatewaysColoured: { src: "/art/brand/Gateways Coloured.svg", w: 300, h: 100, kind: "sprite", note: "Gateways coloured SVG" },
-    gatewaysBlackSvg: { src: "/art/brand/Gateways Black.svg", w: 300, h: 100, kind: "sprite", note: "Gateways black SVG" },
-    gatewaysWhiteSvg: { src: "/art/brand/Gateways White.svg", w: 300, h: 100, kind: "sprite", note: "Gateways white SVG" },
+    // 375x375 is the SVGs' real viewBox. They were recorded as 300x100 — wrong,
+    // and latent rather than harmless: the nav happens to pass only `src`, so
+    // nothing reads these today, but any consumer that did would lay out a
+    // square logo as a 3:1 letterbox.
+    gatewaysColoured: { src: "/art/brand/Gateways Coloured.svg", w: 375, h: 375, kind: "sprite", note: "Gateways coloured SVG — nav mark, and the splash crest's source" },
+    gatewaysBlackSvg: { src: "/art/brand/Gateways Black.svg", w: 375, h: 375, kind: "sprite", note: "Gateways black SVG" },
+    gatewaysWhiteSvg: { src: "/art/brand/Gateways White.svg", w: 375, h: 375, kind: "sprite", note: "Gateways white SVG" },
     gatewaysCrest: { src: "/art/brand/Gateways_Pixel.png", w: 1254, h: 1254, kind: "sprite", note: "Gateways crest, gold" },
     gatewaysCrestBlack: { src: "/art/brand/gateways_black.png", w: 1254, h: 1254, kind: "sprite", note: "Gateways crest, black — light theme" },
     gatewaysCrestPixel: { src: "/art/brand/gateways-crest-pixel.png", w: 152, h: 152, kind: "sprite", note: "crest, pixel art" },
