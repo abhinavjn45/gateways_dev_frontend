@@ -685,6 +685,39 @@ html[data-theme="light"] .theme-only-light {
   display: block;
 }
 
+/* ---- Scene layer theme gate -----------------------------------------------
+   Same job as `.theme-only-*` above, opposite DEFAULT, and the difference is a
+   bug fix rather than a preference.
+
+   `data-theme` is not in the server-rendered HTML — THEME_BOOT stamps it at
+   runtime, and under the App Router `next/script beforeInteractive` is
+   serialised into the flight payload rather than emitted as a blocking inline
+   script, so there is at least one paint with no attribute at all.
+
+   For an icon that is invisible. For a scene it is not: `.theme-only-*` hides
+   BOTH variants until the attribute arrives, so that paint had no sky and no
+   `night-wash`, leaving the shared daylight landforms glaring over the dark
+   body — a full-screen green flash before the splash covered it.
+
+   So the dark stack is the DEFAULT and light is the override, exactly as every
+   token in this file already works. With no attribute the scene now matches the
+   body it sits on, and the attribute only ever flips it to light. */
+.scene-only-dark {
+  display: block;
+}
+
+.scene-only-light {
+  display: none;
+}
+
+html[data-theme="light"] .scene-only-dark {
+  display: none;
+}
+
+html[data-theme="light"] .scene-only-light {
+  display: block;
+}
+
 /* ============================================================================
    Themed cursor — a pickaxe, one per theme
 
@@ -864,43 +897,6 @@ textarea,
   100% { transform: translate(0, 0); }
 }
 
-/* ---- Rain -----------------------------------------------------------------
-   The hero's dark theme only. CSS rather than a GSAP tween because the scene's
-   `drift` animates background-position-X and rain has to fall: adding a
-   vertical axis to that tween engine to serve one layer is more machinery than
-   the effect is worth, and this is a single looping animation on a single
-   element with nothing to coordinate — the case the animation ruleset assigns
-   to CSS, same as `sky-float` above.
-
-   TRAVEL IS EXACTLY ONE TILE HEIGHT (256px, matching the `rain` layer's `h`
-   AND its explicit `fit` in scenes.ts — the layer is pinned to its natural size
-   precisely so those two numbers can be the same one). Any other distance puts a visible jump in the rain every cycle,
-   for the same reason the drift tweens travel exactly one tile width. Change
-   one and you must change the other.
-
-   `background-repeat` is overridden because ParallaxLayer sets `repeat-x` for
-   every tiled layer, and rain scrolling vertically through a strip that does
-   not repeat downward would run out of tile.
-
-   Reduced motion needs no branch here, but NOT for the reason `sky-float` gets
-   away with it. That one literally returns to its origin; this one ends a full
-   tile DOWN. It survives anyway because the override also pins
-   `animation-iteration-count: 1`, so the rain snaps to the 100% frame — and at
-   exactly one tile of travel those pixels are the pixels it started on. The
-   rain is then visible and completely still, which is what was wanted.
-
-   This is why the travel distance must stay exactly one tile. Any other value
-   would leave reduced-motion users looking at a half-scrolled tile. */
-@keyframes rain-fall {
-  from { background-position: 0 0; }
-  to   { background-position: 0 256px; }
-}
-
-.rain-fall {
-  background-repeat: repeat !important;
-  animation: rain-fall 0.55s linear infinite;
-}
-
 /* The scroll cue's up-and-down. Bigger travel than `float` because this one has
    a job to do — it is telling the visitor the page continues below the fold,
    and a 6px nudge does not read as an instruction. */
@@ -910,15 +906,16 @@ textarea,
 }
 
 /* ============================================================================
-   Crest-assembly splash (see components/portal/pixel-splash.tsx)
+   Crest splash (see components/portal/pixel-splash.tsx)
    ========================================================================= */
 
 /* --splash-size is ALWAYS an integer multiple of the pixel crest's 152px —
-   because the assembled artwork is real pixel art and a fractional scale makes
-   it shimmer (the same integer-scaling rule as --mc-scale).
-   152 = 38 x 4, so every valid size also divides by the 38-cell assembly grid
-   and by the 4 art pixels per block: --splash-tile and the art pixels both land
-   on whole pixels, and no hairline seams appear between assembled blocks.
+   because the artwork is real pixel art and a fractional scale makes it shimmer
+   (the same integer-scaling rule as --mc-scale).
+   It must divide by 152 rather than merely be near it: the canvas resolves
+   through backing stores of 19, 38, 76 and 152, so a fractional --splash-size
+   would land every one of those steps on part-pixels and the blocks would crawl
+   as the resolve progressed instead of sitting still and getting smaller.
    The extra step at 1280 exists so a small laptop does not get a crest that
    nearly touches both edges. */
 /* Declared on the root, not the stage, because the backdrop's aperture has to be
@@ -929,7 +926,6 @@ textarea,
    dissolve the ones in the source art. */
 #pixel-splash {
   --splash-size: 456px; /* 152 x 3 */
-  --splash-tile: calc(var(--splash-size) / 38);
   --splash-blur: 22px;
 }
 
@@ -1009,7 +1005,16 @@ textarea,
 .splash-scene {
   position: absolute;
   inset: -12%;
-  filter: blur(var(--splash-blur)) brightness(0.55) saturate(0.9);
+  /* Barely dimmed, and that is a CHANGE from the 0.55 this used to carry.
+     0.55 was tuned when `overworld-panorama` had only a daylight stack, so the
+     splash was always dimming a BRIGHT landscape and 0.55 left a dim one. The
+     scene now has a night stack, which arrives already dark and then passes
+     under the veil below — three dimmings in series took the backdrop to solid
+     black, and a black backdrop turns the closing zoom from a focus pull into a
+     hard cut to the lit hero. That cut is what reads as a flash.
+     The veil is what separates the crest from the picture; this filter only has
+     to soften it. Retune the veil, not this. */
+  filter: blur(var(--splash-blur)) brightness(1) saturate(0.95);
   transform: translateZ(0);
   animation: splash-scene-in 0.55s ease-out both;
 }
@@ -1027,7 +1032,7 @@ html[data-theme="light"] .splash-scene {
 
 /* Sits the crest off the landscape. `color-mix` toward --void means ONE rule
    covers both themes — the token already flips from near-black to sky — and the
-   radial keeps the centre clearest, so the assembling blocks land on the calmest
+   radial keeps the centre clearest, so the resolving crest sits on the calmest
    part of the picture while the edges stay close to the old solid fill. */
 .splash-veil {
   background: radial-gradient(
@@ -1042,7 +1047,7 @@ html[data-theme="light"] .splash-scene {
    It mounts a frame after first paint, and mounting it means rasterising four
    generated layers — about 100KB of SVG — at 1600x900 and running a 22px blur
    over the result. That landed as a hard cut from flat --void to a full
-   landscape, one frame into the assembly: the flash at the start of the splash.
+   landscape, one frame into the resolve: the flash at the start of the splash.
 
    A CSS animation rather than an `opacity: 0` resting state, so the layer is
    never left invisible if the animation does not run — the same failure mode
@@ -1054,42 +1059,18 @@ html[data-theme="light"] .splash-scene {
   to { opacity: 1; }
 }
 
-.splash-tile {
-  width: var(--splash-tile);
-  height: var(--splash-tile);
-  background-size: var(--splash-size) var(--splash-size);
-  background-repeat: no-repeat;
+.splash-crest {
+  width: var(--splash-size);
+  height: var(--splash-size);
   /* Integer UPSCALE of pixel art, so nearest-neighbour is exactly right here —
      it keeps the art's pixel edges hard. (The full-detail 1254px crest is the
-     opposite case and must never be pixelated; see the manifest's brand note.) */
+     opposite case and must never be pixelated; see the manifest's brand note.)
+
+     This is also what makes the resolve work at all. The canvas backing store
+     is only 19-152px square; the blockiness the visitor sees is this rule
+     blowing that up to --splash-size without smoothing. Take `pixelated` away
+     and the coarse steps come out as a blur instead of as blocks. */
   image-rendering: pixelated;
-}
-
-/* The cube face worn during flight.
-   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-   A GRADIENT, not the `bevel` utility, and the difference is worth 639 repaints
-   a frame. `bevel` is a three-part box-shadow, two inset and one cast OUTSIDE
-   the element. A box-shadow cannot be composited, so every one of these faces
-   forced a paint on every frame of the assembly — and because the outer part
-   falls outside the box, each face also dirtied its neighbours' rectangles,
-   which is the specific reason the flight stuttered rather than merely being
-   busy.
-
-   It was also drawn at the wrong size. `--mc-bevel` is an absolute 3px (2px on
-   mobile) tuned for buttons and panels, but a tile here is only --splash-size/38
-   — 8px on a phone. A 2px inset from each side left a 4px core, so half of each
-   flying block was bevel, and the outer drop smeared onto the block below it.
-
-   Percentages fix both problems at once: contained inside the box, so no
-   neighbour is touched, and proportional, so the step reads the same at 8px as
-   at 20px. */
-.splash-face {
-  background-image: linear-gradient(
-    135deg,
-    var(--mc-edge-hi) 0 14%,
-    transparent 14% 86%,
-    var(--mc-edge-lo) 86% 100%
-  );
 }
 
 /* Faint buildable-space grid behind the crest. */
@@ -1125,17 +1106,15 @@ html[data-theme="light"] .splash-scene {
    not possible any other way here: the crest is a raster image, so there is no
    fill token to swap.
 
-   Applied ONCE on the stage rather than per element, which is the whole reason
-   it is affordable — it catches the 639 tiles, their cube faces and the
-   shockwave ring in a single filtered layer, instead of putting 641 separate
-   filters on nodes GSAP is already animating every frame. Unlike the backdrop's
-   blur, this is a per-pixel colour matrix with no kernel, so it is close to free.
+   Applied on the stage rather than on the canvas so it catches the shockwave
+   ring too, in one filtered layer. Unlike the backdrop's blur this is a
+   per-pixel colour matrix with no kernel, so it is close to free.
 
-   The one thing it does cost: the flight faces' bevel goes black along with the
-   face, so the blocks read as flat black squares while they fly rather than as
-   lit cubes. That is inherent to "make it black" — a bevel is two tints of the
-   fill, and black has no tints — and it resolves the moment the faces fade off
-   the finished mark. */
+   It survives the resolve unchanged: the canvas is repainted four times at
+   increasing resolutions and the filter simply re-applies to whatever is in it,
+   so every step is black in this theme and gold in the other with no extra
+   work. It also cannot desynchronise from the artwork the way a second, black
+   copy of the crest PNG would. */
 html[data-theme="light"] .splash-stage {
   filter: brightness(0);
 }

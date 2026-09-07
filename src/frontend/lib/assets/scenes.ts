@@ -66,22 +66,21 @@ export interface SceneLayer extends AssetSpec {
   /**
    * Render this layer in ONE theme only.
    *
-   * Compiles to the `.theme-only-dark` / `.theme-only-light` classes in
-   * globals.css, which key off the `data-theme` attribute THEME_BOOT stamps
-   * before first paint. That is deliberate and it is the only correct route
-   * above the fold: branching on `useTheme` resolves "dark" on the first
-   * client pass and corrects in an effect, so a light-theme visitor gets one
-   * frame of the dark scene — see the note on `BiomeScene`'s `lightScene`.
+   * Compiles to the `.scene-only-dark` / `.scene-only-light` classes in
+   * globals.css, which key off the `data-theme` attribute. CSS and not
+   * `useTheme` is the only correct route above the fold: that hook resolves
+   * "dark" on the first client pass and corrects in an effect, so a
+   * light-theme visitor would get a frame of the dark scene — see the note on
+   * `BiomeScene`'s `lightScene`.
+   *
+   * Those classes DEFAULT TO DARK rather than hiding both variants, because
+   * `data-theme` is NOT in the server-rendered HTML. See their definition in
+   * globals.css for why that matters here and not for the theme icons.
    *
    * Both variants sit in the DOM and one is hidden. Layers are `aria-hidden`
    * already, so the hidden twin costs nothing to assistive tech.
    */
   theme?: "dark" | "light";
-  /**
-   * Extra classes on the layer element, for motion CSS cannot be expressed as
-   * `drift` (which is horizontal only). `rain-fall` is the one user.
-   */
-  className?: string;
 }
 
 export interface Scene {
@@ -93,7 +92,7 @@ export interface Scene {
   baseGradient: string;
   /**
    * Dark-theme counterpart to `baseGradient`. When set, both are rendered and
-   * swapped by the same `.theme-only-*` mechanism the layers use, so the
+   * swapped by the same `.scene-only-*` mechanism the layers use, so the
    * fallback can never disagree with the layers stacked on top of it.
    */
   baseGradientNight?: string;
@@ -235,8 +234,8 @@ export const SCENES: Record<string, Scene> = {
    * theme is a daylight world being mirrored, not a portal in a dark valley —
    * so there is no violet anywhere in the stack.
    *
-   * The DARK theme gets the same world at night: a storm sky, a drifting cloud
-   * bank, a wash over the landforms and rain in front. Those layers carry
+   * The DARK theme gets the same world at night: an overcast sky, a drifting
+   * cloud bank and a wash over the landforms. Those layers carry
    * `theme: "dark"` and the daylight sky carries `theme: "light"`, so exactly
    * one of the two is on screen and the choice is made in CSS before first
    * paint. The landform painters are shared by both.
@@ -266,9 +265,8 @@ export const SCENES: Record<string, Scene> = {
       //
       // The night stack DOES carry a bank (`storm-bank`, below) and that is not
       // a contradiction: it is heavily darkened by `night-wash`, sits at a much
-      // lower contrast than the announcement clouds in front of it, and is what
-      // the rain has to fall out of. It reads as weather, not as a second set
-      // of objects competing for attention.
+      // lower contrast than the announcement clouds in front of it. It reads as
+      // weather, not as a second set of objects competing for attention.
       layer("hills", "far", 0.16, {
         paint: "hills-tile",
         tile: true,
@@ -298,8 +296,16 @@ export const SCENES: Record<string, Scene> = {
          follows below — one source of truth per landform, so a tweak to the
          meadow cannot leave the night version behind.
 
-         Order is paint order: the cloud bank sits behind the wash so the wash
-         darkens it too, and the rain falls in front of everything. */
+         Order is paint order: the cloud bank sits behind the wash, so the wash
+         darkens the clouds along with the land.
+
+         There is deliberately NO precipitation layer. One existed briefly and
+         was removed: it animated `background-position` on a full-bleed,
+         `image-rendering: pixelated` element every 0.55s, and that property is
+         PAINTED, not composited — so it repainted the whole layer on every
+         frame and cost far more than the drift tweens this file is otherwise
+         careful about. Weather here has to be something the compositor can move
+         (a transform) or something that does not move at all. */
       layer("storm-bank", "far", 0.12, {
         paint: "storm-clouds",
         theme: "dark",
@@ -309,21 +315,6 @@ export const SCENES: Record<string, Scene> = {
         h: 900,
       }),
       layer("night-wash", "overlay", 0, { paint: "night-wash", theme: "dark" }),
-      /* `fit` is NOT optional here. ParallaxLayer defaults a tiled layer to
-         `auto 100%`, which scales the tile to the ELEMENT's height — for a
-         full-bleed hero that stretches a 256px rain tile to the whole viewport
-         and draws five enormous bars instead of rain. Pinning it to its natural
-         256×256 also makes the `.rain-fall` keyframe's 256px travel exactly one
-         rendered tile, which is what hides the loop. Change one, change both. */
-      layer("rain", "overlay", 0.08, {
-        paint: "rain",
-        theme: "dark",
-        className: "rain-fall",
-        tile: true,
-        w: 256,
-        h: 256,
-        fit: "256px 256px",
-      }),
     ],
   }),
 

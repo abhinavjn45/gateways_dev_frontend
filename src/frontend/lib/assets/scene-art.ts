@@ -94,7 +94,6 @@ const C = {
   stormCloudBody: "#3b4359",
   stormCloudUnder: "#2c3345",
 
-  rainStreak: "#b9cbe8",
 } as const;
 
 /** Linear blend between two hex colours. Used for banded sky ramps. */
@@ -306,8 +305,9 @@ function cloudBank(
  *
  * Same 16-band construction as `skyDay` — banding is the point, a real gradient
  * would be smoother and wrong — but ramped through storm slate instead of
- * afternoon blue. Deliberately STARLESS: `skyNight` above is the clear-night
- * sky for the portal valley, and stars behind a rainstorm read as an error.
+ * afternoon blue. Deliberately STARLESS: this sky is overcast, and `skyNight`
+ * above is the clear-night sky for the portal valley. Stars showing through a
+ * solid cloud bank read as a rendering error, not as weather.
  */
 function skyStorm(w: number, h: number): string {
   const bands = 16;
@@ -323,7 +323,7 @@ function skyStorm(w: number, h: number): string {
   return svg(w, h, "none", body);
 }
 
-/** The cloud bank the rain falls out of. Same silhouette, storm greys. */
+/** The night sky's cloud bank. Same silhouette as daylight, storm greys. */
 function stormClouds(w: number, h: number, key: string): string {
   return cloudBank(w, h, key, {
     s: 24,
@@ -360,48 +360,6 @@ function nightWash(w: number, h: number): string {
   return svg(w, h, "none", body);
 }
 
-/**
- * Falling rain. Tiles on BOTH axes — `.rain-fall` in globals.css scrolls it
- * vertically, so unlike every other layer here the top and bottom edges have to
- * meet as cleanly as the left and right ones.
- *
- * Two rules make that work:
- *  - every streak is emitted twice, at `y` and at `y - h`, so one crossing the
- *    top edge reappears at the bottom instead of being clipped;
- *  - streak x is kept inside `[0, w - lean]`, which removes the horizontal wrap
- *    case entirely rather than solving it.
- *
- * The lean is stair-stepped in whole pixels, not drawn as a sloped path: the
- * root `<svg>` is `shape-rendering="crispEdges"`, so a diagonal would be
- * stepped anyway — better to author the steps than to inherit them.
- */
-function rain(w: number, h: number, key: string): string {
-  const rnd = seededRandom(key);
-  const lean = 2;
-  // Deliberately sparse. Every streak is ~110 chars of inline SVG shipped in
-  // the server-rendered HTML, and each one is drawn TWICE for the vertical
-  // seam — at 90 this layer alone was 64KB of the homepage payload. 34 over a
-  // 256px tile is the same apparent density for a quarter of the bytes.
-  const count = 34;
-  let body = "";
-
-  for (let i = 0; i < count; i++) {
-    const x = Math.round(rnd() * (w - lean * 3));
-    const y = Math.round(rnd() * h);
-    const segs = 2 + Math.floor(rnd() * 2);
-    const segH = 5 + Math.round(rnd() * 5);
-    const op = Number((0.16 + rnd() * 0.32).toFixed(2));
-
-    // Both copies, for the vertical seam.
-    for (const dy of [0, -h]) {
-      for (let sgi = 0; sgi < segs; sgi++) {
-        body += rect(x + sgi * lean, y + dy + sgi * segH, 2, segH, C.rainStreak, op);
-      }
-    }
-  }
-
-  return svg(w, h, "none", body);
-}
 
 /**
  * Distant rock spires on the far side of the valley.
@@ -1086,9 +1044,6 @@ export function paintSceneLayer(
       break;
     case "night-wash":
       result = nightWash(w, h);
-      break;
-    case "rain":
-      result = rain(w, h, key);
       break;
     case "ridge-far":
       result = ridgeFar(w, h, key);
