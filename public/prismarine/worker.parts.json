@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "source": "worker.js",
+  "sourceBytes": 3732901,
+  "sourceSha256": "7c54458241d8cb0108efada06bee8814185db491b8eda3a677f91469e4980244",
+  "compression": "gzip",
+  "asset": {
+    "path": "worker.js.gz",
+    "bytes": 568189,
+    "sha256": "d2ce8c54858e2432d1916eba310bef08b0c24e28ed791575ecebf0dd7b7c8210"
+  }
+}

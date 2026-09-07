@@ -10,9 +10,12 @@ import type { FestEvent } from "@/frontend/lib/events";
 import { cn } from "@/frontend/lib/utils";
 import { CheckCircle, Copy, Share2 } from "lucide-react";
 
-export function EventRegistrationButton({ event }: { event: FestEvent }) {
+export function EventRegistrationButton({ event, inline = false }: { event: FestEvent; inline?: boolean }) {
   const pathname = usePathname();
-  const isDashboard = pathname.startsWith("/dashboard");
+  // The in-place flow is gated to the dashboard by pathname. `inline` opts in
+  // from other authenticated surfaces — the 3D campus's event hub at /world —
+  // which would otherwise get a link back to Explore instead of the buttons.
+  const isDashboard = inline || pathname.startsWith("/dashboard");
   const { status, session } = useSession();
   const userId = session?.userId;
 
