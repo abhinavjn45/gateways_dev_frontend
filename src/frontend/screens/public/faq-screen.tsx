@@ -18,12 +18,32 @@ import { CHATBOT_FAQ, FAQ_CATEGORIES } from "@/frontend/lib/chatbot-faq";
  * stays out of that argument and just hands over the grouped content.
  */
 export function FaqScreen() {
-  // A category with nothing in it yet renders nothing rather than an empty
-  // heading — the list is data-driven and will not always be full.
-  const groups: SignGroup[] = FAQ_CATEGORIES.map((category) => ({
-    category,
-    entries: CHATBOT_FAQ.filter((f) => f.category === category),
-  })).filter((group) => group.entries.length > 0);
+  const faqs = [
+    {
+      question: "Q. Who can participate in Gateways 2026?",
+      answer: "Ans. Gateways is a National Level IT Fest, and students from any college or university across India pursuing their UG or PG degrees can participate. Specific eligibility criteria for each event can be found on their respective pages."
+    },
+    {
+      question: "Q. Is there any registration fee?",
+      answer: "Ans. Yes, there is a nominal entry fee. Early bird registration is available at a discounted price. Check the 'Events' section for specific pricing details for individual and team events."
+    },
+    {
+      question: "Q. Can I participate in multiple events?",
+      answer: "Ans. Yes! You can participate in multiple events as long as their timings do not overlap. However, you can only register for one flagship or main event happening simultaneously."
+    },
+    {
+      question: "Q. Do I need to be a part of a team?",
+      answer: "Ans. Not necessarily. We have a mix of both individual and team events. For team events, you can either create a new team and invite members or join an existing team using a Team ID."
+    },
+    {
+      question: "Q. Will accommodation be provided?",
+      answer: "Ans. Yes, accommodation is provided from October 8 to October 9, 2026, on a first-come, first-served basis strictly for participants traveling from outside Bangalore."
+    },
+    {
+      question: "Q. How will I receive updates regarding the events?",
+      answer: "Ans. All updates, announcements, and schedules will be updated on your participant dashboard. Make sure to regularly check the portal and your registered email address."
+    }
+  ];
 
   return (
     // `relative` with a z-index: the sign layer's canvas is fixed at z-0 across
@@ -40,35 +60,17 @@ export function FaqScreen() {
         </p>
       </header>
 
-      <FaqSigns groups={groups} />
-
-      <section>
-        <BlockPanel variant="gold" padded="lg" className="flex flex-col gap-[var(--mc-unit)]">
-          <p className="text-[16px] leading-relaxed text-mc-text md:text-[18px]">
-            Still stuck? The organising team is listed by role — registration,
-            hospitality, and general enquiries each have their own contact.
-          </p>
-          <div className="flex flex-wrap gap-[calc(var(--mc-unit)*1.5)]">
-            <Link
-              href="/contact"
-              className="font-pixel text-[9px] uppercase tracking-[0.1em] text-mc-accent no-underline hover:underline"
-            >
-              Contact us
-            </Link>
-            <Link
-              href="/rules"
-              className="font-pixel text-[9px] uppercase tracking-[0.1em] text-mc-accent no-underline hover:underline"
-            >
-              Rules &amp; regulations
-            </Link>
-            <Link
-              href="/registration-process"
-              className="font-pixel text-[9px] uppercase tracking-[0.1em] text-mc-accent no-underline hover:underline"
-            >
-              How to register
-            </Link>
-          </div>
-        </BlockPanel>
+      <section className="mt-[calc(var(--mc-unit)*2)] flex flex-col gap-[calc(var(--mc-unit)*2)]">
+        {faqs.map((faq, i) => (
+          <BlockPanel key={i} variant="panel" padded="lg">
+            <h2 className="font-pixel text-[18px] md:text-[22px] text-mc-gold-light mb-[calc(var(--mc-unit))]">
+              {faq.question}
+            </h2>
+            <p className="text-[16px] md:text-[18px] text-mc-text leading-relaxed">
+              {faq.answer}
+            </p>
+          </BlockPanel>
+        ))}
       </section>
     </div>
   );

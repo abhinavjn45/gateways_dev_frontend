@@ -72,15 +72,9 @@ export function SiteFooter() {
           otherwise start in the turf. */}
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-[calc(var(--mc-unit)*2)] px-[calc(var(--mc-unit)*2)] pb-[calc(var(--mc-unit)*3)] pt-[calc(var(--mc-unit)*10)] md:px-[calc(var(--mc-unit)*1.5)]">
         
-        {/* Brand on the left, link columns pushed to the right edge.
-            This was a 4/3/3 ten-column grid, where each link column was far
-            wider than its longest link — so both lists floated in the middle of
-            the footer with a dead band of soil to their right. Sized to their
-            content and flushed right instead, the lists sit against the
-            container edge and the brand block takes the slack. */}
-        <div className="flex flex-col gap-[calc(var(--mc-unit)*3)] md:flex-row md:items-start md:justify-between md:gap-[calc(var(--mc-unit)*3)]">
-          {/* Column 1: Brand & Legacy */}
-          <div className="flex flex-col gap-[calc(var(--mc-unit)*1.5)] md:max-w-[46%]">
+        <div className="grid grid-cols-1 gap-[calc(var(--mc-unit)*4)] md:grid-cols-12 md:gap-[calc(var(--mc-unit)*3)]">
+          {/* Column 1: Brand & Bio */}
+          <div className="md:col-span-4 flex flex-col gap-[calc(var(--mc-unit)*2)]">
             <div className="flex items-center gap-[calc(var(--mc-unit)*1.5)]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -119,52 +113,73 @@ export function SiteFooter() {
             </ul>
           </div>
 
-          {/* Columns 2 & 3, kept together so they travel to the edge as a pair
-              and stack as a pair on a narrow screen. */}
-          <div className="flex flex-col gap-[calc(var(--mc-unit)*3)] sm:flex-row sm:gap-[calc(var(--mc-unit)*5)]">
           {/* Column 2: Useful Links */}
-          <div className="flex flex-col gap-[calc(var(--mc-unit)*1.5)]">
+          <div className="md:col-span-3 flex flex-col gap-[calc(var(--mc-unit)*1.5)]">
             <h3 className="font-pixel text-[12px] uppercase text-mc-gold-light">Useful Links</h3>
             <ul className="flex flex-col gap-[calc(var(--mc-unit)*0.75)]">
               <li>
-                <a href="/faq" className="inline-flex min-h-8 items-center font-pixel text-[9px] uppercase tracking-[0.1em] text-mc-cloud no-underline transition-colors hover:text-mc-gold-light">
+                <a href="/faq" className="inline-flex min-h-8 items-center whitespace-nowrap font-pixel text-[9px] uppercase tracking-[0.1em] text-mc-cloud no-underline transition-colors hover:text-mc-gold-light">
                   FAQs
                 </a>
               </li>
               <li>
-                <a href="/registration-process" className="inline-flex min-h-8 items-center font-pixel text-[9px] uppercase tracking-[0.1em] text-mc-cloud no-underline transition-colors hover:text-mc-gold-light">
+                <a href="/registration-process" className="inline-flex min-h-8 items-center whitespace-nowrap font-pixel text-[9px] uppercase tracking-[0.1em] text-mc-cloud no-underline transition-colors hover:text-mc-gold-light">
                   Registration Process
                 </a>
               </li>
               <li>
-                <a href="/guidelines" className="inline-flex min-h-8 items-center font-pixel text-[9px] uppercase tracking-[0.1em] text-mc-cloud no-underline transition-colors hover:text-mc-gold-light">
-                  Participant&apos;s Guidelines
+                <a href="/guidelines" className="inline-flex min-h-8 items-center whitespace-nowrap font-pixel text-[9px] uppercase tracking-[0.1em] text-mc-cloud no-underline transition-colors hover:text-mc-gold-light">
+                  Participant's Guidelines
                 </a>
               </li>
             </ul>
           </div>
 
           {/* Column 3: Policies */}
-          <div className="flex flex-col gap-[calc(var(--mc-unit)*1.5)]">
+          <div className="md:col-span-3 flex flex-col gap-[calc(var(--mc-unit)*1.5)]">
             <h3 className="font-pixel text-[12px] uppercase text-mc-gold-light">Policies</h3>
             <ul className="flex flex-col gap-[calc(var(--mc-unit)*0.75)]">
               <li>
-                <a href="/terms" className="inline-flex min-h-8 items-center font-pixel text-[9px] uppercase tracking-[0.1em] text-mc-cloud no-underline transition-colors hover:text-mc-gold-light">
+                <a href="/terms" className="inline-flex min-h-8 items-center whitespace-nowrap font-pixel text-[9px] uppercase tracking-[0.1em] text-mc-cloud no-underline transition-colors hover:text-mc-gold-light">
                   Terms & Conditions
                 </a>
               </li>
               <li>
-                <a href="/privacy" className="inline-flex min-h-8 items-center font-pixel text-[9px] uppercase tracking-[0.1em] text-mc-cloud no-underline transition-colors hover:text-mc-gold-light">
+                <a href="/privacy" className="inline-flex min-h-8 items-center whitespace-nowrap font-pixel text-[9px] uppercase tracking-[0.1em] text-mc-cloud no-underline transition-colors hover:text-mc-gold-light">
                   Privacy Policy
                 </a>
               </li>
               <li>
-                <a href="/rules" className="inline-flex min-h-8 items-center font-pixel text-[9px] uppercase tracking-[0.1em] text-mc-cloud no-underline transition-colors hover:text-mc-gold-light">
+                <a href="#" className="inline-flex min-h-8 items-center whitespace-nowrap font-pixel text-[9px] uppercase tracking-[0.1em] text-mc-cloud no-underline transition-colors hover:text-mc-gold-light">
                   Rules & Regulations
                 </a>
               </li>
             </ul>
           </div>
+
+          {/* Column 4: App Download */}
+          <div className="md:col-span-2 flex flex-col gap-[calc(var(--mc-unit)*1.5)]">
+            <h3 className="font-pixel text-[12px] uppercase text-mc-gold-light">Get The App</h3>
+            <div className="flex flex-col gap-3 items-start">
+              <a 
+                href="#" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="inline-flex transition-transform hover:scale-105"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="https://upload.wikimedia.org/wikipedia/commons/3/3c/Download_on_the_App_Store_Badge.svg" alt="Download on App Store" className="h-10 object-contain" />
+              </a>
+              <a 
+                href="#" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="inline-flex transition-transform hover:scale-105 mt-1"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Get it on Google Play" className="h-[2.8rem] object-contain" />
+              </a>
+            </div>
           </div>
         </div>
 

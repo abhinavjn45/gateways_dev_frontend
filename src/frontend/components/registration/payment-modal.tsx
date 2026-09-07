@@ -144,7 +144,7 @@ export function PaymentModal({
           variant="stone" 
           size="sm" 
           className="mt-[calc(var(--mc-unit)*2)] font-body" 
-          onClick={() => window.open("https://youtu.be/dQw4w9WgXcQ", "_blank")}
+          onClick={() => window.open("https://res.cloudinary.com/dchqvsa57/video/upload/v1788243617/Payment_Tutorial_Video_ygmihq.mp4", "_blank")}
         >
           <span className="inline-flex items-center">
             <Video className="w-4 h-4 mr-2" />
