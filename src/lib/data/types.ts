@@ -252,7 +252,7 @@ export interface EventCategory {
   slug: string;
   name: string;
   description: string | null;
-  /** Links to a WORLD_LOCATIONS key so the map can filter events. */
+  /** Links to a campus room key so the world can filter events. (Unused today.) */
   worldLocationKey: string | null;
   blockColor: string;
   sortOrder: number;

@@ -2,6 +2,8 @@
 # Ignore loose PNGs (exports, scratch) but ship committed art under public/art/.
 *.png
 !public/art/**/*.png
+# The generated block atlas is committed so deploys need no texture download.
+!public/prismarine/**/*.png
 # dependencies
 /node_modules
 /.pnp

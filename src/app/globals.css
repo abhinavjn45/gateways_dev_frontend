@@ -820,53 +820,6 @@ textarea,
 }
 
 /* ============================================================================
-   3D voxel world — floating building labels
-   These render inside a WebGL canvas via drei's <Html>, so they sit outside
-   the Tailwind-scanned tree and need real CSS.
-   ========================================================================= */
-
-.voxel-marker-label {
-  pointer-events: auto;
-  cursor: var(--cursor-fallback);
-  cursor: var(--cursor-themed);
-  white-space: nowrap;
-  border: 2px solid var(--color-mc-border);
-  /* Panel token, not the literal dark slate it used to be. The label's text
-     colour was always themed, so a hardcoded background meant dark-on-dark the
-     moment the light theme was selected. Mixed rather than solid so the chip
-     still reads as floating over the scene. */
-  background: color-mix(in srgb, var(--color-mc-panel) 92%, transparent);
-  color: var(--color-mc-text);
-  font-family: var(--font-pixel);
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  padding: 6px 10px;
-  /* Same edge variables every other bevel uses, so the chip lightens with the
-     rest of the UI instead of keeping black shadows on a pale surface. */
-  box-shadow:
-    inset 2px 2px 0 0 var(--mc-edge-hi),
-    inset -2px -2px 0 0 var(--mc-edge-lo),
-    0 3px 0 0 var(--mc-edge-drop);
-  transition: filter 100ms ease, transform 100ms ease;
-}
-
-/* Accent rather than literal gold: #ffd166 text on a pale sky panel is ~1.9:1.
-   The semantic token is the deep amber in light theme and the gold in dark. */
-.voxel-marker-label:hover,
-.voxel-marker-label[data-active] {
-  border-color: var(--color-mc-accent);
-  color: var(--color-mc-accent-strong);
-  filter: brightness(1.25);
-  transform: translateY(-2px);
-}
-
-.voxel-marker-label:focus-visible {
-  outline: 3px solid var(--mc-focus-ring);
-  outline-offset: 2px;
-}
-
-/* ============================================================================
    Keyframes
    ========================================================================= */
 

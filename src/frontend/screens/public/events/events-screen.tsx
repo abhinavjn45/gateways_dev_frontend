@@ -25,7 +25,6 @@ import {
   type FestEvent,
 } from "@/frontend/lib/events";
 import { repo } from "@/lib/data";
-import { locationByKey } from "@/frontend/lib/world/world-locations";
 import { cn } from "@/frontend/lib/utils";
 
 /**
@@ -53,7 +52,9 @@ export function EventsScreen({ basePath = "/events", isDashboard = false }: { ba
   const { session } = useSession();
   const userId = session?.userId;
 
-  const [selected, setSelected] = useState<FestEvent | null>(null);
+  // Keyed by slug rather than holding the event, so `?event=<slug>` from the
+  // campus's List view can open the modal before the list has even loaded.
+  const [selectedSlug, setSelectedSlug] = useState<string | null>(params.get("event"));
   /**
    * The grid contents: the track from `?category=`, narrowed by the search box.
    *
@@ -63,6 +64,8 @@ export function EventsScreen({ basePath = "/events", isDashboard = false }: { ba
    */
   const { data: allEventsData, loading: eventsLoading } = useAsync(fetchFestEvents, []);
   const allEvents = allEventsData || [];
+  const selected = selectedSlug ? (allEvents.find((e) => e.slug === selectedSlug) ?? null) : null;
+  const setSelected = (e: FestEvent | null) => setSelectedSlug(e ? e.slug : null);
 
   const activeTrack = EVENT_TRACKS.find((t) => t.id === categorySlug)?.id;
   const query = search.trim().toLowerCase();
@@ -95,17 +98,7 @@ export function EventsScreen({ basePath = "/events", isDashboard = false }: { ba
 
       {!isDashboard && (
         <BackLink
-          href={
-            !userId
-              ? "/"
-              : // Only deep-link to a marker that exists. The filter slugs are
-                // now `technical` / `non-technical`, which are not map keys —
-                // passing one would have asked the map to focus a location it has
-                // never heard of.
-                categorySlug && locationByKey(categorySlug)
-                ? `/world?view=map&location=${encodeURIComponent(categorySlug)}`
-                : "/world?view=map"
-          }
+          href={!userId ? "/" : "/world"}
         />
       )}
 
@@ -139,6 +132,30 @@ export function EventsScreen({ basePath = "/events", isDashboard = false }: { ba
           </p>
         </header>
       )}
+
+      {isDashboard ? (
+        <BlockPanel
+          variant="portal"
+          padded="md"
+          className="flex flex-col items-start justify-between gap-[var(--mc-unit)] sm:flex-row sm:items-center"
+        >
+          <div>
+            <p className="font-pixel text-[10px] uppercase tracking-wider text-mc-eyebrow">New</p>
+            <p className="mt-[calc(var(--mc-unit)*0.5)] font-pixel text-[11px] text-mc-text">
+              Walk the fest in 3D
+            </p>
+            <p className="mt-[calc(var(--mc-unit)*0.5)] text-[18px] text-mc-text-dim">
+              Every event has its own classroom on the campus. Step inside one and press E to open its hub.
+            </p>
+          </div>
+          <Link
+            href="/world?view=3d"
+            className={cn(blockButton({ variant: "gold" }), "shrink-0 no-underline")}
+          >
+            Enter the 3D world
+          </Link>
+        </BlockPanel>
+      ) : null}
 
       {!isDashboard && !paymentLoading && userReceipt?.status !== "verified" ? (
         <BlockPanel

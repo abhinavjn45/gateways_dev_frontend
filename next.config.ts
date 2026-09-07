@@ -28,6 +28,28 @@ const nextConfig: NextConfig = {
    * is disabled.
    */
   skipTrailingSlashRedirect: true,
+  /**
+   * The voxel engine assets under /prismarine are content-addressed: every URL
+   * the engine requests carries `?v=<hash>` from version.json, so the files
+   * themselves can be cached forever. The one exception is version.json, which
+   * the loader fetches with `cache: "no-store"` and which is what busts the rest.
+   */
+  async headers() {
+    // Order matters: when two entries match the same path and set the same
+    // header, the LAST one wins — so the version.json exception comes second.
+    return [
+      {
+        source: "/prismarine/:path*",
+        headers: [
+          { key: "Cache-Control", value: "public, max-age=31536000, immutable" },
+        ],
+      },
+      {
+        source: "/prismarine/version.json",
+        headers: [{ key: "Cache-Control", value: "no-store" }],
+      },
+    ];
+  },
 };
 
 export default nextConfig;
