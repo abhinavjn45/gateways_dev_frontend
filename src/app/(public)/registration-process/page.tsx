@@ -2,8 +2,14 @@ import { RegistrationProcessScreen } from "@/frontend/screens/public/registratio
 
 export const metadata = {
   title: "Registration Process",
-  description:
-    "How to register for Gateways 2026 — pay the fest pass, upload your receipt, then sign up for events.",
+  description: "A step-by-step guide on how to register for Gateways 2026 events and manage your team.",
+  keywords: [
+    "Gateways Registration",
+    "How to register",
+    "Event registration process",
+    "Gateways 2026",
+    "Team creation",
+  ],
 };
 
 export default function RegistrationProcessPage() {
