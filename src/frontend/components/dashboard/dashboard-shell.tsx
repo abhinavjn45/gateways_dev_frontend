@@ -37,7 +37,7 @@ const NAV = [
   { href: "/world?view=3d", label: "3D World", icon: "◆" },
   { href: "/dashboard/schedule", label: "Schedule", icon: "◷" },
   { href: "/dashboard/events", label: "My Events", icon: "▤" },
-  { href: "/dashboard/notifications", label: "Announcements", icon: "◈" },
+  { href: "/dashboard/announcements", label: "Announcements", icon: "◈" },
   { href: "/dashboard/settings", label: "Settings", icon: "⚙" },
 ] as const;
 
@@ -92,7 +92,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         "/dashboard/privacy",
         "/dashboard/explore",
         "/dashboard/schedule",
-        "/dashboard/notifications",
+        "/dashboard/announcements",
       ];
       if (pathname.startsWith("/dashboard") && !allowedPaths.includes(pathname)) {
         router.replace("/dashboard/profile");
@@ -260,13 +260,13 @@ function SidebarContent({
           <div className="w-8 shrink-0">
             {/* Light theme: show black logo */}
             <img 
-              src="/art/brand/Gateways Black.svg" 
+              src="https://cdn.jsdelivr.net/gh/abhinavjn45/gateways2026-assets@main/art/brand/gateways-black.svg" 
               alt="Gateways Logo" 
               className="theme-only-light w-full h-auto opacity-90 group-hover:opacity-100 transition-opacity"
             />
             {/* Dark theme: show white logo */}
             <img 
-              src="/art/brand/Gateways White.svg" 
+              src="https://cdn.jsdelivr.net/gh/abhinavjn45/gateways2026-assets@main/art/brand/gateways-white.svg" 
               alt="Gateways Logo" 
               className="theme-only-dark w-full h-auto opacity-90 group-hover:opacity-100 transition-opacity"
             />
@@ -280,8 +280,8 @@ function SidebarContent({
       <div className="flex-1 min-h-0 overflow-y-auto pr-1 -mr-1 flex flex-col gap-[2px]">
         <nav aria-label="Dashboard" className="flex flex-col gap-[2px]">
           {NAV.map((item) => {
-            const active = pathname === navPath(item.href);
-            const isItemLocked = isLocked && !UNLOCKED.has(item.href);
+            const active = pathname === item.href;
+            const isItemLocked = isLocked && item.href !== "/dashboard/profile" && item.href !== "/dashboard/settings" && item.href !== "/dashboard/announcements" && item.href !== "/dashboard/schedule" && item.href !== "/dashboard/explore";
             
             return (
               <Link

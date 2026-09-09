@@ -184,7 +184,7 @@ export function SiteNav({ onOpenEvents, onOpenSchedule }: SiteNavProps) {
               </BlockButton>
             ) : (
               <BlockButton variant="stone" size="sm" onClick={() => router.push("/login")}>
-                Get Started
+                Start the Journey
               </BlockButton>
             )}
           </div>
