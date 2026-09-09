@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { detectWebGL } from "@/frontend/lib/ambient/detect-webgl";
 import { isAmbientRoute } from "@/frontend/lib/ambient/ambient-routes";
-import { blockCountFor, measurePageBand, type PageBand } from "@/frontend/lib/ambient/page-band";
+import { measurePageBand, sameBand, type PageBand } from "@/frontend/lib/ambient/page-band";
 import { useReducedMotion } from "@/frontend/lib/animation/use-reduced-motion";
 
 /**
@@ -45,6 +45,11 @@ const AmbientBlockScene = dynamic(() => import("./ambient-block-scene"), {
 
 /** Below this width the layer is off entirely. */
 const MIN_WIDTH = 900;
+
+/** How many blocks hang in the viewport at once. */
+function countForViewport(): number {
+  return window.innerWidth >= 1400 ? 9 : 6;
+}
 /** Page reflow settles before we re-measure. */
 const MEASURE_DEBOUNCE = 200;
 
@@ -78,15 +83,16 @@ export function AmbientBlocks() {
       setSupport(wide && fine && hasWebGL ? "ready" : "unsupported");
 
       const next = measurePageBand();
-      setBand(next);
+      setBand((prev) => (sameBand(prev, next) ? prev : next));
       // The count is fixed from the FIRST usable measurement and then left
       // alone. It keys the scene, so letting it track every reflow would tear
       // down and rebuild the WebGL context as images load.
-      if (next) {
-        setCount((prev) =>
-          prev > 0 ? prev : blockCountFor(next, window.innerWidth, window.innerHeight),
-        );
-      }
+      // Count is a function of the VIEWPORT, not of page length. It used to be
+      // `blockCountFor(band, ...)`, which was right while blocks were anchored
+      // to the document and spread over the whole scroll; now that they hang in
+      // viewport space, every block is on screen at once, so a long page would
+      // have produced a wall of them.
+      if (next) setCount((prev) => (prev > 0 ? prev : countForViewport()));
     };
 
     evaluate();

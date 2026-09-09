@@ -175,10 +175,13 @@ export const ART = {
    *   so it must only be pixelated at an integer multiple of its own size —
    *   which in practice means never; render it at a CSS size and leave sampling
    *   alone.
-   * - `gatewaysCrestPixel` IS pixel art: the crest redrawn at 152px against the
-   *   gold token ramp by `scripts/gen-splash-mask.mjs`. Draw it ONLY at integer
-   *   multiples of 152 (304/456/608/760) and always with `pixelated`. It is what
-   *   the splash screen assembles out of flying blocks.
+   * - `gatewaysCrestPixel` IS pixel art: `gatewaysColoured` — the nav's mark —
+   *   rasterised to 152px against the gold token ramp by
+   *   `scripts/gen-splash-mask.mjs`. Draw it ONLY at integer multiples of 152
+   *   (304/456/608/760) and always with `pixelated`. It is what the splash
+   *   screen resolves into, which is why it is baked from the SAME source the
+   *   header uses: two different drawings of the logo seconds apart reads as a
+   *   mistake. Regenerate it whenever that SVG changes.
    * - `gatewaysCrestAperture` is not artwork at all — it is the crest's filled
    *   silhouette, used only as a CSS mask so the splash can zoom into the logo
    *   and reveal the page through it. Never render it directly.

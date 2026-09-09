@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars, react/no-unescaped-entities */
 "use client";
 
-import { BlockPanel } from "@/frontend/components/mc";
 import { blockButton } from "@/frontend/components/mc/block-button";
 import { GRASS_GROUND_STYLE } from "@/frontend/lib/assets/textures";
 import { FEST } from "@/frontend/lib/fest";

@@ -2,7 +2,7 @@
 
 import { useFrame } from "@react-three/fiber";
 import { Canvas } from "@react-three/fiber";
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 
 /**
@@ -190,8 +190,16 @@ function Bot({ active }: { active: boolean }) {
 /**
  * The canvas. Default-exported so `next/dynamic` can pull it in one chunk.
  *
- * `frameloop` is the whole performance story: "never" renders a single frame
- * and then stops, which is what a reduced-motion or backgrounded page gets.
+ * `frameloop` is the whole performance story: "demand" renders a single frame
+ * and then stops, which is what a reduced-motion, backgrounded, or scrolled-away
+ * page gets.
+ *
+ * THE SCROLLED-AWAY CASE WAS MISSING. This comment previously claimed the scene
+ * stopped on a hidden tab, but nothing implemented it: the canvas ran
+ * `frameloop="always"` on every non-excluded route, forever, whether or not the
+ * launcher was on screen or the tab was in front. It is a small canvas, but a
+ * continuously rendering WebGL context is never free — and it shares a page
+ * with a second, full-viewport one.
  */
 export default function CraftBotScene({
   active = false,
@@ -209,15 +217,41 @@ export default function CraftBotScene({
    */
   onReady?: () => void;
 }) {
+  const host = useRef<HTMLDivElement>(null);
+  const [onScreen, setOnScreen] = useState(true);
+
+  useEffect(() => {
+    const node = host.current;
+    if (!node) return;
+
+    const io = new IntersectionObserver(([e]) => setOnScreen(e.isIntersecting), {
+      rootMargin: "120px",
+    });
+    io.observe(node);
+
+    // A backgrounded tab should not be rendering either.
+    const onVisibility = () => setOnScreen(!document.hidden && Boolean(node.offsetParent));
+    document.addEventListener("visibilitychange", onVisibility);
+
+    return () => {
+      io.disconnect();
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, []);
+
   return (
+    <div ref={host} className="h-full w-full">
     <Canvas
-      frameloop={animate ? "always" : "demand"}
+      frameloop={animate && onScreen ? "always" : "demand"}
       dpr={[1, 1.5]}
       // Pulled in from z=5.2: the launcher canvas is now square and as small as
       // 64px, where the old framing left Pixey swimming in empty space. y=0.2
       // centres the head-plus-grass-block mass rather than the head alone.
       camera={{ position: [0, 0.2, 4.7], fov: 34 }}
-      gl={{ antialias: true, alpha: true, powerPreference: "low-power" }}
+      // antialias off: this is a 64-88px canvas of hard-edged voxels, where MSAA
+      // buys nothing visible and costs a multisampled buffer on a context that
+      // renders continuously.
+      gl={{ antialias: false, alpha: true, powerPreference: "low-power" }}
       onCreated={() => onReady?.()}
     >
       <ambientLight intensity={1.6} />
@@ -225,5 +259,6 @@ export default function CraftBotScene({
       <pointLight position={[-3, 1, 3]} intensity={12} distance={12} color="#00ffd5" />
       <Bot active={active} />
     </Canvas>
+    </div>
   );
 }

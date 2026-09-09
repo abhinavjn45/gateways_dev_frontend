@@ -3,37 +3,49 @@
  * Builds the splash screen's two generated artefacts from the crest artwork:
  *
  *   1. public/art/brand/gateways-crest-pixel.png — the crest redrawn as true
- *      pixel art: downsampled to 114x114 and snapped to the project's gold ramp.
- *   2. src/frontend/lib/animation/splash-mask.ts — which cells of the assembly
- *      grid contain artwork.
+ *      pixel art, downsampled and snapped to the project's gold ramp.
+ *   2. public/art/brand/gateways-crest-aperture.png — the crest's filled
+ *      silhouette, used as a CSS mask for the closing zoom-through.
  *
  *   node scripts/gen-splash-mask.mjs
  *
- * WHY A SEPARATE PIXEL ASSET: the splash assembles the crest out of flying
- * blocks, and the thing it assembles INTO has to be pixel art itself — landing
- * on the original smooth artwork undoes the whole effect. Rendering all 3040
- * art pixels as individual animated DOM nodes would put ~450KB of markup in
- * every page's HTML, so instead the pixel art is baked once and the animation
- * flies in ART_PER_TILE-square chunks of it.
+ * WHY A SEPARATE PIXEL ASSET: the splash resolves the crest from very coarse
+ * blocks into pixel art, and the thing it resolves INTO has to be pixel art
+ * itself — landing on the original smooth artwork undoes the whole effect. The
+ * component draws this PNG into a canvas at 19, 38, 76 and 152 pixels square,
+ * so the palette snapping has to be baked here rather than guessed at runtime.
  *
- * WHY PRECOMPUTE THE MASK: only ~23% of the crest is opaque, so animating every
- * grid cell would waste half of them on invisible no-ops. Sampling alpha in the
- * browser instead would gate the animation behind an image decode and a canvas
- * read, and put a failure path in front of the whole site.
+ * This script previously also emitted `splash-mask.ts`, an occupancy grid for a
+ * 639-block assembly animation. That animation is gone — the splash is one
+ * canvas now — so the mask is gone with it.
  *
  * Rerun this whenever the source crest changes.
  */
 
-import { writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import sharp from "sharp";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const SOURCE = path.join(ROOT, "public/art/brand/Gateways_Pixel.png");
+/**
+ * THE SAME MARK THE NAV SHOWS, deliberately — `site-nav.tsx` renders
+ * `Gateways Coloured.svg`, and the splash resolving into a different drawing of
+ * the logo than the one sitting in the header two seconds later is a continuity
+ * break the visitor sees directly.
+ *
+ * It is also the drawing that survives this pipeline. `Gateways_Pixel.png`, the
+ * previous source, is the OUTLINE treatment: hairline strokes with hollow
+ * centres, which is exactly what vanishes when you downsample to 19px for the
+ * coarsest step — the crest arrived as a scatter of unrelated dots rather than a
+ * blocky logo. The nav's mark is solid-filled, so every step of the resolve has
+ * real area to land on.
+ *
+ * sharp rasterises the SVG, so `density` below decides the sampling quality
+ * rather than any fixed pixel source.
+ */
+const SOURCE = path.join(ROOT, "public/art/brand/Gateways Coloured.svg");
 const ART_OUT = path.join(ROOT, "public/art/brand/gateways-crest-pixel.png");
 const MASK_PNG_OUT = path.join(ROOT, "public/art/brand/gateways-crest-aperture.png");
-const MASK_OUT = path.join(ROOT, "src/frontend/lib/animation/splash-mask.ts");
 
 /**
  * Pixel-art resolution. The GATEWAYS wordmark is what sets this floor: at 66 it
@@ -41,16 +53,13 @@ const MASK_OUT = path.join(ROOT, "src/frontend/lib/animation/splash-mask.ts");
  * 152 they separate cleanly. Going further (190+) reads no better at the sizes
  * we actually draw, and would force display sizes too wide for a phone — every
  * on-screen size has to be a whole multiple of this number.
+ *
+ * It also has to divide cleanly by powers of two: the splash resolves through
+ * backing stores of ART/8, /4, /2 and /1, and a size that did not divide evenly
+ * would put fractional source pixels in the coarse steps. 152 = 8 x 19, so it
+ * does.
  */
 const ART = 152;
-
-/**
- * Art pixels per flying block. The assembly grid is therefore ART / ART_PER_TILE
- * = 38 cells a side. Must divide ART exactly (152 = 8 x 19, so: 1, 2, 4, 8, 19,
- * 38, 76, 152) or blocks would carry fractional pixels and show seams.
- */
-const ART_PER_TILE = 4;
-const GRID = ART / ART_PER_TILE;
 
 /** Below this the cell is treated as empty rather than faintly tinted. */
 const ALPHA_FLOOR = 55;
@@ -68,7 +77,7 @@ const RAMP = [
   { name: "gold-dark", rgb: [171, 118, 20] },
 ];
 
-const { data, info } = await sharp(SOURCE)
+const { data, info } = await sharp(SOURCE, { density: 600 })
   .resize(ART, ART, { kernel: "lanczos3" })
   .ensureAlpha()
   .raw()
@@ -160,66 +169,10 @@ await sharp(maskBuf, { raw: { width: ART, height: ART, channels: 4 } })
   .png({ compressionLevel: 9 })
   .toFile(MASK_PNG_OUT);
 
-// --- 2. Which grid cells carry a block --------------------------------------
-
-const rows = [];
-for (let gy = 0; gy < GRID; gy++) {
-  let row = "";
-  for (let gx = 0; gx < GRID; gx++) {
-    row += cellHasArt(gx, gy) ? "#" : ".";
-  }
-  rows.push(row);
-}
-
-function cellHasArt(gx, gy) {
-  for (let y = gy * ART_PER_TILE; y < (gy + 1) * ART_PER_TILE; y++) {
-    for (let x = gx * ART_PER_TILE; x < (gx + 1) * ART_PER_TILE; x++) {
-      if (filled[y * ART + x]) return true;
-    }
-  }
-  return false;
-}
-
-const blocks = rows.reduce((n, row) => n + [...row].filter((c) => c === "#").length, 0);
 const artPixels = filled.reduce((n, v) => n + v, 0);
-
-const file = `/**
- * GENERATED FILE — do not edit by hand.
- * Run \`node scripts/gen-splash-mask.mjs\` to regenerate from the crest art.
- *
- * Which cells of the splash's assembly grid contain artwork.
- * '#' = a block flies in here, '.' = empty (not rendered at all).
- *
- * ${blocks} of ${GRID * GRID} cells carry a block; each one is a
- * ${ART_PER_TILE}x${ART_PER_TILE} chunk of the ${ART}x${ART} pixel-art crest
- * (${artPixels} opaque art pixels in total).
- */
-
-/** Assembly cells per side — how many blocks fly in across the crest's width. */
-export const SPLASH_GRID = ${GRID};
-
-/** Side length of the generated pixel-art crest, in art pixels. */
-export const SPLASH_ART_SIZE = ${ART};
-
-/** Art pixels per flying block (SPLASH_ART_SIZE / SPLASH_GRID). */
-export const SPLASH_ART_PER_TILE = ${ART_PER_TILE};
-
-/** Number of blocks the splash actually animates. */
-export const SPLASH_BLOCK_COUNT = ${blocks};
-
-export const SPLASH_MASK: readonly string[] = [
-${rows.map((r) => `  "${r}",`).join("\n")}
-];
-`;
-
-await writeFile(MASK_OUT, file, "utf8");
 
 console.log(`Wrote ${path.relative(ROOT, ART_OUT)} — ${ART}x${ART}, ${artPixels} art pixels.`);
 console.log(
   `Wrote ${path.relative(ROOT, MASK_PNG_OUT)} — aperture silhouette, ` +
     `${Math.round((apertureCells / (ART * ART)) * 100)}% coverage.`,
-);
-console.log(
-  `Wrote ${path.relative(ROOT, MASK_OUT)} — ${GRID}x${GRID} grid, ${blocks} blocks ` +
-    `of ${ART_PER_TILE}x${ART_PER_TILE} pixels each.`,
 );

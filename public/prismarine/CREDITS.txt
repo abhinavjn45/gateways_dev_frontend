@@ -1,0 +1,35 @@
+Credits and licences — the 3D campus
+====================================
+
+This world ships no Mojang artwork.
+
+Block textures — VoxeLibre
+  The block atlas (textures/*.png) is assembled from the VoxeLibre texture set
+  (https://github.com/VoxeLibre/VoxeLibre), licensed CC BY-SA 4.0
+  (https://creativecommons.org/licenses/by-sa/4.0/). VoxeLibre's textures are
+  based on the "Pixel Perfection" resource pack by XSSheep, with contributions
+  from Wuzzy, kingoscargames, leorockway, xMrVizzy, yutyo, NO11, kay27,
+  MysticTempest, RandomLegoBrick, cora, Faerraven / Michieal, Nicu, Exhale,
+  Aeonix_Aeon, Wbjitscool, SmokeyDope, thunder1035, Herowl, NovaWostra,
+  rudzik8, kno10 and Chiragon.
+
+  Attribution: this file must stay reachable; the credit is also shown in the
+  in-world controls guide (press H).
+  ShareAlike: the generated atlas is an adaptation of CC BY-SA material and is
+  itself CC BY-SA 4.0. Tiles with no VoxeLibre equivalent are drawn
+  procedurally by scripts/mc/build-atlas.mjs.
+
+Block models and geometry
+  Block shapes come from the model JSON bundled with prismarine-viewer (MIT).
+  This is geometry data, not artwork.
+
+Engine and libraries (MIT)
+  prismarine-viewer, prismarine-schematic, prismarine-world, prismarine-chunk,
+  prismarine-block, prismarine-physics, minecraft-data, three.
+
+Audio
+  public/audio/ambient.ogg is not included. If an NCS release is used, follow
+  the attribution NCS requires for that track.
+
+Not affiliated with Mojang Studios or Microsoft. "Minecraft" is a trademark of
+Mojang Synergies AB.
