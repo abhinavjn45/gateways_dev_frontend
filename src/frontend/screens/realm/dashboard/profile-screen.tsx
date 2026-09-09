@@ -226,7 +226,29 @@ export function ProfileScreen() {
         </BlockPanel>
       ) : null}
 
-      {detailsComplete && (session?.paymentStatus === 'none' || !session?.paymentStatus || session?.paymentStatus === 'rejected') ? (
+      {detailsComplete && session?.paymentStatus === 'rejected' ? (
+        <BlockPanel variant="slot" padded="lg" className="border-[length:var(--mc-bevel)] border-mc-error flex flex-col gap-[calc(var(--mc-unit)*1)]">
+          <div className="flex flex-wrap items-baseline justify-between gap-[var(--mc-unit)]">
+            <h2 className="font-pixel text-[14px] uppercase tracking-wide text-mc-error">
+              Payment Rejected
+            </h2>
+          </div>
+          <p className="text-[18px] text-mc-text font-body leading-relaxed">
+            Payment has been rejected due to some issues, please re-upload your payment details
+          </p>
+          <div className="flex flex-wrap gap-[var(--mc-unit)] mt-2">
+            <BlockButton
+              variant="gold"
+              size="sm"
+              onClick={() => setPaymentOpen(true)}
+            >
+              Submit Payment Details
+            </BlockButton>
+          </div>
+        </BlockPanel>
+      ) : null}
+
+      {detailsComplete && (session?.paymentStatus === 'none' || !session?.paymentStatus) ? (
         <BlockPanel variant="panel" padded="lg" className="flex flex-col gap-[var(--mc-unit)]">
           <div className="flex flex-wrap items-baseline justify-between gap-[var(--mc-unit)]">
             <h2 className="font-pixel text-[10px] uppercase tracking-[0.1em] text-mc-gold">
@@ -238,9 +260,7 @@ export function ProfileScreen() {
           </div>
           <div className="py-[var(--mc-unit)]">
             <p className="text-[18px] text-mc-gold">
-              {session?.paymentStatus === 'rejected' 
-                ? "Your previous payment submission was rejected. Please submit valid payment details to unlock dashboard features."
-                : "Your payment details are missing. All dashboard features will remain locked until your payment is verified."}
+              Your payment details are missing. All dashboard features will remain locked until your payment is verified.
             </p>
           </div>
           <div className="flex flex-wrap gap-[var(--mc-unit)]">

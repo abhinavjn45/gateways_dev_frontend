@@ -1,8 +1,23 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+const BLOCKED_SUBNETS = [
+  '114.29.226.', // Attacker subnet
+];
+
 export default function proxy(request: NextRequest) {
+  const ip = request.ip || request.headers.get('x-real-ip') || request.headers.get('x-forwarded-for') || '';
+  
+  if (BLOCKED_SUBNETS.some(subnet => ip.startsWith(subnet))) {
+    return new NextResponse('Access Denied', { status: 403 });
+  }
+
   const { pathname } = request.nextUrl;
+
+  if (pathname.startsWith('/art/brand/')) {
+    return new NextResponse('Not Found', { status: 404 });
+  }
+
   const token = request.cookies.get('token')?.value;
 
   // Paths that require authentication
@@ -31,11 +46,10 @@ export const config = {
   matcher: [
     /*
      * Match all request paths except for the ones starting with:
-     * - api (API routes)
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+    '/((?!_next/static|_next/image|favicon.ico).*)',
   ],
 };
