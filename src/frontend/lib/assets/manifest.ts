@@ -49,11 +49,11 @@ const spec = <T extends Record<string, AssetSpec>>(t: T) => t;
 export const ART = {
   /** Supplied high-resolution character renders used only on the homepage. */
   home: spec({
-    bowOne: { src: "/art/Bow_1.png", w: 935, h: 1681, kind: "sprite", rendering: "smooth" },
-    bowTwo: { src: "/art/Bow_2.png", w: 941, h: 1672, kind: "sprite", rendering: "smooth" },
-    girl: { src: "/art/Girl_1.png", w: 941, h: 1672, kind: "sprite", rendering: "smooth" },
-    pickaxe: { src: "/art/Pickaxe_1.png", w: 1122, h: 1402, kind: "sprite", rendering: "smooth" },
-    creeper: { src: "/art/creeper.png", w: 304, h: 657, kind: "sprite", rendering: "smooth" },
+    bowOne: { src: "https://cdn.jsdelivr.net/gh/abhinavjn45/gateways2026-assets@main/art/bow-1.png", w: 935, h: 1681, kind: "sprite", rendering: "smooth" },
+    bowTwo: { src: "https://cdn.jsdelivr.net/gh/abhinavjn45/gateways2026-assets@main/art/bow-2.png", w: 941, h: 1672, kind: "sprite", rendering: "smooth" },
+    girl: { src: "https://cdn.jsdelivr.net/gh/abhinavjn45/gateways2026-assets@main/art/girl-1.png", w: 941, h: 1672, kind: "sprite", rendering: "smooth" },
+    pickaxe: { src: "https://cdn.jsdelivr.net/gh/abhinavjn45/gateways2026-assets@main/art/pickaxe-1.png", w: 1122, h: 1402, kind: "sprite", rendering: "smooth" },
+    creeper: { src: "https://cdn.jsdelivr.net/gh/abhinavjn45/gateways2026-assets@main/art/creeper.png", w: 304, h: 657, kind: "sprite", rendering: "smooth" },
   }),
 
   portal: spec({
@@ -192,22 +192,18 @@ export const ART = {
    *   globals.css, never in JS — see the note there.
    */
   brand: spec({
-    christUniversity: { src: "/art/brand/christ-university.png", w: 1795, h: 608, kind: "sprite", note: "CHRIST wordmark, white" },
-    christWhite: { src: "/art/brand/Christ White.svg", w: 323, h: 96, kind: "sprite", note: "CHRIST wordmark, white SVG" },
-    christBlack: { src: "/art/brand/Christ Black.svg", w: 323, h: 96, kind: "sprite", note: "CHRIST wordmark, black SVG" },
-    christSmallWhite: { src: "/art/brand/Christ Small White.svg", w: 96, h: 96, kind: "sprite", note: "CHRIST seal, white SVG" },
-    christSmallBlack: { src: "/art/brand/Christ Small Black.svg", w: 96, h: 96, kind: "sprite", note: "CHRIST seal, black SVG" },
-    // 375x375 is the SVGs' real viewBox. They were recorded as 300x100 — wrong,
-    // and latent rather than harmless: the nav happens to pass only `src`, so
-    // nothing reads these today, but any consumer that did would lay out a
-    // square logo as a 3:1 letterbox.
-    gatewaysColoured: { src: "/art/brand/Gateways Coloured.svg", w: 375, h: 375, kind: "sprite", note: "Gateways coloured SVG — nav mark, and the splash crest's source" },
-    gatewaysBlackSvg: { src: "/art/brand/Gateways Black.svg", w: 375, h: 375, kind: "sprite", note: "Gateways black SVG" },
-    gatewaysWhiteSvg: { src: "/art/brand/Gateways White.svg", w: 375, h: 375, kind: "sprite", note: "Gateways white SVG" },
-    gatewaysCrest: { src: "/art/brand/Gateways_Pixel.png", w: 1254, h: 1254, kind: "sprite", note: "Gateways crest, gold" },
-    gatewaysCrestBlack: { src: "/art/brand/gateways_black.png", w: 1254, h: 1254, kind: "sprite", note: "Gateways crest, black — light theme" },
-    gatewaysCrestPixel: { src: "/art/brand/gateways-crest-pixel.png", w: 152, h: 152, kind: "sprite", note: "crest, pixel art" },
-    gatewaysCrestAperture: { src: "/art/brand/gateways-crest-aperture.png", w: 152, h: 152, kind: "sprite", note: "crest silhouette, CSS mask" },
+    christUniversity: { src: "https://cdn.jsdelivr.net/gh/abhinavjn45/gateways2026-assets@main/art/brand/christ-university.png", w: 1795, h: 608, kind: "sprite", note: "CHRIST wordmark, white" },
+    christWhite: { src: "https://cdn.jsdelivr.net/gh/abhinavjn45/gateways2026-assets@main/art/brand/christ-white.svg", w: 323, h: 96, kind: "sprite", note: "CHRIST wordmark, white SVG" },
+    christBlack: { src: "https://cdn.jsdelivr.net/gh/abhinavjn45/gateways2026-assets@main/art/brand/christ-black.svg", w: 323, h: 96, kind: "sprite", note: "CHRIST wordmark, black SVG" },
+    christSmallWhite: { src: "https://cdn.jsdelivr.net/gh/abhinavjn45/gateways2026-assets@main/art/brand/christ-small-white.svg", w: 96, h: 96, kind: "sprite", note: "CHRIST seal, white SVG" },
+    christSmallBlack: { src: "https://cdn.jsdelivr.net/gh/abhinavjn45/gateways2026-assets@main/art/brand/christ-small-black.svg", w: 96, h: 96, kind: "sprite", note: "CHRIST seal, black SVG" },
+    gatewaysColoured: { src: "https://cdn.jsdelivr.net/gh/abhinavjn45/gateways2026-assets@main/art/brand/gateways-coloured.svg", w: 300, h: 100, kind: "sprite", note: "Gateways coloured SVG" },
+    gatewaysBlackSvg: { src: "https://cdn.jsdelivr.net/gh/abhinavjn45/gateways2026-assets@main/art/brand/gateways-black.svg", w: 300, h: 100, kind: "sprite", note: "Gateways black SVG" },
+    gatewaysWhiteSvg: { src: "https://cdn.jsdelivr.net/gh/abhinavjn45/gateways2026-assets@main/art/brand/gateways-white.svg", w: 300, h: 100, kind: "sprite", note: "Gateways white SVG" },
+    gatewaysCrest: { src: "https://cdn.jsdelivr.net/gh/abhinavjn45/gateways2026-assets@main/art/brand/Gateways_Pixel.png", w: 1254, h: 1254, kind: "sprite", note: "Gateways crest, gold" },
+    gatewaysCrestBlack: { src: "https://cdn.jsdelivr.net/gh/abhinavjn45/gateways2026-assets@main/art/brand/gateways_black.png", w: 1254, h: 1254, kind: "sprite", note: "Gateways crest, black — light theme" },
+    gatewaysCrestPixel: { src: "https://cdn.jsdelivr.net/gh/abhinavjn45/gateways2026-assets@main/art/brand/gateways-crest-pixel.png", w: 152, h: 152, kind: "sprite", note: "crest, pixel art" },
+    gatewaysCrestAperture: { src: "https://cdn.jsdelivr.net/gh/abhinavjn45/gateways2026-assets@main/art/brand/gateways-crest-aperture.png", w: 152, h: 152, kind: "sprite", note: "crest silhouette, CSS mask" },
   }),
 
   ui: spec({
