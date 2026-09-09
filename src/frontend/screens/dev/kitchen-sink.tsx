@@ -14,7 +14,6 @@ import {
   LoadingBlocks,
   PixelAvatar,
   PixelImage,
-  Signpost,
   XpBar,
   showToast,
   type ToastSeverity,
@@ -22,7 +21,6 @@ import {
 import { ART, SKIN_IDS, allAssets } from "@/frontend/lib/assets/manifest";
 import { SCENES } from "@/frontend/lib/assets/scenes";
 import { BiomeScene } from "@/frontend/components/scene";
-import { WORLD_LOCATIONS } from "@/frontend/lib/world/world-locations";
 import type { Rarity } from "@/frontend/components/mc/badge-slot";
 
 const BUTTON_VARIANTS = ["primary", "portal", "emerald", "stone", "gold", "danger", "dirt", "ghost"] as const;
@@ -221,14 +219,6 @@ export function KitchenSink() {
             </div>
           </div>
         </BlockModal>
-      </Section>
-
-      <Section title="Signposts" note="Percentage-positioned so they track the map at any resolution.">
-        <div className="relative h-[280px] w-full overflow-hidden bg-mc-grass-dark bevel-inset">
-          {WORLD_LOCATIONS.slice(0, 4).map((l) => (
-            <Signpost key={l.key} label={l.label} item={l.item} href="#" xPct={l.x} yPct={l.y} />
-          ))}
-        </div>
       </Section>
 
       <Section title="Loading">

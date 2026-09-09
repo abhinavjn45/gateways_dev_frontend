@@ -32,6 +32,9 @@ const NAV = [
   // the one thing here a participant MUST do before they can register.
   { href: "/dashboard/profile", label: "Profile", icon: "◉" },
   { href: "/dashboard/explore", label: "Explore Events", icon: "✦" },
+  // The walkable campus: every classroom is an event. Lives outside
+  // /dashboard so the sidebar does not eat a third of the 3D view.
+  { href: "/world?view=3d", label: "3D World", icon: "◆" },
   { href: "/dashboard/schedule", label: "Schedule", icon: "◷" },
   { href: "/dashboard/events", label: "My Events", icon: "▤" },
   { href: "/dashboard/announcements", label: "Announcements", icon: "◈" },
@@ -53,6 +56,23 @@ const TABS = [
   { href: "/events", label: "Events", icon: "▤" },
   { href: "/dashboard/profile", label: "Profile", icon: "◉" },
 ] as const;
+
+/**
+ * Destinations that stay open before the profile is complete and the payment
+ * verified. Exploring the campus is harmless — registration is enforced
+ * inside the event hub itself — so the 3D world is on the list.
+ */
+const UNLOCKED = new Set<string>([
+  "/dashboard/profile",
+  "/dashboard/settings",
+  "/dashboard/notifications",
+  "/dashboard/schedule",
+  "/dashboard/explore",
+  "/world?view=3d",
+]);
+
+/** Active-state matching ignores the query: `usePathname()` never carries one. */
+const navPath = (href: string) => href.split("?")[0];
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const { character, session, signOut } = useSession();

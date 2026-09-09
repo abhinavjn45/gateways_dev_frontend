@@ -76,6 +76,24 @@ const C = {
   leaf: "#3f8f2f",
   leafLight: "#5cb03f",
   leafDark: "#2b6620",
+
+  // ---- Night / storm -------------------------------------------------------
+  // The dark-theme half of the panorama. These do NOT mirror a --color-mc-*
+  // token: cloud, sky and grass are MATERIALS, and globals.css keeps material
+  // colours out of the theme flip on purpose ("a block's colour is its
+  // identity"). Weather is not a material, so it gets its own values here and
+  // its own semantic vars in globals.css for the announcement clouds.
+  stormHigh: "#0a1020",
+  stormMid: "#16203a",
+  stormLow: "#28344f",
+
+  // A step darker than the --cloud-* vars in globals.css on purpose: the
+  // announcement clouds carry text and must read in FRONT of this bank. Same
+  // hues, lower value, so they are the same weather at different distances.
+  stormCloudTop: "#4e5871",
+  stormCloudBody: "#3b4359",
+  stormCloudUnder: "#2c3345",
+
 } as const;
 
 /** Linear blend between two hex colours. Used for banded sky ramps. */
@@ -183,44 +201,165 @@ function skyDay(w: number, h: number): string {
  * edges by a full cluster width rather than wrapped.
  */
 function cloudsBlocky(w: number, h: number, key: string): string {
+  return cloudBank(w, h, key, {
+    s: 24,
+    count: 7,
+    top: C.cloudTop,
+    body: C.cloudBody,
+    under: C.cloudUnder,
+    topBand: [0.1, 0.4],
+  });
+}
+
+/**
+ * Column heights, in blocks, for one cloud cluster.
+ *
+ * A cumulus is not a pyramid. This used to taper linearly from a wide base to a
+ * narrow top, which can only ever draw a ziggurat — and a ziggurat is what the
+ * sky looked like. Taking the MAX of two or three overlapping half-domes of
+ * different radii and heights instead gives the lumpy crown and the flat base
+ * that actually read as a cloud.
+ *
+ * The floor of 1 is what keeps the base a continuous flat line; without it the
+ * gaps between lobes cut the cluster into separate towers.
+ */
+function cloudProfile(cols: number, rnd: () => number): number[] {
+  const lobes = 2 + Math.floor(rnd() * 2);
+  const domes: Array<{ c: number; r: number; hi: number }> = [];
+  for (let i = 0; i < lobes; i++) {
+    domes.push({
+      c: ((i + 0.5) / lobes) * cols + (rnd() - 0.5) * (cols / lobes) * 0.6,
+      r: cols * (0.3 + rnd() * 0.22),
+      hi: 2 + rnd() * 2.2,
+    });
+  }
+
+  const out: number[] = [];
+  for (let x = 0; x < cols; x++) {
+    let best = 0;
+    for (const d of domes) {
+      const t = Math.abs(x + 0.5 - d.c) / d.r;
+      if (t >= 1) continue;
+      best = Math.max(best, d.hi * Math.sqrt(1 - t * t));
+    }
+    out.push(Math.max(1, Math.round(best)));
+  }
+  return out;
+}
+
+/**
+ * A tileable band of cloud clusters. Shared by the daylight sky and the storm
+ * bank so the two can never drift into different silhouettes.
+ *
+ * Clusters are inset from both edges by more than the widest possible cluster
+ * rather than wrapped: this layer is `repeat-x` and drifts forever, so a puff
+ * crossing an edge would drag a seam across the sky once per cycle.
+ */
+function cloudBank(
+  w: number,
+  h: number,
+  key: string,
+  o: {
+    s: number;
+    count: number;
+    top: string;
+    body: string;
+    under: string;
+    /** Vertical band the cluster bases sit in, as a fraction of height. */
+    topBand: [number, number];
+  },
+): string {
   const rnd = seededRandom(key);
-  const s = 24; // block size
+  const { s } = o;
   let body = "";
 
-  const puff = (cx: number, cy: number, wide: number, tall: number) => {
-    // Rows narrow toward the top, so the cluster silhouettes as a cumulus
-    // rather than a rectangle.
-    for (let row = 0; row < tall; row++) {
-      const shrink = Math.round(row * (wide / (tall * 1.6)) + (rnd() < 0.4 ? 1 : 0));
-      const cols = Math.max(1, wide - shrink * 2);
-      const x0 = cx - (cols * s) / 2;
-      const y = cy - row * s;
-      for (let c = 0; c < cols; c++) {
-        const top = row === tall - 1;
-        const bottom = row === 0;
+  const margin = s * 10;
+  for (let i = 0; i < o.count; i++) {
+    const cols = 5 + Math.floor(rnd() * 5);
+    const profile = cloudProfile(cols, rnd);
+
+    const cxRaw = margin + ((w - margin * 2) * (i + 0.5)) / o.count + (rnd() - 0.5) * s * 4;
+    const x0 = Math.round((cxRaw - (cols * s) / 2) / s) * s;
+    const baseY =
+      Math.round((h * o.topBand[0] + rnd() * h * (o.topBand[1] - o.topBand[0])) / s) * s;
+
+    for (let c = 0; c < cols; c++) {
+      const tall = profile[c];
+      for (let r = 0; r < tall; r++) {
         body += rect(
           x0 + c * s,
-          y,
+          baseY - r * s,
           s,
           s,
-          top ? C.cloudTop : bottom ? C.cloudUnder : C.cloudBody,
+          r === tall - 1 ? o.top : r === 0 ? o.under : o.body,
         );
       }
     }
-  };
-
-  // Inset from both edges by more than the widest cluster keeps the tile seam
-  // clean. Clouds live in the upper 45% only; below that is the valley.
-  const margin = s * 10;
-  const count = 7;
-  for (let i = 0; i < count; i++) {
-    const cx = margin + ((w - margin * 2) * (i + 0.5)) / count + (rnd() - 0.5) * s * 4;
-    const cy = h * 0.1 + rnd() * h * 0.3;
-    puff(Math.round(cx / s) * s, Math.round(cy / s) * s, 5 + Math.floor(rnd() * 5), 2 + Math.floor(rnd() * 3));
   }
 
   return svg(w, h, "none", body);
 }
+
+/**
+ * Overcast sky for the hero's dark theme.
+ *
+ * Same 16-band construction as `skyDay` — banding is the point, a real gradient
+ * would be smoother and wrong — but ramped through storm slate instead of
+ * afternoon blue. Deliberately STARLESS: this sky is overcast, and `skyNight`
+ * above is the clear-night sky for the portal valley. Stars showing through a
+ * solid cloud bank read as a rendering error, not as weather.
+ */
+function skyStorm(w: number, h: number): string {
+  const bands = 16;
+  let body = rect(0, 0, w, h, C.stormLow);
+  for (let i = 0; i < bands; i++) {
+    const t = i / (bands - 1);
+    const col =
+      t < 0.55
+        ? mix(C.stormHigh, C.stormMid, t / 0.55)
+        : mix(C.stormMid, C.stormLow, (t - 0.55) / 0.45);
+    body += rect(0, (i * h) / bands, w, h / bands + 1, col);
+  }
+  return svg(w, h, "none", body);
+}
+
+/** The night sky's cloud bank. Same silhouette as daylight, storm greys. */
+function stormClouds(w: number, h: number, key: string): string {
+  return cloudBank(w, h, key, {
+    s: 24,
+    count: 8,
+    top: C.stormCloudTop,
+    body: C.stormCloudBody,
+    under: C.stormCloudUnder,
+    topBand: [0.08, 0.34],
+  });
+}
+
+/**
+ * Darkens the daylight landforms to night.
+ *
+ * The hills, treeline and meadow painters are authored for sunlight and are
+ * reused verbatim under the dark theme — repainting all three in a night
+ * palette would double the surface area and let the two halves drift apart.
+ * This is the same trade `nightVeil` makes for the portal valley, but FLAT
+ * top-to-bottom rather than radial: `nightVeil` punches a bright hole where the
+ * portal stands, and there is no portal here to justify one.
+ *
+ * Heavier at the bottom than the top so the horizon keeps a little light and
+ * the meadow does not flatten into a black band.
+ */
+function nightWash(w: number, h: number): string {
+  const body =
+    `<defs><linearGradient id="nw" x1="0" y1="0" x2="0" y2="1">` +
+    `<stop offset="0%" stop-color="#070c18" stop-opacity="0.28"/>` +
+    `<stop offset="42%" stop-color="#0a1020" stop-opacity="0.56"/>` +
+    `<stop offset="68%" stop-color="#080d1a" stop-opacity="0.78"/>` +
+    `<stop offset="100%" stop-color="#05080f" stop-opacity="0.92"/>` +
+    `</linearGradient></defs>` +
+    rect(0, 0, w, h, "url(#nw)");
+  return svg(w, h, "none", body);
+}
+
 
 /**
  * Distant rock spires on the far side of the valley.
@@ -896,6 +1035,15 @@ export function paintSceneLayer(
       break;
     case "clouds-blocky":
       result = cloudsBlocky(w, h, key);
+      break;
+    case "sky-storm":
+      result = skyStorm(w, h);
+      break;
+    case "storm-clouds":
+      result = stormClouds(w, h, key);
+      break;
+    case "night-wash":
+      result = nightWash(w, h);
       break;
     case "ridge-far":
       result = ridgeFar(w, h, key);

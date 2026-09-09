@@ -12,10 +12,16 @@ import { cn } from "@/frontend/lib/utils";
  * overlay on top of it.
  *
  * The cloud is built from blocks rather than a background image: a lit top
- * face, a body, a shaded underside, plus a few bumps above and nubs below to
- * break the rectangle into a stepped silhouette. Every offset is a multiple of
- * `--mc-unit`, so the whole shape rescales with `--mc-scale` and its edges stay
- * on the pixel grid at 2×, 3× and 4×.
+ * face, a body, a shaded underside, a stepped crown of bumps above and nubs
+ * hanging below. Every offset is a multiple of `--mc-unit`, so the whole shape
+ * rescales with `--mc-scale` and its edges stay on the pixel grid at 2×, 3×
+ * and 4×. See `SHAPES` for what makes the crown read as a cloud rather than as
+ * a box with tabs on it.
+ *
+ * COLOUR IS THEMED, geometry is not. The three faces come from `--cloud-lit` /
+ * `--cloud-face` / `--cloud-shade` in globals.css, which are storm greys in the
+ * dark theme and the pale cloud material in the light one — so these match the
+ * weather in the panorama behind them without a second DOM tree or a JS branch.
  *
  * CSS animation, not GSAP and not Framer: each cloud is one looping transform
  * on one element with no coordination between them — the case the animation
@@ -70,7 +76,7 @@ const SLOTS = [
   // Inner pair — the high span over the wordmark. Needs both room across and
   // room down, so it is the first thing to go.
   { top: "6%", left: "24%", duration: 13, delay: -5, shape: 2, gate: "arch" },
-  { top: "6%", right: "24%", duration: 19, delay: -12, shape: 0, gate: "arch" },
+  { top: "6%", right: "24%", duration: 19, delay: -12, shape: 3, gate: "arch" },
 ] as const;
 
 /**
@@ -84,11 +90,83 @@ const GATES = {
   arch: "hidden [@media(min-width:1024px)_and_(min-height:700px)]:block",
 } as const;
 
-/** Bump/nub placements per shape, so the four clouds are not identical stamps. */
+/**
+ * Bump/nub placements per shape, so the four clouds are not identical stamps.
+ *
+ * Each shape is a CONTIGUOUS CROWN: the bumps butt up against one another left
+ * to right (6+14=20, 20+22=42, …) and step up to a single off-centre peak
+ * before stepping back down. That contiguity is the whole fix. The previous
+ * shapes carried two isolated bumps on a bare top edge, which left most of the
+ * silhouette a flat rectangle with a couple of tabs on it — the reason these
+ * did not read as clouds.
+ *
+ * Rules for editing:
+ *  - `left + w` must stay ≤ 100, or a bump overhangs the body and the cloud
+ *    gains a hard corner exactly where it should be softest.
+ *  - `h` is in whole `--mc-unit`s, 1–3. Anything taller reads as a tower.
+ *  - Vary WHERE the peak sits between shapes, not just its height; four clouds
+ *    peaking dead centre look like one cloud drawn four times.
+ */
 const SHAPES = [
-  { bumps: [{ left: "14%", w: "30%", h: 1 }, { left: "52%", w: "24%", h: 2 }], nubs: [{ left: "22%", w: "24%" }] },
-  { bumps: [{ left: "20%", w: "26%", h: 2 }, { left: "56%", w: "20%", h: 1 }], nubs: [{ left: "48%", w: "28%" }] },
-  { bumps: [{ left: "10%", w: "22%", h: 1 }, { left: "40%", w: "34%", h: 2 }], nubs: [{ left: "16%", w: "20%" }, { left: "58%", w: "18%" }] },
+  // Peak just right of centre.
+  {
+    bumps: [
+      { left: "6%", w: "14%", h: 1 },
+      { left: "20%", w: "22%", h: 2 },
+      { left: "42%", w: "26%", h: 3 },
+      { left: "68%", w: "20%", h: 2 },
+      { left: "88%", w: "10%", h: 1 },
+    ],
+    nubs: [
+      { left: "14%", w: "20%" },
+      { left: "44%", w: "26%" },
+      { left: "76%", w: "14%" },
+    ],
+  },
+  // Broad and low — two shoulders, no single peak.
+  {
+    bumps: [
+      { left: "4%", w: "16%", h: 1 },
+      { left: "20%", w: "24%", h: 2 },
+      { left: "44%", w: "22%", h: 2 },
+      { left: "66%", w: "22%", h: 3 },
+      { left: "88%", w: "10%", h: 1 },
+    ],
+    nubs: [
+      { left: "10%", w: "18%" },
+      { left: "38%", w: "22%" },
+      { left: "68%", w: "20%" },
+    ],
+  },
+  // Peak hard left.
+  {
+    bumps: [
+      { left: "4%", w: "18%", h: 2 },
+      { left: "22%", w: "24%", h: 3 },
+      { left: "46%", w: "22%", h: 2 },
+      { left: "68%", w: "20%", h: 1 },
+      { left: "88%", w: "8%", h: 1 },
+    ],
+    nubs: [
+      { left: "18%", w: "24%" },
+      { left: "52%", w: "18%" },
+    ],
+  },
+  // Peak hard right.
+  {
+    bumps: [
+      { left: "6%", w: "12%", h: 1 },
+      { left: "18%", w: "20%", h: 2 },
+      { left: "38%", w: "24%", h: 2 },
+      { left: "62%", w: "24%", h: 3 },
+      { left: "86%", w: "12%", h: 1 },
+    ],
+    nubs: [
+      { left: "12%", w: "16%" },
+      { left: "40%", w: "20%" },
+      { left: "70%", w: "22%" },
+    ],
+  },
 ] as const;
 
 export function SkyAnnouncements() {
@@ -134,7 +212,7 @@ function SkyCloud({ text, shape }: { text: string; shape: number }) {
         <span
           aria-hidden
           key={`bump-${i}`}
-          className="absolute block bg-mc-cloud-light"
+          className="absolute block bg-[var(--cloud-lit)]"
           style={{
             left: b.left,
             width: b.w,
@@ -149,7 +227,7 @@ function SkyCloud({ text, shape }: { text: string; shape: number }) {
         <span
           aria-hidden
           key={`nub-${i}`}
-          className="absolute bottom-[calc(var(--mc-unit)*-1)] block h-[var(--mc-unit)] bg-mc-cloud-dark"
+          className="absolute bottom-[calc(var(--mc-unit)*-1)] block h-[var(--mc-unit)] bg-[var(--cloud-shade)]"
           style={{ left: n.left, width: n.w }}
         />
       ))}
@@ -157,12 +235,12 @@ function SkyCloud({ text, shape }: { text: string; shape: number }) {
       {/* Body. The top and bottom borders are the lit and shaded faces — the
           same two-tone trick the `bevel` utility uses, done with borders here
           because the bumps must line up flush with the lit face. */}
-      <div className="relative border-b-[length:var(--mc-unit)] border-t-[length:var(--mc-unit)] border-b-mc-cloud-dark border-t-mc-cloud-light bg-mc-cloud px-[calc(var(--mc-unit)*1.25)] py-[calc(var(--mc-unit)*0.75)]">
+      <div className="relative border-b-[length:var(--mc-unit)] border-t-[length:var(--mc-unit)] border-b-[var(--cloud-shade)] border-t-[var(--cloud-lit)] bg-[var(--cloud-face)] px-[calc(var(--mc-unit)*1.25)] py-[calc(var(--mc-unit)*0.75)]">
         {/* text-balance so the lines come out even lengths. Without it the
             greedy line-breaker leaves orphans and splits mid-date
             ("hackathon begins 30 / september 2026"), which in a 2–3 line block at
             this size is the difference between a caption and a ransom note. */}
-        <span className="block text-balance text-center font-pixel text-[7px] uppercase leading-[1.9] tracking-[0.06em] text-mc-obsidian md:text-[9px]">
+        <span className="block text-balance text-center font-pixel text-[7px] uppercase leading-[1.9] tracking-[0.06em] text-[var(--cloud-ink)] md:text-[9px]">
           {text}
         </span>
       </div>

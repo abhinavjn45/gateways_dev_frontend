@@ -1,0 +1,59 @@
+{
+  "_README": "Single source of truth for the 3D classroom world. Read by scripts/mc/*.mjs (via fs) and by the React side (via resolveJsonModule). Change `world.slots` and rerun `npm run mc:assets` to regenerate the school; event names are bound at runtime and never baked into the world.",
+  "world": {
+    "version": "1.17.1",
+    "schematic": "world.schem",
+    "renderDistance": 4,
+    "slots": 16
+  },
+  "spare": [
+    { "label": "Sponsors' Pavilion", "lines": ["SPONSORS'", "PAVILION"] },
+    { "label": "Leaderboard", "lines": ["LEADERBOARD"] },
+    { "label": "Help Desk", "lines": ["HELP DESK"] }
+  ],
+  "comingSoon": { "label": "Coming soon", "lines": ["COMING", "SOON"] },
+  "credits": "Textures from VoxeLibre (CC BY-SA 4.0). Not affiliated with Mojang Studios.",
+  "runtime": {
+    "downloading": "Downloading the world engine...",
+    "downloadError": "Failed to download the world engine.",
+    "preparing": "Preparing...",
+    "unavailable": "The world engine is unavailable.",
+    "fatalPrefix": "Unable to enter the world: "
+  },
+  "loading": {
+    "heading": "Entering the campus...",
+    "back": "Back",
+    "retry": "Retry",
+    "tips": [
+      "Tip: Walk up to a classroom and press E to open its event hub",
+      "Tip: Press H any time for the controls",
+      "Tip: Esc releases the mouse",
+      "Tip: Every classroom is one Gateways event",
+      "Tip: On a phone, the left half of the screen is your joystick"
+    ]
+  },
+  "status": {
+    "downloading": "Downloading renderer...",
+    "readingSchematic": "Reading the campus...",
+    "buildingWorld": "Campus {size} decoded. Building terrain...",
+    "terrain": "Rendering nearby terrain...",
+    "lighting": "Sky and block lighting ready",
+    "props": "Hanging the event signs...",
+    "ready": "Ready"
+  },
+  "ui": {
+    "shortcutsHeading": "Walk the campus. Every classroom is an event — step inside and press E.",
+    "shortcutsHint": "Press H any time to show or hide this guide.",
+    "hubHint": "Press E — {name}",
+    "hubHintTouch": "Tap here — {name}"
+  },
+  "controls": [
+    { "keys": "W A S D", "label": "Move" },
+    { "keys": "Space", "label": "Jump; small ledges also auto-jump" },
+    { "keys": "Shift", "label": "Sneak" },
+    { "keys": "Ctrl", "label": "Sprint" },
+    { "keys": "Mouse", "label": "Look around (click to capture, Esc to release)" },
+    { "keys": "E / Enter / Right click", "label": "Open the event hub of the classroom you are in" },
+    { "keys": "H", "label": "Show or hide this guide" }
+  ]
+}

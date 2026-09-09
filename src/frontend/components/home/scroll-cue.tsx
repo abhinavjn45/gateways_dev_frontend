@@ -29,10 +29,23 @@ export function ScrollCue({ className }: { className?: string }) {
   useEffect(() => {
     let timer = 0;
 
+    // `scrolling` is a boolean, but this used to reset a timeout on EVERY
+    // scroll event — hundreds per gesture, each one a clearTimeout plus a
+    // setTimeout plus a setState call React then had to bail out of. Tracking
+    // the flag in a local and only touching React on an actual transition keeps
+    // the scroll path free.
+    let active = false;
+    const stop = () => {
+      active = false;
+      setScrolling(false);
+    };
     const onScroll = () => {
-      setScrolling(true);
+      if (!active) {
+        active = true;
+        setScrolling(true);
+      }
       window.clearTimeout(timer);
-      timer = window.setTimeout(() => setScrolling(false), IDLE_MS);
+      timer = window.setTimeout(stop, IDLE_MS);
     };
 
     // passive: never calls preventDefault, so the browser can keep scrolling

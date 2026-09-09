@@ -56,7 +56,7 @@ function TeamSection({ title, members }: { title: string; members: TeamMember[] 
   );
 }
 
-/** Committee heads group by the team they run, so the grid reads as an org chart. */
+/** Committee heads group by the team they run: one labelled card grid per team. */
 function CommitteeHeadsSection() {
   const groups = new Map<string, CommitteeHead[]>();
   for (const head of COMMITTEE_HEADS) {
@@ -68,14 +68,17 @@ function CommitteeHeadsSection() {
   return (
     <section>
       <h2 className="font-pixel text-[11px] uppercase text-mc-text-dim">Committee Heads</h2>
-      <div className="mt-[var(--mc-unit)] grid gap-[calc(var(--mc-unit)*1.5)] sm:grid-cols-2">
+      <div className="mt-[var(--mc-unit)] flex flex-col gap-[calc(var(--mc-unit)*1.5)]">
         {[...groups.entries()].map(([team, heads]) => (
           <div key={team}>
             <h3 className="text-[15px] text-mc-eyebrow">{team}</h3>
-            <ul className="mt-[calc(var(--mc-unit)*0.5)] flex flex-col gap-[calc(var(--mc-unit)*0.5)]">
+            {/* Each team gets the full width and the same three-up card grid as
+                the other sections, rather than a narrow stacked column: the
+                team name is the only thing that needs its own row. */}
+            <ul className="mt-[calc(var(--mc-unit)*0.5)] grid gap-[var(--mc-unit)] sm:grid-cols-2 lg:grid-cols-3">
               {heads.map((head) => (
                 <li key={head.name}>
-                  <MemberCard member={head} compact />
+                  <MemberCard member={head} />
                 </li>
               ))}
             </ul>
@@ -86,23 +89,20 @@ function CommitteeHeadsSection() {
   );
 }
 
-function MemberCard({ member, compact = false }: { member: TeamMember; compact?: boolean }) {
+function MemberCard({ member }: { member: TeamMember }) {
   return (
     <BlockPanel
       variant="panel"
-      padded={compact ? "md" : "lg"}
+      padded="lg"
       className="flex h-full items-center gap-[calc(var(--mc-unit)*1.5)]"
     >
       {/* 88px, not the 48 this started at: these are real faces in a square
           crop, and at 48 a head occupies about thirty pixels — recognisable as
           a person, not as WHICH person, which is the entire job of a portrait
-          on a credits page. The committee-heads list stays smaller because it
-          is a dense org-chart column, not a card grid. */}
-      <MemberPortrait member={member} size={compact ? 56 : 88} />
+          on a credits page. */}
+      <MemberPortrait member={member} size={88} />
       <div className="min-w-0">
-        <p className={cn("font-pixel text-mc-success", compact ? "text-[10px]" : "text-[11px]")}>
-          {member.name}
-        </p>
+        <p className="font-pixel text-[11px] text-mc-success">{member.name}</p>
         <p className="mt-[calc(var(--mc-unit)*0.25)] text-[18px] text-mc-text-dim">
           {member.subtitle}
         </p>

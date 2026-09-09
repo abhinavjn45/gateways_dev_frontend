@@ -63,6 +63,24 @@ export interface SceneLayer extends AssetSpec {
    * layers, `center` otherwise.
    */
   anchor?: string;
+  /**
+   * Render this layer in ONE theme only.
+   *
+   * Compiles to the `.scene-only-dark` / `.scene-only-light` classes in
+   * globals.css, which key off the `data-theme` attribute. CSS and not
+   * `useTheme` is the only correct route above the fold: that hook resolves
+   * "dark" on the first client pass and corrects in an effect, so a
+   * light-theme visitor would get a frame of the dark scene — see the note on
+   * `BiomeScene`'s `lightScene`.
+   *
+   * Those classes DEFAULT TO DARK rather than hiding both variants, because
+   * `data-theme` is NOT in the server-rendered HTML. See their definition in
+   * globals.css for why that matters here and not for the theme icons.
+   *
+   * Both variants sit in the DOM and one is hidden. Layers are `aria-hidden`
+   * already, so the hidden twin costs nothing to assistive tech.
+   */
+  theme?: "dark" | "light";
 }
 
 export interface Scene {
@@ -72,6 +90,12 @@ export interface Scene {
   brief: string;
   /** Fallback CSS gradient painted under the layers — covers any gaps. */
   baseGradient: string;
+  /**
+   * Dark-theme counterpart to `baseGradient`. When set, both are rendered and
+   * swapped by the same `.scene-only-*` mechanism the layers use, so the
+   * fallback can never disagree with the layers stacked on top of it.
+   */
+  baseGradientNight?: string;
   /**
    * Placeholder palette for THIS scene: [near, far] hex pair.
    *
@@ -206,9 +230,15 @@ export const SCENES: Record<string, Scene> = {
    * photograph. Pointer parallax still applies on top, so moving the mouse and
    * simply waiting both produce depth.
    *
-   * Bright by design. This is the fest's front door and the theme is a daylight
-   * world being mirrored, not a portal in a dark valley — so there is no violet
-   * anywhere in the stack.
+   * Bright by design in the LIGHT theme. This is the fest's front door and the
+   * theme is a daylight world being mirrored, not a portal in a dark valley —
+   * so there is no violet anywhere in the stack.
+   *
+   * The DARK theme gets the same world at night: an overcast sky, a drifting
+   * cloud bank and a wash over the landforms. Those layers carry
+   * `theme: "dark"` and the daylight sky carries `theme: "light"`, so exactly
+   * one of the two is on screen and the choice is made in CSS before first
+   * paint. The landform painters are shared by both.
    */
   "overworld-panorama": buildScene({
     key: "overworld-panorama",
@@ -218,14 +248,25 @@ export const SCENES: Record<string, Scene> = {
       "clouds, hazed rolling hills, a treeline, and a vivid near meadow. " +
       "Seamlessly tileable horizontally. Original voxel style, no game logos.",
     baseGradient: "linear-gradient(180deg, #1b4a86 0%, #2064b4 38%, #5787bf 68%, #5fa73f 100%)",
+    // Same sky-to-grass shape, in night values, so the fallback matches the
+    // storm stack rather than flashing daylight behind it.
+    baseGradientNight:
+      "linear-gradient(180deg, #0a1020 0%, #131d33 40%, #1d2a41 70%, #1f3320 100%)",
     palette: ["#7ec850", "#2064b4"],
     layers: [
-      layer("sky", "sky", 0, { paint: "sky-day" }),
-      // NO decorative cloud layer here, deliberately. The homepage writes its
-      // announcements into pixel clouds of its own (`sky-announcements.tsx`),
-      // and a second set of painted clouds drifting behind them turned the sky
-      // into visual noise — two cloud systems at different speeds, one of them
-      // carrying text. The announcement clouds ARE this scene's clouds.
+      layer("sky", "sky", 0, { paint: "sky-day", theme: "light" }),
+      layer("sky-storm", "sky", 0, { paint: "sky-storm", theme: "dark" }),
+      // NO decorative cloud layer in DAYLIGHT, deliberately. The homepage
+      // writes its announcements into pixel clouds of its own
+      // (`sky-announcements.tsx`), and a second set of painted clouds drifting
+      // behind them turned the sky into visual noise — two cloud systems at
+      // different speeds, one of them carrying text. The announcement clouds
+      // ARE this scene's daytime clouds.
+      //
+      // The night stack DOES carry a bank (`storm-bank`, below) and that is not
+      // a contradiction: it is heavily darkened by `night-wash`, sits at a much
+      // lower contrast than the announcement clouds in front of it. It reads as
+      // weather, not as a second set of objects competing for attention.
       layer("hills", "far", 0.16, {
         paint: "hills-tile",
         tile: true,
@@ -248,6 +289,32 @@ export const SCENES: Record<string, Scene> = {
         w: 1600,
         h: 900,
       }),
+
+      /* ---- Dark theme only: the same world after nightfall ----------------
+         The three landform painters above are reused UNCHANGED. `night-wash`
+         darkens them instead, which is the rule `portal-threshold` already
+         follows below — one source of truth per landform, so a tweak to the
+         meadow cannot leave the night version behind.
+
+         Order is paint order: the cloud bank sits behind the wash, so the wash
+         darkens the clouds along with the land.
+
+         There is deliberately NO precipitation layer. One existed briefly and
+         was removed: it animated `background-position` on a full-bleed,
+         `image-rendering: pixelated` element every 0.55s, and that property is
+         PAINTED, not composited — so it repainted the whole layer on every
+         frame and cost far more than the drift tweens this file is otherwise
+         careful about. Weather here has to be something the compositor can move
+         (a transform) or something that does not move at all. */
+      layer("storm-bank", "far", 0.12, {
+        paint: "storm-clouds",
+        theme: "dark",
+        tile: true,
+        drift: -11,
+        w: 1600,
+        h: 900,
+      }),
+      layer("night-wash", "overlay", 0, { paint: "night-wash", theme: "dark" }),
     ],
   }),
 
