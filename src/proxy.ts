@@ -6,6 +6,7 @@ const BLOCKED_SUBNETS = [
 ];
 
 export default function proxy(request: NextRequest) {
+  // @ts-ignore - Some versions of Next.js NextRequest don't have ip typed
   const ip = request.ip || request.headers.get('x-real-ip') || request.headers.get('x-forwarded-for') || '';
   
   if (BLOCKED_SUBNETS.some(subnet => ip.startsWith(subnet))) {
