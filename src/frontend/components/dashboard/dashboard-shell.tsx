@@ -34,7 +34,7 @@ const NAV = [
   { href: "/dashboard/explore", label: "Explore Events", icon: "✦" },
   { href: "/dashboard/schedule", label: "Schedule", icon: "◷" },
   { href: "/dashboard/events", label: "My Events", icon: "▤" },
-  { href: "/dashboard/notifications", label: "Announcements", icon: "◈" },
+  { href: "/dashboard/announcements", label: "Announcements", icon: "◈" },
   { href: "/dashboard/settings", label: "Settings", icon: "⚙" },
 ] as const;
 
@@ -72,7 +72,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         "/dashboard/privacy",
         "/dashboard/explore",
         "/dashboard/schedule",
-        "/dashboard/notifications",
+        "/dashboard/announcements",
       ];
       if (pathname.startsWith("/dashboard") && !allowedPaths.includes(pathname)) {
         router.replace("/dashboard/profile");
@@ -261,7 +261,7 @@ function SidebarContent({
         <nav aria-label="Dashboard" className="flex flex-col gap-[2px]">
           {NAV.map((item) => {
             const active = pathname === item.href;
-            const isItemLocked = isLocked && item.href !== "/dashboard/profile" && item.href !== "/dashboard/settings" && item.href !== "/dashboard/notifications" && item.href !== "/dashboard/schedule" && item.href !== "/dashboard/explore";
+            const isItemLocked = isLocked && item.href !== "/dashboard/profile" && item.href !== "/dashboard/settings" && item.href !== "/dashboard/announcements" && item.href !== "/dashboard/schedule" && item.href !== "/dashboard/explore";
             
             return (
               <Link
