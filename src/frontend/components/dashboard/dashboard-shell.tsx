@@ -281,7 +281,7 @@ function SidebarContent({
         <nav aria-label="Dashboard" className="flex flex-col gap-[2px]">
           {NAV.map((item) => {
             const active = pathname === item.href;
-            const isItemLocked = isLocked && item.href !== "/dashboard/profile" && item.href !== "/dashboard/settings" && item.href !== "/dashboard/announcements" && item.href !== "/dashboard/schedule" && item.href !== "/dashboard/explore";
+            const isItemLocked = isLocked && item.href !== "/dashboard/profile" && item.href !== "/dashboard/settings" && item.href !== "/dashboard/announcements" && item.href !== "/dashboard/schedule" && item.href !== "/dashboard/explore" && item.href !== "/world?view=3d";
             
             return (
               <Link
