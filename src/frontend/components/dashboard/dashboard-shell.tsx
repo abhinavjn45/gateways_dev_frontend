@@ -27,6 +27,9 @@ import { cn } from "@/frontend/lib/utils";
  * highest-traffic destinations, matching the mockup.
  */
 
+/** The 3D campus row, referenced by the lock rule and the hint below. */
+const WORLD_HREF = "/world?view=3d";
+
 const NAV = [
   // Profile leads: it is where participant details are filled in, and that is
   // the one thing here a participant MUST do before they can register.
@@ -34,7 +37,7 @@ const NAV = [
   { href: "/dashboard/explore", label: "Explore Events", icon: "✦" },
   // The walkable campus: every classroom is an event. Lives outside
   // /dashboard so the sidebar does not eat a third of the 3D view.
-  { href: "/world?view=3d", label: "3D World", icon: "◆" },
+  { href: WORLD_HREF, label: "3D World", icon: "◆" },
   { href: "/dashboard/schedule", label: "Schedule", icon: "◷" },
   { href: "/dashboard/events", label: "My Events", icon: "▤" },
   { href: "/dashboard/announcements", label: "Announcements", icon: "◈" },
@@ -79,6 +82,12 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  /**
+   * Lives HERE, not in SidebarContent: that component is mounted twice (the
+   * desktop rail and the mobile drawer). Holding this in the child would let
+   * someone dismiss the hint on one and still meet it on the other.
+   */
+  const [worldHintDismissed, setWorldHintDismissed] = useState(false);
 
   // Auto-redirect if locked out
   useEffect(() => {
@@ -155,6 +164,8 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             onNavigate={() => undefined}
             onSignOut={handleSignOut}
             session={session}
+            worldHintDismissed={worldHintDismissed}
+            onDismissWorldHint={() => setWorldHintDismissed(true)}
           />
         </aside>
 
@@ -191,6 +202,8 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                   onNavigate={() => setDrawerOpen(false)}
                   onSignOut={handleSignOut}
                   session={session}
+                  worldHintDismissed={worldHintDismissed}
+                  onDismissWorldHint={() => setWorldHintDismissed(true)}
                 />
               </motion.aside>
             </>
@@ -241,13 +254,43 @@ function SidebarContent({
   onNavigate,
   onSignOut,
   session,
+  worldHintDismissed,
+  onDismissWorldHint,
 }: {
   pathname: string;
   onNavigate: () => void;
   onSignOut: () => void;
   session: any;
+  worldHintDismissed: boolean;
+  onDismissWorldHint: () => void;
 }) {
-  const isLocked = session && (!session.isProfileComplete || !session.isPaymentVerified);
+  /**
+   * What each destination needs before it opens.
+   *
+   * The 3D campus deliberately asks for LESS than the rest: filling in your
+   * participant details is enough, and the fee is not. Walking the campus is
+   * how someone decides whether the fest is worth paying for, so putting it
+   * behind the payment turned the best part of the site into something only
+   * people who had already committed could see.
+   *
+   * Registering for an event still needs a verified payment, because that is a
+   * commitment the fest has to be able to honour.
+   */
+  const ALWAYS_OPEN: readonly string[] = [
+    "/dashboard/profile",
+    "/dashboard/settings",
+    "/dashboard/announcements",
+    "/dashboard/schedule",
+    "/dashboard/explore",
+  ];
+
+  function lockFor(href: string): "profile" | "payment" | null {
+    if (!session || ALWAYS_OPEN.includes(href)) return null;
+    if (!session.isProfileComplete) return "profile";
+    if (href === WORLD_HREF) return null; // details are the whole price of entry
+    if (!session.isPaymentVerified) return "payment";
+    return null;
+  }
 
   return (
     <>
@@ -281,11 +324,16 @@ function SidebarContent({
         <nav aria-label="Dashboard" className="flex flex-col gap-[2px]">
           {NAV.map((item) => {
             const active = pathname === item.href;
-            const isItemLocked = isLocked && item.href !== "/dashboard/profile" && item.href !== "/dashboard/settings" && item.href !== "/dashboard/announcements" && item.href !== "/dashboard/schedule" && item.href !== "/dashboard/explore";
-            
+            const lock = lockFor(item.href);
+            const isItemLocked = lock !== null;
+            // Only ever on the world row, only while the details are what is
+            // missing, and only until it is dismissed.
+            const showWorldHint =
+              item.href === WORLD_HREF && lock === "profile" && !worldHintDismissed;
+
             return (
+              <div key={item.href} className="flex flex-col gap-[2px]">
               <Link
-                key={item.href}
                 href={isItemLocked ? "/dashboard/profile" : item.href}
                 onClick={(e) => {
                   if (isItemLocked) {
@@ -311,6 +359,43 @@ function SidebarContent({
                 </span>
                 {item.label}
               </Link>
+
+              {/* Sits UNDER the row rather than floating beside it: the sidebar
+                  is the full height of a narrow column, and a popover anchored
+                  to its right edge would either overlap the page content or be
+                  clipped by the drawer's own scroll container on mobile. In a
+                  vertical nav, directly beneath reads as "attached to this
+                  item" just as well, and it can never be cut off. */}
+              {showWorldHint ? (
+                <div
+                  role="status"
+                  className={cn(
+                    "relative mx-[calc(var(--mc-unit)*0.5)] mb-[calc(var(--mc-unit)*0.5)]",
+                    "border-[length:var(--mc-bevel)] border-solid border-mc-gold bg-mc-panel-dark",
+                    "px-[calc(var(--mc-unit)*0.75)] py-[calc(var(--mc-unit)*0.6)]",
+                    // Room for the button so a long line never runs under it.
+                    "pr-[calc(var(--mc-unit)*2.25)]",
+                  )}
+                >
+                  <button
+                    type="button"
+                    onClick={onDismissWorldHint}
+                    aria-label="Dismiss"
+                    title="Dismiss"
+                    className={cn(
+                      "absolute top-0 right-0 grid place-items-center",
+                      "h-[26px] w-[26px] cursor-pointer border-0 bg-transparent",
+                      "text-[13px] leading-none text-mc-text-dim hover:text-mc-text",
+                    )}
+                  >
+                    <span aria-hidden>✕</span>
+                  </button>
+                  <p className="text-[15px] leading-snug text-mc-text-dim">
+                    Fill in your details to access the world.
+                  </p>
+                </div>
+              ) : null}
+              </div>
             );
           })}
         </nav>

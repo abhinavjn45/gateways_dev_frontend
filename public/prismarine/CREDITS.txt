@@ -28,8 +28,13 @@ Engine and libraries (MIT)
   prismarine-block, prismarine-physics, minecraft-data, three.
 
 Audio
-  public/audio/ambient.ogg is not included. If an NCS release is used, follow
-  the attribution NCS requires for that track.
+  The site's background track is public/audio/parallax-theme.mp3, declared in
+  src/frontend/lib/audio/track.ts. Record its attribution below -- if an NCS
+  release is used, follow the attribution NCS requires for that track.
+
+    Title:
+    Artist:
+    Licence:
 
 Not affiliated with Mojang Studios or Microsoft. "Minecraft" is a trademark of
 Mojang Synergies AB.
