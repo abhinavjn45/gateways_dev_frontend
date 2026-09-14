@@ -13,7 +13,6 @@ import {
 import { useSession } from "@/frontend/components/auth/session-provider";
 import { McWorld } from "@/frontend/components/minecraft/world-loader";
 import { EventHubModal } from "@/frontend/components/minecraft/event-hub-modal";
-import { AudioControl } from "@/frontend/components/minecraft/audio-control";
 import { useAsync } from "@/frontend/hooks/use-async";
 import { detectWebGL } from "@/frontend/lib/ambient/detect-webgl";
 import { eventTime, fetchFestEvents, type FestEvent } from "@/frontend/lib/events";
@@ -227,8 +226,6 @@ export function WorldScreen({
               Retry events
             </BlockButton>
           ) : null}
-
-          <AudioControl />
 
           {/* A Link styled as a block button, rather than a button wrapping a
               Link: keeps real anchor semantics (middle-click, focus, crawling). */}
