@@ -4,6 +4,7 @@ import { fontVariables } from "@/frontend/lib/fonts";
 import { PixelSplash } from "@/frontend/components/portal/pixel-splash";
 import { HistoryCursor } from "@/frontend/components/navigation/history-cursor";
 import { FestChat } from "@/frontend/components/chat/fest-chat";
+import { MusicPlayer } from "@/frontend/components/audio/music-player";
 import { AmbientBlocks, PageBackdrop } from "@/frontend/components/ambient";
 import { SPLASH_SEEN_KEY } from "@/frontend/lib/animation/splash-store";
 // From theme-store, NOT use-theme: the latter is a "use client" module, and a
@@ -178,6 +179,12 @@ export default function RootLayout({
             navigation. */}
         <HistoryCursor />
         <FestChat />
+        {/* Mounted HERE, and only here. The root layout is the one layout that
+            survives every client navigation, so this is what keeps the track
+            playing across a route change instead of restarting it — and it is
+            also the only layout wrapping the (portal) group, which has no
+            SiteShell and no toaster of its own. */}
+        <MusicPlayer />
         <PixelSplash />
       </body>
     </html>
