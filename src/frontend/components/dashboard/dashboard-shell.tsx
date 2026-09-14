@@ -330,7 +330,7 @@ function SidebarContent({
             // missing, and only until it is dismissed.
             const showWorldHint =
               item.href === WORLD_HREF && lock === "profile" && !worldHintDismissed;
-
+            
             return (
               <div key={item.href} className="flex flex-col gap-[2px]">
               <Link
