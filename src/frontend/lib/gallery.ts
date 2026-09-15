@@ -145,3 +145,4 @@ export function chaptersForEdition(edition: string): GalleryChapter[] {
     moments: chapter.moments.filter((m) => m.edition === edition),
   })).filter((chapter) => chapter.moments.length > 0);
 }
+
