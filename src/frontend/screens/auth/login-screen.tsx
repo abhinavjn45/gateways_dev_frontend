@@ -672,13 +672,13 @@ export function LoginScreen() {
           </BlockButton>
         </form>
 
-        <div className="flex items-center gap-[var(--mc-unit)]">
+        {/* <div className="flex items-center gap-[var(--mc-unit)]">
           <span className="h-[2px] flex-1 bg-mc-border" />
           <span className="text-[17px] uppercase text-mc-text-dim">Or continue with</span>
           <span className="h-[2px] flex-1 bg-mc-border" />
-        </div>
+        </div> */}
 
-        <div className="grid grid-cols-1 gap-[var(--mc-unit)]">
+        {/* <div className="grid grid-cols-1 gap-[var(--mc-unit)]">
           {PROVIDERS.map((p) => (
             <BlockButton
               key={p.id}
@@ -695,7 +695,7 @@ export function LoginScreen() {
               <span>Coming Soon</span>
             </BlockButton>
           ))}
-        </div>
+        </div> */}
 
           {/* Only true of the local data layer. With the API backend the
               account lives in the backend's database, so the disclaimer would
