@@ -77,6 +77,39 @@ for (const [key, p] of Object.entries(anchors.pois || {})) {
 }
 if (anchors.pois?.entrance) standable(anchors.pois.entrance.x, anchors.pois.entrance.y, anchors.pois.entrance.z, 'entrance')
 
+// ------------------------------------------------------------- activities
+const activities = anchors.activities
+if (!activities) fail('missing activities')
+else {
+  const { hunt, creative } = activities
+  if (hunt.crystals.length !== 10 || new Set(hunt.crystals.map(c => c.id)).size !== 10) fail('hunt needs 10 unique crystals')
+  standable(hunt.start.x, hunt.start.y, hunt.start.z, 'hunt start')
+  standable(creative.entry.x, creative.entry.y, creative.entry.z, 'creative entry')
+  standable(creative.returnPoint.x, creative.returnPoint.y, creative.returnPoint.z, 'creative return')
+  if (creative.max.x - creative.min.x !== 31 || creative.max.z - creative.min.z !== 31 || creative.max.y - creative.min.y !== 23) fail('creative dimensions')
+  for (const c of hunt.crystals) standable(c.x, c.y, c.z, `crystal ${c.id}`)
+  for (let x = creative.min.x; x <= creative.max.x; x++) {
+    for (let z = creative.min.z; z <= creative.max.z; z++) {
+      if (isAir(x, creative.min.y - 1, z)) fail('plot missing foundation')
+      for (let y = creative.min.y; y <= creative.max.y; y++) if (!isAir(x, y, z)) fail('plot is obstructed')
+    }
+  }
+  // Flood the level walking surface to prove each objective is reachable.
+  const queue = [[Math.floor(anchors.spawn.x), Math.floor(anchors.spawn.z)]]
+  const visited = new Set(queue.map(([x, z]) => `${x},${z}`))
+  for (let i = 0; i < queue.length; i++) {
+    const [x, z] = queue[i]
+    for (const [nx, nz] of [[x + 1, z], [x - 1, z], [x, z + 1], [x, z - 1]]) {
+      const key = `${nx},${nz}`, y = anchors.floor
+      if (visited.has(key) || !inBounds(nx, y, nz) || !passable(nx, y, nz) || !isAir(nx, y + 1, nz) || isAir(nx, y - 1, nz)) continue
+      visited.add(key); queue.push([nx, nz])
+    }
+  }
+  for (const [name, p] of [['hunt start', hunt.start], ['creative entry', creative.entry], ...hunt.crystals.map(c => [`crystal ${c.id}`, c])]) {
+    if (!visited.has(`${Math.floor(p.x)},${Math.floor(p.z)}`)) fail(`${name} cannot be reached on foot`)
+  }
+}
+
 // ------------------------------------------------------------------ totals
 let solid = 0
 for (const b of schem.blocks) if (schem.palette[b] !== 0) solid++

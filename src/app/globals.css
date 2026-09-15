@@ -879,6 +879,7 @@ textarea,
    dissolve the ones in the source art. */
 #pixel-splash {
   --splash-size: 456px; /* 152 x 3 */
+  --splash-tile: calc(var(--splash-size) / 38);
   --splash-blur: 22px;
 }
 
@@ -899,37 +900,15 @@ textarea,
   height: var(--splash-size);
 }
 
-/* The reveal. The void is painted by THIS layer rather than the root, so a
-   crest-shaped hole can be punched through it: scaling the overlay then turns
-   the logo itself into the window the homepage arrives through.
-
-   Two mask layers composited with `exclude` — a full-coverage gradient minus the
-   crest silhouette — because CSS masks show content where the mask is opaque and
-   we need the exact inverse. `--splash-hole` starts at 0, so the second layer
-   contributes nothing and the backdrop is simply solid until the reveal begins.
-
-   The silhouette is a filled shape, not the crest line art: masking with the
-   artwork itself would open a few hairline slits rather than a window. */
+/* The overlay's solid ground. NO MASK, deliberately: it used to carry a
+   crest-shaped `mask-image` from the CDN for a zoom-through reveal, and Chrome
+   does not paint a masked element until the mask image has loaded — which on a
+   first visit left the whole overlay invisible for most of a second while the
+   homepage showed underneath. The splash now leaves by fading out instead. */
 .splash-backdrop {
   position: absolute;
   inset: 0;
   background: var(--color-mc-void);
-  --splash-hole: 0px;
-  -webkit-mask-image: linear-gradient(#000, #000), var(--splash-aperture);
-  mask-image: linear-gradient(#000, #000), var(--splash-aperture);
-  -webkit-mask-repeat: no-repeat, no-repeat;
-  mask-repeat: no-repeat, no-repeat;
-  -webkit-mask-position: center, center;
-  mask-position: center, center;
-  -webkit-mask-size: 100% 100%, var(--splash-hole) var(--splash-hole);
-  mask-size: 100% 100%, var(--splash-hole) var(--splash-hole);
-  -webkit-mask-composite: xor; /* Safari's keyword for the same operation */
-  mask-composite: exclude;
-}
-
-/* Cut the aperture. Toggled by the timeline at the moment the zoom begins. */
-.splash-backdrop.is-open {
-  --splash-hole: var(--splash-size);
 }
 
 /* ---- The backdrop's contents ----------------------------------------------
@@ -966,8 +945,9 @@ textarea,
      black, and a black backdrop turns the closing zoom from a focus pull into a
      hard cut to the lit hero. That cut is what reads as a flash.
      The veil is what separates the crest from the picture; this filter only has
-     to soften it. Retune the veil, not this. */
-  filter: blur(var(--splash-blur)) brightness(1) saturate(0.95);
+     to soften it. 0.72 is as far as it goes: the night stack is gated above,
+     so this cannot compound with it into black the way 0.55 once did. */
+  filter: blur(var(--splash-blur)) brightness(0.72) saturate(0.95);
   transform: translateZ(0);
   animation: splash-scene-in 0.55s ease-out both;
 }
@@ -988,11 +968,15 @@ html[data-theme="light"] .splash-scene {
    radial keeps the centre clearest, so the resolving crest sits on the calmest
    part of the picture while the edges stay close to the old solid fill. */
 .splash-veil {
+  /* Heavier than it was (50 / 78 / 92): at 50% the resolving crest sat on a
+     visibly busy landscape and read as noise until its last step. The centre
+     now holds the picture back far enough that the mark is the only thing in
+     focus, while the edges still keep the scene present for the closing pull. */
   background: radial-gradient(
     circle at 50% 48%,
-    color-mix(in srgb, var(--color-mc-void) 50%, transparent) 0%,
-    color-mix(in srgb, var(--color-mc-void) 78%, transparent) 62%,
-    color-mix(in srgb, var(--color-mc-void) 92%, transparent) 100%
+    color-mix(in srgb, var(--color-mc-void) 74%, transparent) 0%,
+    color-mix(in srgb, var(--color-mc-void) 88%, transparent) 62%,
+    color-mix(in srgb, var(--color-mc-void) 96%, transparent) 100%
   );
 }
 
@@ -1012,18 +996,26 @@ html[data-theme="light"] .splash-scene {
   to { opacity: 1; }
 }
 
-.splash-crest {
-  width: var(--splash-size);
-  height: var(--splash-size);
-  /* Integer UPSCALE of pixel art, so nearest-neighbour is exactly right here —
-     it keeps the art's pixel edges hard. (The full-detail 1254px crest is the
-     opposite case and must never be pixelated; see the manifest's brand note.)
+.splash-tile {
+  width: var(--splash-tile);
+  height: var(--splash-tile);
+  background-image: var(--splash-tile-src);
+  background-size: var(--splash-size) var(--splash-size);
+  background-repeat: no-repeat;
+  /* The source (`gatewaysCrest`) is smooth line art, not pixel art — leave
+     sampling alone so each block's chunk stays sharp instead of blocky. */
+  image-rendering: auto;
+  /* 618 of these fly in and land at once. Without this hint, weaker GPUs can
+     fall back to repainting each tile's transform on the main thread instead
+     of compositing it, which is what turns the assembly choppy on some
+     devices regardless of connection speed. Bounded to this component's short
+     lifetime — the timeline releases it once the blocks have landed, and the
+     whole overlay unmounts a few seconds later. */
+  will-change: transform, opacity;
+}
 
-     This is also what makes the resolve work at all. The canvas backing store
-     is only 19-152px square; the blockiness the visitor sees is this rule
-     blowing that up to --splash-size without smoothing. Take `pixelated` away
-     and the coarse steps come out as a blur instead of as blocks. */
-  image-rendering: pixelated;
+html[data-theme="light"] .splash-tile {
+  background-image: var(--splash-tile-src-light);
 }
 
 /* Faint buildable-space grid behind the crest. */
@@ -1051,25 +1043,30 @@ html[data-theme="light"] .splash-scene {
    Gold is the mark's colour on the dark void, but the light backdrop is a bright
    sky and gold-on-sky is the weakest pairing in the palette — two mid-lightness
    warm-vs-cool colours with almost nothing between them. Black is the strongest
-   thing that can sit on that sky, and it costs the crest nothing: the artwork is
-   LINE ART, so its shape is carried by the transparent gaps, not by its fill.
+   thing that can sit on that sky.
 
-   `brightness(0)` drives every colour channel to zero while leaving alpha
-   untouched — a true black silhouette of exactly the same pixels. A recolour is
-   not possible any other way here: the crest is a raster image, so there is no
-   fill token to swap.
+   NOT a `filter: brightness(0)` on `.splash-stage`. That is cheap per pixel,
+   but it makes the browser treat the whole stage as one render surface that
+   has to be flattened and recomposited on every frame ANY of its 618
+   descendants move, instead of letting each tile's transform composite
+   independently — extra GPU work dark-theme visitors never pay, and the
+   likeliest reason the assembly would stutter specifically in light mode.
 
-   Applied on the stage rather than on the canvas so it catches the shockwave
-   ring too, in one filtered layer. Unlike the backdrop's blur this is a
-   per-pixel colour matrix with no kernel, so it is close to free.
+   Same result, no ancestor filter: `--splash-tile-src-light` swaps the tile
+   art for the pre-made solid-black crest (`gatewaysCrestBlack`), and the face
+   and ring get flat colour overrides. Three cheap, independent rules instead
+   of one filter sitting above hundreds of animating nodes.
 
-   It survives the resolve unchanged: the canvas is repainted four times at
-   increasing resolutions and the filter simply re-applies to whatever is in it,
-   so every step is black in this theme and gold in the other with no extra
-   work. It also cannot desynchronise from the artwork the way a second, black
-   copy of the crest PNG would. */
-html[data-theme="light"] .splash-stage {
-  filter: brightness(0);
+   True black, not `--color-mc-void` — that token itself flips to a pale sky
+   blue in the light theme (it is the backdrop's own colour), which is the
+   opposite of what these need. */
+html[data-theme="light"] .splash-face {
+  background-color: #000;
+  box-shadow: none;
+}
+
+html[data-theme="light"] .splash-ring {
+  border-color: #000;
 }
 
 /* ============================================================================

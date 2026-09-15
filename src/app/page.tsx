@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { MotionConfig } from "framer-motion";
 import { HomeScreen } from "@/frontend/screens/home/home-screen";
 import { PortalTransitionProvider } from "@/frontend/components/portal/portal-transition-overlay";
+import { SessionProvider } from "@/frontend/components/auth/session-provider";
+import { BlockToaster } from "@/frontend/components/mc";
 import { FEST } from "@/frontend/lib/fest";
 
 export const metadata: Metadata = {
@@ -34,13 +36,29 @@ export const metadata: Metadata = {
  * to the two pages where a visitor is actually looking for an answer rather
  * than reading one — everywhere else it was a floating button over content that
  * already said what it had to say.
+ *
+ * `SessionProvider` and `BlockToaster` are here for the SAME REASON as
+ * `MotionConfig`: `/` lives outside every route group, so it inherits none of
+ * what the group layouts provide, and the root layout provides none of it
+ * either. The events modal on this page now renders `EventRegistrationButton`,
+ * which calls `useSession()` and `showToast()` — without the provider that is
+ * a hard "useSession must be used inside <SessionProvider>" crash, and without
+ * the toaster its confirmations are swallowed in silence.
+ *
+ * This is exactly the case the (public) layout describes when it explains why
+ * it mounts the provider on pages that gate nothing: so a signed-in visitor
+ * gets a register button rather than a prompt.
  */
 export default function Home() {
   return (
-    <PortalTransitionProvider>
-      <MotionConfig reducedMotion="user">
-        <HomeScreen />
-      </MotionConfig>
-    </PortalTransitionProvider>
+    // SessionProvider outermost, matching all four route-group layouts.
+    <SessionProvider>
+      <PortalTransitionProvider>
+        <MotionConfig reducedMotion="user">
+          <HomeScreen />
+          <BlockToaster />
+        </MotionConfig>
+      </PortalTransitionProvider>
+    </SessionProvider>
   );
 }

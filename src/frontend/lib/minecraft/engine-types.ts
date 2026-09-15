@@ -53,6 +53,10 @@ export interface WorldMeta {
   rooms: RoomAnchor[];
   pois: Record<string, Vec3Like & Record<string, unknown>>;
   renderDistance: number;
+  activities?: {
+    hunt: { start: Vec3Like & { yaw: number }; durationSeconds: number; crystals: (Vec3Like & { id: string })[] };
+    creative: { min: Vec3Like; max: Vec3Like; entry: Vec3Like & { yaw: number }; returnPoint: Vec3Like & { yaw: number } };
+  };
 }
 
 /**
@@ -79,6 +83,8 @@ export interface EngineHandle {
   teleportToRoom: (index: number) => boolean;
   setBindings: (bindings: RoomBinding[]) => void;
   toast: (text: string) => void;
+  /** The site theme is the world's time of day: "dark" is night. */
+  setTheme: (theme: "light" | "dark") => void;
 }
 
 export interface EngineStartOptions {
@@ -88,6 +94,8 @@ export interface EngineStartOptions {
   meta: WorldMeta;
   bindings: RoomBinding[];
   spawnRoom?: number;
+  /** Initial time of day, so the first frame is already right. */
+  theme?: "light" | "dark";
   onOpenEvent: (slug: string) => void;
   onStatus?: (message: string) => void;
   onProgress?: (t: number) => void;

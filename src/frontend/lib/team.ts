@@ -206,11 +206,12 @@ export const COMMITTEE_HEADS: CommitteeHead[] = [
  * noise.
  */
 export const TECHNICAL_COMMITTEE: TeamMember[] = [
-  { name: "Yanish Rai", subtitle: "4 MCA A (2547158)", blurb: "Crafting portals to new worlds." },
-  { name: "Kartik Dewnani", subtitle: "4 MCA A (2547128)", blurb: "Animating the Upside Down." },
+  { name: "Yanish Rai", subtitle: "4 MCA A (2547158)" },
+  { name: "Kartik Dewnani", subtitle: "4 MCA A (2547128)" },
+  { name: "Darshan Heble K", subtitle: "5 MCA A (2547119)" },
   { name: "Vishal B G", subtitle: "1 MCA A (2647158)" },
   { name: "Gerard Nicholas Paul M", subtitle: "1 MCA A (2647122)" },
-  { name: "S Anand", subtitle: "1 MCA A (2647145)", blurb: "Code, coffee, and curiosity." },
-  { name: "Gokul T A", subtitle: "1 MCA B (2647224)", blurb: "Code, coffee, and curiosity." },
+  { name: "S Anand", subtitle: "1 MCA A (2647145)" },
+  { name: "Gokul T A", subtitle: "1 MCA B (2647224)" },
 ];
 

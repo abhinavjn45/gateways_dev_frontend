@@ -139,13 +139,36 @@ export function HangingSign({
               material={BOARD_MAT}
               scale={[BOARD_W, BOARD_H, BOARD_D]}
             />
-            <mesh
-              geometry={UNIT_PLANE}
-              scale={[BOARD_W, BOARD_H, 1]}
-              position={[0, 0, BOARD_D / 2 + 0.01]}
-            >
-              <meshBasicMaterial map={boardMap} color={PLATE_SHADE} toneMapped={false} />
-            </mesh>
+            {/* MOUNTED ONLY ONCE ITS TEXTURE EXISTS, and that is load-bearing
+                rather than tidiness.
+
+                The board's map is deliberately lazy — 2.5MB baked on first
+                open — so on every render before that it would be `null`. A
+                material built with `map={null}` compiles a shader WITHOUT
+                `USE_MAP`, and three only recompiles when told to via
+                `needsUpdate`. React Three Fiber assigns changed props straight
+                onto the object and never sets that flag (the only
+                `needsUpdate` anywhere in the library is `gl.shadowMap`'s), so
+                the texture arriving later was written to a program that had no
+                sampler to read it — leaving the plate drawing flat
+                PLATE_SHADE. That is the blank white board.
+
+                The beam above never hit this because `getBeamTexture` returns
+                on the first render, so its material is born with a map.
+
+                Gating the mesh means this material only ever exists WITH a
+                map, so there is no null-to-texture transition to recompile.
+                Until then the board's own wood shows, which is what an
+                un-painted sign should look like anyway. */}
+            {boardMap ? (
+              <mesh
+                geometry={UNIT_PLANE}
+                scale={[BOARD_W, BOARD_H, 1]}
+                position={[0, 0, BOARD_D / 2 + 0.01]}
+              >
+                <meshBasicMaterial map={boardMap} color={PLATE_SHADE} toneMapped={false} />
+              </mesh>
+            ) : null}
           </group>
         </group>
       </group>

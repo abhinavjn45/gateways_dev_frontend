@@ -29,6 +29,7 @@ fs.writeFileSync(path.join(OUT, 'world.meta.json'), JSON.stringify({
   spawn: anchors.spawn,
   rooms: anchors.rooms,
   pois: anchors.pois,
+  activities: anchors.activities,
   renderDistance: config.world?.renderDistance ?? 4
 }, null, 1) + '\n')
 

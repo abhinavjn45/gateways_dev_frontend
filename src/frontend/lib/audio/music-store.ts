@@ -80,6 +80,32 @@ export function getMutedServerSnapshot(): boolean {
   return false;
 }
 
+/**
+ * Whether the track actually loaded.
+ *
+ * The <audio> element lives in the root layout and the control lives in the
+ * site nav, so "the file is missing or undecodable — show no control" has to
+ * cross between them. Module state rather than storage: it describes THIS page
+ * load, and a file that 404s now may be fine after a deploy. Read it with the
+ * same `subscribeMuted` subscription — every notify re-reads every snapshot.
+ */
+let trackAvailable = true;
+
+export function readTrackAvailable(): boolean {
+  return trackAvailable;
+}
+
+export function markTrackUnavailable(): void {
+  if (!trackAvailable) return;
+  trackAvailable = false;
+  listeners.forEach((notify) => notify());
+}
+
+/** Assume it loads. A control that vanishes on error beats one that flashes in. */
+export function getTrackAvailableServerSnapshot(): boolean {
+  return true;
+}
+
 /** True when the track name has not been announced yet in this tab. */
 export function shouldAnnounce(): boolean {
   try {
