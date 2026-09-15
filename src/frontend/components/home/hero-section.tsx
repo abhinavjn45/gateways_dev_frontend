@@ -161,18 +161,13 @@ export function HeroSection() {
           >
             Start the Journey
           </BlockButton>
-          <div className="relative inline-flex">
-            <BlockButton
-              size="lg"
-              variant="stone"
-              disabled
-            >
-              Read Brochure
-            </BlockButton>
-            <span className="absolute -top-[10px] -right-[10px] z-10 bg-mc-gold text-mc-obsidian border-[length:var(--mc-bevel)] border-mc-border px-[6px] py-[4px] font-pixel text-[8px] uppercase tracking-wider leading-none shadow-[2px_2px_0_rgba(0,0,0,0.5)] pointer-events-none">
-              Coming Soon
-            </span>
-          </div>
+          <BlockButton
+            size="lg"
+            variant="stone"
+            onClick={() => window.open("https://heyzine.com/flip-book/26e7f069c1.html", "_blank")}
+          >
+            Read Brochure
+          </BlockButton>
         </div>
 
         {/* Tells the visitor there is more below the fold. Decorative only —
