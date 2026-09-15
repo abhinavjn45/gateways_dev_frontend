@@ -9,8 +9,8 @@ import type { RoomAnchor, RoomBinding } from "./engine-types";
  * generator fills the wings north → east → west → south, so the technical
  * track ends up along the north wing and the rest wrap round from there.
  *
- * Slots left over after the events get the configured spare signage
- * (Sponsors' Pavilion, Leaderboard…) and then "Coming soon". Events beyond the
+ * Slots left over after the events get the configured spare signage, if any
+ * (`config.spare` — empty today, so they all read "Coming soon"). Events beyond the
  * slot count are returned as `overflow` so the List view can still show them;
  * the world itself needs `world.slots` raised and `npm run mc:assets` rerun.
  */

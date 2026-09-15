@@ -29,7 +29,12 @@ export function GalleryScreen() {
   const chapters = chaptersForEdition(edition);
 
   return (
-    <div className="mx-auto flex w-full max-w-[1220px] flex-col gap-[calc(var(--mc-unit)*2)] px-[calc(var(--mc-unit)*2)] py-[calc(var(--mc-unit)*2)]">
+    // `relative z-10`: the backdrop and floating blocks in the root layout are
+    // fixed at z-index 0, and a positioned layer paints OVER non-positioned
+    // content. Without this the headings and chapter captions — plain text —
+    // sat underneath the dark backdrop, while the photo frames (positioned
+    // panels) showed through. Same fix as the FAQ page.
+    <div className="relative z-10 mx-auto flex w-full max-w-[1220px] flex-col gap-[calc(var(--mc-unit)*2)] px-[calc(var(--mc-unit)*2)] py-[calc(var(--mc-unit)*2)]">
       <BackLink href="/" label="Home" />
 
       <header>
