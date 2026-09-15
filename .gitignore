@@ -104,3 +104,6 @@ poster_page.zip
 # Documents
 *.md
 *.pdf
+
+artifacts/
+*.py
