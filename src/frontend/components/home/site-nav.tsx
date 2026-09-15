@@ -154,7 +154,7 @@ export function SiteNav({ onOpenEvents, onOpenSchedule }: SiteNavProps) {
 
           {/* Gateways Crest */}
           <a
-            href="#top"
+            href="/"
             className="flex min-h-11 min-w-11 shrink-0 items-center gap-[calc(var(--mc-unit)*0.75)] no-underline"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}

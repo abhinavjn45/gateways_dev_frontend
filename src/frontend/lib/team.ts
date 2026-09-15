@@ -65,17 +65,17 @@ export interface TeamMember {
 const CLOUDINARY_PHOTOS = "https://res.cloudinary.com/dchqvsa57/image/upload";
 
 export const ADVISORY_COMMITTEE: TeamMember[] = [
-  { name: "Dr. Fr. Jossy P George", subtitle: "Director CS, Statistics & DS", image: `${CLOUDINARY_PHOTOS}/v1787329590/Dr._Jossy_P_George_jpgjmi.jpg`  },
-  { name: "Dr. Deepthi Das", subtitle: "Associate Dean", image: `${CLOUDINARY_PHOTOS}/v1787329589/Dr._Deepthi_Das_tfo6tx.jpg` },
-  { name: "Dr. Rupali Sunil Wagh", subtitle: "Head of Department", image: `${CLOUDINARY_PHOTOS}/v1787329592/Dr._Rupali_Sunil_Wagh_kcwbxq.jpg` },
-  { name: "Dr. Gobi Ramasamy", subtitle: "Associate HOD", image: `${CLOUDINARY_PHOTOS}/v1787329591/Dr._Gobi_R_iko5zq.jpg` },
-  { name: "Dr. Cynthia T", subtitle: "PG Program Coordinator", image: `${CLOUDINARY_PHOTOS}/v1787329592/Dr._Cynthia_T_dktteq.jpg` },
+  { name: "Dr. Fr. Jossy P George", subtitle: "Director CS, Statistics & DS", image: `${CLOUDINARY_PHOTOS}/v1789442021/Dr._Jossy_P_George_duszhv.jpg`  },
+  { name: "Dr. Deepthi Das", subtitle: "Associate Dean", image: `${CLOUDINARY_PHOTOS}/v1789442020/Dr._Deepthi_Das_kpuk0v.jpg` },
+  { name: "Dr. Rupali Sunil Wagh", subtitle: "Head of Department", image: `${CLOUDINARY_PHOTOS}/v1789442023/Dr._Rupali_Sunil_Wagh_aivgvh.jpg` },
+  { name: "Dr. Gobi Ramasamy", subtitle: "Associate HOD", image: `${CLOUDINARY_PHOTOS}/v1789442020/Dr._Gobi_R_sqguzi.jpg` },
+  { name: "Dr. Cynthia T", subtitle: "PG Program Coordinator", image: `${CLOUDINARY_PHOTOS}/v1789442020/Dr._Cynthia_T_zmmd2v.jpg` },
 ];
 
 export const FACULTY_COORDINATORS: TeamMember[] = [
-  { name: "Dr. Neha Singhal", subtitle: "Assistant Professor", image: `${CLOUDINARY_PHOTOS}/v1787329591/Dr._Neha_Singal_bmozvl.jpg` },
-  { name: "Dr. Shivangi Singh", subtitle: "Assistant Professor", image: `${CLOUDINARY_PHOTOS}/v1787329800/Dr._20Shivangi_20Singh-DpB_cLfZ_cnen3a.jpg` },
-  { name: "Dr. Nizar Banu P K", subtitle: "Associate Professor", image: `${CLOUDINARY_PHOTOS}/v1787329591/Dr._Nizar_Banu_P_K_rit7vl.jpg` },
+  { name: "Dr. Neha Singhal", subtitle: "Assistant Professor", image: `${CLOUDINARY_PHOTOS}/v1789442022/Dr._Neha_Singal_fmuygl.jpg` },
+  { name: "Dr. Shivangi Singh", subtitle: "Assistant Professor", image: `${CLOUDINARY_PHOTOS}/v1789442300/Dr._Shivangi_Singh_eiskxd.jpg` },
+  { name: "Dr. Nizar Banu P K", subtitle: "Associate Professor", image: `${CLOUDINARY_PHOTOS}/v1789442022/Dr._Nizar_Banu_P_K_wbkiys.jpg` },
 ];
 
 /**
