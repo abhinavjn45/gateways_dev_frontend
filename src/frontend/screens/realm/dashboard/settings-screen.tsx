@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { BlockButton, BlockPanel, showToast } from "@/frontend/components/mc";
 import { useSession } from "@/frontend/components/auth/session-provider";
 import {
@@ -8,6 +8,13 @@ import {
   setReduceMotionPreference,
 } from "@/frontend/lib/animation/use-reduced-motion";
 import { useTheme, type ThemePreference } from "@/frontend/lib/theme/use-theme";
+import {
+  getMutedServerSnapshot,
+  readMuted,
+  subscribeMuted,
+  writeMuted,
+} from "@/frontend/lib/audio/music-store";
+import { MUSIC_TRACK } from "@/frontend/lib/audio/track";
 
 /**
  * Settings.
@@ -33,6 +40,23 @@ export function SettingsScreen() {
       typeof window !== "undefined" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches,
   );
+
+  /**
+   * Mute, read live rather than snapshotted into `useState` like the two rows
+   * above. It is a genuine external store: the floating widget on the public
+   * pages writes it, and so does another tab through the `storage` event, so a
+   * value copied once at mount would go stale while this screen sat open.
+   */
+  const muted = useSyncExternalStore(subscribeMuted, readMuted, getMutedServerSnapshot);
+
+  function applyMusic(next: boolean) {
+    writeMuted(next);
+    showToast({
+      title: next ? "Music off" : "Music on",
+      body: next ? "Background music muted." : `${MUSIC_TRACK.label} is playing.`,
+      severity: "success",
+    });
+  }
 
   function applyMotion(next: "system" | "on" | "off") {
     setMotion(next);
@@ -125,6 +149,39 @@ export function SettingsScreen() {
                 variant={motion === opt.id ? "primary" : "ghost"}
                 aria-pressed={motion === opt.id}
                 onClick={() => applyMotion(opt.id)}
+              >
+                {opt.label}
+              </BlockButton>
+            ))}
+          </div>
+        </fieldset>
+      </BlockPanel>
+
+      {/* The dashboard and the 3D world deliberately do NOT show the floating
+          music widget — this is the control for both of them. */}
+      <BlockPanel variant="panel" title="Music">
+        <fieldset className="border-0 p-0">
+          <legend className="font-pixel text-[10px] uppercase text-mc-text-dim">
+            Background music
+          </legend>
+          <p className="mt-[calc(var(--mc-unit)*0.5)] text-[18px] text-mc-text-dim">
+            <strong className="text-mc-text">{MUSIC_TRACK.label}</strong> plays while you
+            browse the site. Your choice is remembered on this device.
+          </p>
+
+          <div className="mt-[var(--mc-unit)] flex flex-wrap gap-[calc(var(--mc-unit)*0.5)]">
+            {(
+              [
+                { id: "on", label: "Music on", muted: false },
+                { id: "off", label: "Music off", muted: true },
+              ] as const
+            ).map((opt) => (
+              <BlockButton
+                key={opt.id}
+                size="sm"
+                variant={muted === opt.muted ? "primary" : "ghost"}
+                aria-pressed={muted === opt.muted}
+                onClick={() => applyMusic(opt.muted)}
               >
                 {opt.label}
               </BlockButton>

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { gsap, prefersReducedMotion, useGSAP } from "@/frontend/lib/animation/gsap-init";
 import { markSplashSeen, shouldPlaySplash } from "@/frontend/lib/animation/splash-store";
+import { SPLASH_GRID, SPLASH_MASK } from "@/frontend/lib/animation/splash-mask";
 import { ART } from "@/frontend/lib/assets/manifest";
 import { ParallaxLayer } from "@/frontend/components/scene";
 import { cn } from "@/frontend/lib/utils";
@@ -15,39 +16,56 @@ import { getScene } from "@/frontend/lib/assets/scenes";
  * out of the dark and resolve into a solid form — rebuilt in the project's voxel
  * idiom and, unlike the original's 8-10 hours per frame, running at 60fps.
  *
- * WHAT IT RESOLVES INTO: a pixel-art redraw of THE MARK THE NAV SHOWS.
- * `scripts/gen-splash-mask.mjs` rasterises `Gateways Coloured.svg` — the same
- * file `site-nav.tsx` renders — down to 152x152 against the gold token ramp, and
- * that is the end state. Two reasons it is not the SVG itself at rest: landing
- * on smooth vector art would undo the whole effect, since the pixels would
- * resolve into something never made of pixels; and the SVG is 2.9MB, which is
- * not a thing to block the first beat of a splash on. The bake is 4KB.
+ * WHAT IT ASSEMBLES INTO: the actual smooth 1254px crest (`gatewaysCrest` /
+ * `gatewaysCrestBlack`), not a pixelated redraw. For a while this was ONE
+ * <canvas> drawing the 152px pixel-art crest at four increasing resolutions —
+ * 19, 38, 76, 152 — blown up to --splash-size with `image-rendering: pixelated`.
+ * Cheaper, and it was reverted for two reasons the visitor can see: the finished
+ * mark was a 152px image stretched to 456-760px, and every one of the four
+ * redraws was a hard pop. Unreadable for its first 2.4s and flashing four
+ * times is not what an opening flourish is for. The tiles below are more work
+ * for the GPU, so they carry the mitigations that make that affordable (see
+ * the timeline).
  *
- * HOW IT WORKS: ONE <canvas>, redrawn at four increasing resolutions. The crest
- * PNG is drawn into a backing store of 19, then 38, then 76, then 152 pixels
- * square with `imageSmoothingEnabled = false`, and CSS scales that up to
- * --splash-size with `image-rendering: pixelated`. So the mark arrives as huge
- * blocks and sharpens into itself, ending at the crest's native 152px — the same
- * picture the rest of the site uses.
+ * HOW IT WORKS: `SPLASH_MASK` is a 38x38 occupancy grid of the crest — which
+ * cells hold any art at all — so the animation does not waste 61% of its blocks
+ * on empty space. The pixels each block shows come from the full-detail image,
+ * sliced into that same grid via CSS background-position, one <span> per
+ * occupied cell. Each block flies in from a randomised radial offset wearing a
+ * solid cube face; the face fades on landing to reveal that block's chunk of the
+ * crest. That two-layer trick is what makes it read as blocks ASSEMBLING rather
+ * than an image wiping in.
  *
- * Those four numbers are 152 divided by 8, 4, 2 and 1. Exact integer divisions,
- * so every step lands on whole source pixels and none of them resample into mush.
- *
- * THIS USED TO BE 639 FLYING BLOCKS. Each was a <span> holding a 4x4 chunk of the
- * same PNG via background-position, wearing a gold face that faded on landing —
- * 1278 elements under GSAP to draw a picture already sitting on disk as a file.
- * The canvas is the same idea, blocks resolving into a mark, at four redraws
- * instead of 1278 tweened nodes.
- *
- * The steps are DISCRETE `tl.call()`s, never a tween on a paint property. A
- * full-size surface repainted every frame is what the ambient rain layer did
- * before it was removed for stuttering the page.
+ * THE ART MUST BE LOADED BEFORE THE FACES FADE. The tiles are CSS backgrounds
+ * of one 277KB PNG (609KB for the black light-theme one). Until it arrives every
+ * tile is transparent, and the cube faces that cover them fade at 0.85s — on a
+ * cold first visit that would be a crest revealing as nothing. So the timeline
+ * is built paused and released once the image has decoded, capped at 1.5s so a
+ * slow network degrades to tiles filling in late rather than a stuck overlay.
+ * Decoding also primes the HTTP cache the CSS backgrounds read from.
  *
  * WHAT IT STANDS IN FRONT OF: the hero's own landscape, thrown far out of focus,
- * rather than a flat fill. The splash then reads as being staged in the world the
- * site opens onto, and the final zoom becomes a focus pull into it instead of a
- * cut between two unrelated surfaces. It is the same `overworld-panorama` scene
- * data the hero uses — not a copy of it — so retuning the hero retunes this.
+ * rather than a flat fill, so the splash reads as being staged in the world the
+ * site opens onto. It is the same `overworld-panorama` scene data the hero uses —
+ * not a copy of it — so retuning the hero retunes this.
+ *
+ * IT LEAVES BY FADING, NOT BY ZOOMING THROUGH THE CREST. The exit used to punch a
+ * crest-shaped hole in the backdrop (a CSS mask), scale the overlay 14x through
+ * it and flood the screen with a gold bloom. A frame-by-frame recording showed
+ * that sequence was the flicker, three ways over:
+ *
+ *   - the mask image comes from the CDN, and Chrome does not paint a masked
+ *     element until its mask has loaded — so for ~0.7s on a first visit the
+ *     overlay was invisible and the homepage showed, then the splash slammed
+ *     over it;
+ *   - opening the hole exposed the page through the gaps in the crest's line
+ *     art, a beat before the zoom could carry them off-screen;
+ *   - the bloom took the whole screen to near-solid gold, a brightness spike to
+ *     nearly four times the page it was revealing.
+ *
+ * A fade has none of those failure modes: no mask, so the backdrop is solid from
+ * the first paint; nothing to see through; and brightness moves in one direction
+ * from the dark overlay to the page.
  *
  * IT IS AN OVERLAY, NOT A GATE. The app renders and hydrates underneath, so the
  * homepage's LCP is untouched — the splash only covers it. Everything below is
@@ -63,46 +81,23 @@ import { getScene } from "@/frontend/lib/assets/scenes";
 
 /**
  * Ceiling on how long the overlay may cover the app, whatever the timeline does.
- * Must stay comfortably above the timeline's own ~5.6s, or it would cut the
- * animation off rather than act as a backstop.
+ * Must stay comfortably above the timeline's own ~4.8s plus the up-to-1.5s wait
+ * for the crest image, or it would cut the animation off rather than act as a
+ * backstop.
  */
 const FAILSAFE_MS = 8500;
 
 /**
- * Backing-store sizes for the resolve, coarsest first.
- *
- * Derived from the ART's own width rather than a literal 152, so the two cannot
- * drift if the crest is ever regenerated at another size. Every divisor is a
- * power of two, which is the point: each step lands on whole source pixels, so
- * the blocks are exact and no step resamples into mush.
- *
- * The last entry IS the source size — the resolve ends at the crest's native
- * pixel art, not at a smoothed upscale of it.
+ * How long to wait for the crest PNG before starting anyway. Long enough for a
+ * cold fetch on a decent connection; short enough that a bad one costs the
+ * opening beat, not the whole splash.
  */
-const CREST_PX = ART.brand.gatewaysCrestPixel.w;
-const CREST_STEPS = [CREST_PX / 8, CREST_PX / 4, CREST_PX / 2, CREST_PX] as const;
+const ART_WAIT_MS = 1500;
 
-/**
- * The crest bitmap, requested as soon as this module evaluates.
- *
- * MODULE SCOPE, NOT AN EFFECT, and the difference is visible. Starting the fetch
- * in `useEffect` puts it behind hydration, and measured on a cold load that made
- * the canvas draw nothing until ~700ms — the timeline had already spent most of
- * the coarsest step, so the very blocky beat that the whole effect is built
- * around was half over before anything appeared. Kicking it off here starts the
- * request as the chunk evaluates instead.
- *
- * Guarded because this module is imported by a server-rendered layout, and
- * `Image` does not exist there. `null` on the server is fine: the component only
- * ever reads it from the browser.
- *
- * It is 4KB and it is the one asset the splash cannot draw without, so this is
- * not the same call as the blurred backdrop scene, which is ~100KB and stays
- * deferred to a frame after first paint.
- */
-const CREST_IMG: HTMLImageElement | null =
-  typeof window === "undefined" ? null : new Image();
-if (CREST_IMG) CREST_IMG.src = ART.brand.gatewaysCrestPixel.src;
+/** The occupied cells, resolved once at module scope rather than per render. */
+const CELLS: ReadonlyArray<{ col: number; row: number }> = SPLASH_MASK.flatMap(
+  (line, row) => [...line].flatMap((char, col) => (char === "#" ? [{ col, row }] : [])),
+);
 
 /**
  * The hero's scene, read from the same registry `HeroSection` reads. Looked up at
@@ -110,59 +105,22 @@ if (CREST_IMG) CREST_IMG.src = ART.brand.gatewaysCrestPixel.src;
  */
 const HERO_SCENE = getScene("overworld-panorama");
 
+/** Resolves when the image is decoded, or after `ms`, whichever is first. */
+function decodeWithin(src: string, ms: number): Promise<void> {
+  const img = new Image();
+  img.src = src;
+  const decoded = img.decode().catch(() => {
+    /* a decode failure is not the splash's problem to report */
+  });
+  const timeout = new Promise<void>((resolve) => window.setTimeout(resolve, ms));
+  return Promise.race([decoded, timeout]);
+}
+
 export function PixelSplash() {
   const root = useRef<HTMLDivElement>(null);
-  const backdrop = useRef<HTMLDivElement>(null);
   const stage = useRef<HTMLDivElement>(null);
   const ring = useRef<HTMLDivElement>(null);
-  const crest = useRef<HTMLCanvasElement>(null);
   const [done, setDone] = useState(false);
-
-  /**
-   * The decoded crest, and the step it should currently be showing.
-   *
-   * Both are refs rather than state: a redraw must not re-render the component,
-   * and the timeline writes `step` from a `tl.call()` outside React entirely.
-   *
-   * They are separate because the image and the timeline race. If a step fires
-   * before the PNG has decoded there is nothing to draw, so the step is recorded
-   * and `onload` draws whatever the latest one is by then — which is also why
-   * `drawCrest` reads `step.current` instead of taking it as an argument.
-   */
-  const step = useRef(0);
-
-  const drawCrest = useCallback(() => {
-    const canvas = crest.current;
-    const img = CREST_IMG;
-    // `complete` covers the case that matters most: a repeat visit where the
-    // bitmap is already in cache and no load event will ever fire.
-    if (!canvas || !img?.complete || !img.naturalWidth) return;
-
-    const n = CREST_STEPS[step.current];
-    // Resizing the backing store IS the pixelation: the canvas holds n x n
-    // pixels and CSS blows it up to --splash-size. Assigning width/height also
-    // clears the canvas and resets the context, so `imageSmoothingEnabled` has
-    // to be set after it, every time — not once at setup.
-    canvas.width = n;
-    canvas.height = n;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(img, 0, 0, n, n);
-  }, []);
-
-  // Draw as soon as the bitmap is there. If it already decoded before this
-  // mounted, `drawCrest` runs immediately and no listener is needed.
-  useEffect(() => {
-    const img = CREST_IMG;
-    if (!img) return;
-    if (img.complete) {
-      drawCrest();
-      return;
-    }
-    img.addEventListener("load", drawCrest);
-    return () => img.removeEventListener("load", drawCrest);
-  }, [drawCrest]);
 
   /**
    * The blurred backdrop is mounted a frame AFTER first paint, never on the
@@ -210,47 +168,77 @@ export function PixelSplash() {
         return;
       }
 
-      // Start coarse. `gsap.set` rather than CSS because the canvas also carries
-      // `.gsap-hidden`, and the entrance below animates out of both at once.
-      step.current = 0;
-      drawCrest();
+      const tiles = gsap.utils.toArray<HTMLElement>(".splash-tile", stage.current);
+      const faces = gsap.utils.toArray<HTMLElement>(".splash-face", stage.current);
 
-      gsap.set(crest.current, { autoAlpha: 0, scale: 1.06 });
+      // Scatter each block outward from the centre. This is a `set` rather than a
+      // `.from()` because the offsets are randomised per block and cannot live in
+      // CSS — but the blocks are already opacity:0 via `.gsap-hidden`, so there is
+      // no flash of them at rest first.
+      const centre = (SPLASH_GRID - 1) / 2;
+      tiles.forEach((tile) => {
+        const col = Number(tile.dataset.col);
+        const row = Number(tile.dataset.row);
+        const dx = col - centre;
+        const dy = row - centre;
+        const length = Math.hypot(dx, dy) || 1;
+        const distance = gsap.utils.random(150, 420);
 
-      const tl = gsap.timeline({ onComplete: finish });
-
-      // The mark arrives already assembled but unreadable, and sharpens into
-      // focus. The slight scale-down is the only continuous motion here — it is
-      // a transform, so it composites; the resolution changes are discrete.
-      tl.to(crest.current, {
-        autoAlpha: 1,
-        scale: 1,
-        duration: 0.85,
-        ease: "power2.out",
-      }, 0.2);
-
-      // The resolve itself. `call` and not a tween: each step is one redraw of a
-      // 152px-at-most buffer, and tweening a paint property to get the same four
-      // frames would repaint a full-size surface continuously in between.
-      //
-      // Evenly spaced at 0.73s, so the steps land at 0.93 / 1.66 / 2.39. The
-      // last one is early on purpose: it leaves ~0.5s of the finished crest
-      // sitting still before the ring fires at 2.95, so the accent reads as
-      // punctuating a completed mark rather than interrupting one mid-resolve.
-      CREST_STEPS.forEach((_, i) => {
-        if (i === 0) return;
-        tl.call(() => {
-          step.current = i;
-          drawCrest();
-        }, undefined, 0.2 + i * 0.73);
+        gsap.set(tile, {
+          x: (dx / length) * distance + gsap.utils.random(-70, 70),
+          y: (dy / length) * distance + gsap.utils.random(-70, 70),
+          scale: gsap.utils.random(1.5, 2.4),
+          rotation: gsap.utils.random(-80, 80),
+          autoAlpha: 0,
+        });
       });
 
-      // The crest lands: a shockwave ring pushes out and the whole mark takes a
-      // short breath, so the resolve ends on an accent instead of just stopping.
-      // The ring flashes in already wider than the crest and keeps expanding —
-      // it is never static at the artwork's own size, where it would read as a
-      // frame drawn around the logo rather than a pulse leaving it.
-      tl.to(ring.current, {
+      // Identical stagger config on tiles and faces, so each block's face fades a
+      // fixed beat after that same block starts flying — the "lands, then
+      // resolves" read — without tracking 618 individual timelines.
+      const stagger: gsap.StaggerVars = {
+        grid: [SPLASH_GRID, SPLASH_GRID],
+        from: "center",
+        amount: 1.9,
+      };
+
+      // Built PAUSED: it is released below, once the crest image has decoded.
+      const tl = gsap.timeline({ onComplete: finish, paused: true });
+
+      tl.to(tiles, {
+        x: 0,
+        y: 0,
+        scale: 1,
+        rotation: 0,
+        autoAlpha: 1,
+        duration: 0.85,
+        ease: "back.out(1.4)",
+        stagger,
+      }, 0.2)
+        .to(faces, {
+          autoAlpha: 0,
+          duration: 0.5,
+          ease: "power2.out",
+          stagger,
+        }, 0.85)
+        // 618 promoted compositor layers is fine while they're actively flying
+        // in (that's what `.splash-tile`'s `will-change` in globals.css is for),
+        // but every one of them is still a separate GPU layer the browser has to
+        // track for the rest of the timeline otherwise — including through the
+        // closing 14x zoom, which is the one moment that can least afford it.
+        // They're landed and static by here, so release the layers well before
+        // the zoom needs the budget instead of after.
+        .call(() => {
+          tiles.forEach((tile) => {
+            tile.style.willChange = "auto";
+          });
+        }, undefined, 1.4)
+        // The crest lands: a shockwave ring pushes out and the whole mark takes a
+        // short breath, so the assembly ends on an accent instead of just stopping.
+        // The ring flashes in already wider than the crest and keeps expanding —
+        // it is never static at the artwork's own size, where it would read as a
+        // frame drawn around the logo rather than a pulse leaving it.
+        .to(ring.current, {
           autoAlpha: 0.5,
           scale: 1.15,
           duration: 0.15,
@@ -272,36 +260,25 @@ export function PixelSplash() {
           duration: 0.7,
           ease: "elastic.out(1, 0.5)",
         }, 3.17)
-        // A beat of stillness on the finished crest, then the reveal: the camera
-        // pushes into the logo and the homepage arrives through it.
-        //
-        // Order matters. The aperture opens FIRST, while the crest still covers
-        // that exact shape — so nothing visibly pops. Fading the crest then
-        // uncovers the hole, and by then the zoom is already underway, so the
-        // mark reads as opening rather than disappearing.
-        // A class rather than a GSAP tween on the custom property: the value is
-        // `var(--splash-size)`, an indirection GSAP would try to parse as a number.
-        .call(() => backdrop.current?.classList.add("is-open"), undefined, 4.1)
-        .to(crest.current, {
-          autoAlpha: 0,
-          duration: 0.45,
-          ease: "power2.in",
-        }, 4.15)
+        // A beat of stillness on the finished crest, then the whole overlay —
+        // backdrop, crest and all — fades out together and the homepage is simply
+        // there underneath. One property, one direction, nothing to see through.
+        // See the note at the top of this file for what this replaced and why.
         .to(el, {
-          scale: 14,
-          duration: 1.5,
-          // Accelerating, so it reads as falling into the logo rather than the
-          // logo being pushed at the viewer.
-          ease: "power2.in",
-        }, 4.1)
-        // The silhouette has gaps between the wing feathers. They scale off-screen
-        // long before this, but fading the backdrop out guarantees a clean finish
-        // — and is the whole reveal on any browser without `mask-composite`.
-        .to(backdrop.current, {
           autoAlpha: 0,
-          duration: 0.4,
-          ease: "power2.inOut",
-        }, 5.2);
+          duration: 0.7,
+          ease: "power1.inOut",
+        }, 4.1);
+
+      // Only the theme's own file is fetched. `data-theme` is stamped on <html>
+      // before first paint by the root layout's boot script, so it is already
+      // right here.
+      const light = document.documentElement.dataset.theme === "light";
+      const src = light ? ART.brand.gatewaysCrestBlack.src : ART.brand.gatewaysCrest.src;
+      let cancelled = false;
+      void decodeWithin(src, ART_WAIT_MS).then(() => {
+        if (!cancelled && !finished.current) tl.play();
+      });
 
       // Skip on any input. `once` on each listener plus the `finished` guard means
       // a burst of events cannot start several exit tweens.
@@ -314,19 +291,21 @@ export function PixelSplash() {
       window.addEventListener("keydown", skip, { once: true });
 
       // Last line of defence: if the timeline stalls (a backgrounded tab that
-      // never resumes, a tween that throws), the overlay still lifts.
+      // never resumes, a tween that throws, an image that never decodes), the
+      // overlay still lifts.
       const failsafe = window.setTimeout(finish, FAILSAFE_MS);
 
       return () => {
+        cancelled = true;
         window.removeEventListener("pointerdown", skip);
         window.removeEventListener("keydown", skip);
         window.clearTimeout(failsafe);
       };
     },
-    { scope: root, dependencies: [finish, drawCrest] },
+    { scope: root, dependencies: [finish] },
   );
 
-  // Unmount rather than hide: 542 spans have no business lingering in the DOM
+  // Unmount rather than hide: 618 spans have no business lingering in the DOM
   // for the rest of the session.
   if (done) return null;
 
@@ -338,15 +317,15 @@ export function PixelSplash() {
       className="fixed inset-0 z-[200] grid place-items-center"
       style={
         {
-          "--splash-aperture": `url("${ART.brand.gatewaysCrestAperture.src}")`,
+          "--splash-tile-src": `url("${ART.brand.gatewaysCrest.src}")`,
+          "--splash-tile-src-light": `url("${ART.brand.gatewaysCrestBlack.src}")`,
         } as React.CSSProperties
       }
     >
-      {/* The void itself, and the layer the crest-shaped hole is punched through.
-          It carries the background instead of the root so the reveal has
-          something to cut into. Everything below is a CHILD of it, so the
-          aperture cuts through the whole stack in one go. */}
-      <div ref={backdrop} className="splash-backdrop">
+      {/* The void and the out-of-focus landscape behind the crest. Solid from
+          the very first paint: there is no mask on it any more, so nothing has
+          to load before it covers the page. */}
+      <div className="splash-backdrop">
         {/* The hero's landscape, out of focus. No `AnimatedBackground` wrapper:
             that would attach a pointer listener, a resize listener and a set of
             infinite drift tweens to a picture that is blurred past the point
@@ -397,7 +376,7 @@ export function PixelSplash() {
         <div className="splash-veil pointer-events-none absolute inset-0" />
 
         {/* Faint block grid, so the void reads as buildable space. Inside the
-            backdrop so the aperture cuts through it too. */}
+            backdrop so it sits under the crest with the scene. */}
         <div className="splash-grid pointer-events-none absolute inset-0" />
       </div>
 
@@ -407,24 +386,24 @@ export function PixelSplash() {
           className="splash-ring gsap-hidden pointer-events-none absolute left-1/2 top-1/2"
         />
 
-        {/* The crest. One element, redrawn at four resolutions — see the note
-            at the top of this file for why it is not 639 of them.
-
-            `width`/`height` are the INITIAL backing store only; `drawCrest`
-            reassigns both on every step, and assigning either one clears the
-            canvas. They are set here so the very first paint is already the
-            right shape rather than the 300x150 a canvas defaults to.
-
-            No `alt` equivalent is needed: the whole splash is `aria-hidden`,
-            and the crest is decorative — the page it reveals carries the
-            wordmark as real text. */}
-        <canvas
-          ref={crest}
-          className="splash-crest gsap-hidden block"
-          width={CREST_STEPS[0]}
-          height={CREST_STEPS[0]}
-        />
+        {CELLS.map(({ col, row }) => (
+          <span
+            key={`${col}-${row}`}
+            data-col={col}
+            data-row={row}
+            className="splash-tile gsap-hidden absolute block"
+            style={{
+              left: `calc(var(--splash-tile) * ${col})`,
+              top: `calc(var(--splash-tile) * ${row})`,
+              backgroundPosition: `calc(var(--splash-tile) * -${col}) calc(var(--splash-tile) * -${row})`,
+            }}
+          >
+            {/* The solid cube face worn during flight, faded on landing. */}
+            <i className="splash-face absolute inset-0 block bg-mc-gold bevel" />
+          </span>
+        ))}
       </div>
+
     </div>
   );
 }

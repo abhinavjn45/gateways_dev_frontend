@@ -5,8 +5,7 @@ import { Vec3 } from 'vec3'
  * on demand. The schematic sits at world origin, so schematic (x,y,z) is world
  * (x,y,z) and every coordinate in world.meta.json is directly usable.
  *
- * The world is read-only: there is no patch layer and no way to edit a block,
- * which is the whole point of the campus — you explore it, you do not dig it.
+ * Loaded columns are shared by rendering, physics and the validated creative editor.
  */
 export function createSchematicWorld ({ schematic, World, Chunk }) {
   const size = schematic.size
@@ -57,4 +56,19 @@ export function createSchematicWorld ({ schematic, World, Chunk }) {
   const world = new World(generateChunk)
   world.schematicSize = size
   return world
+}
+
+/** Preload editable columns so subsequent edits are synchronous and atomic. */
+export async function createWorldEditor ({ world, bounds, states, notify = (_pos, _stateId) => {} }) {
+  for (let x = Math.floor(bounds.min.x / 16); x <= Math.floor(bounds.max.x / 16); x++) {
+    for (let z = Math.floor(bounds.min.z / 16); z <= Math.floor(bounds.max.z / 16); z++) await world.getColumn(x, z)
+  }
+  return (p, name) => {
+    if (!['x', 'y', 'z'].every(k => Number.isInteger(p[k]) && p[k] >= bounds.min[k] && p[k] <= bounds.max[k])) throw new Error('Protected block')
+    const stateId = name === null ? 0 : states[name]
+    if (!Number.isInteger(stateId)) throw new Error('Unknown building material')
+    const pos = new Vec3(p.x, p.y, p.z)
+    world.sync.setBlockStateId(pos, stateId)
+    notify(pos, stateId)
+  }
 }

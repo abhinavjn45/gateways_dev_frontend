@@ -9,6 +9,7 @@ import type {
   WorldMeta,
 } from "@/frontend/lib/minecraft/engine-types";
 import { cn } from "@/frontend/lib/utils";
+import { useTheme } from "@/frontend/lib/theme/use-theme";
 
 const SCRIPT_ID = "mc-gateways-engine";
 
@@ -54,15 +55,22 @@ export function McWorld({
   const [tip, setTip] = useState(config.loading.tips[0]);
 
   // Latest callbacks/bindings without re-booting the engine when they change.
-  const latest = useRef({ onOpenEvent, onReady, bindings });
+  const { resolved: theme } = useTheme();
+  const latest = useRef({ onOpenEvent, onReady, bindings, theme });
   useEffect(() => {
-    latest.current = { onOpenEvent, onReady, bindings };
-  }, [onOpenEvent, onReady, bindings]);
+    latest.current = { onOpenEvent, onReady, bindings, theme };
+  }, [onOpenEvent, onReady, bindings, theme]);
 
   // A sheet refresh re-signs the classrooms in place.
   useEffect(() => {
     handleRef.current?.setBindings(bindings);
   }, [bindings]);
+
+  // The site theme is the world's time of day. `resolved` already follows the
+  // in-app toggle, the OS setting and other tabs, so this is the only wire.
+  useEffect(() => {
+    handleRef.current?.setTheme(theme);
+  }, [theme]);
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -86,6 +94,7 @@ export function McWorld({
           playerName,
           meta,
           bindings: latest.current.bindings,
+          theme: latest.current.theme,
           spawnRoom,
           onOpenEvent: (slug) => latest.current.onOpenEvent(slug),
           onStatus: (msg) => {

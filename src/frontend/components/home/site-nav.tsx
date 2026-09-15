@@ -3,8 +3,9 @@
 
 import { useEffect, useState } from "react";
 import { Menu, User, LogIn } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { BlockButton, BlockModal, ThemeToggle } from "@/frontend/components/mc";
+import { MusicToggle } from "@/frontend/components/audio/music-toggle";
 import { ART } from "@/frontend/lib/assets/manifest";
 import { FEST } from "@/frontend/lib/fest";
 import { cn } from "@/frontend/lib/utils";
@@ -47,6 +48,18 @@ export function SiteNav({ onOpenEvents, onOpenSchedule }: SiteNavProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [session, setSession] = useState<any>(null);
   const router = useRouter();
+  const pathname = usePathname();
+
+  /**
+   * Which item is the page you are on. Home only on `/` itself — every path
+   * starts with a slash, so a prefix test would light Home up everywhere. The
+   * rest match their route and anything beneath it, so an event's detail page
+   * (`/events/<slug>`) still shows Events. Events and Schedule open modals from
+   * this bar, but both also have real routes, and those are what count here:
+   * an open modal is not a page.
+   */
+  const isCurrent = (route: string) =>
+    route === "/" ? pathname === "/" : pathname === route || pathname.startsWith(`${route}/`);
 
   useEffect(() => {
     repo.auth.getSession().then((s) => setSession(s));
@@ -164,16 +177,16 @@ export function SiteNav({ onOpenEvents, onOpenSchedule }: SiteNavProps) {
         {/* Desktop nav. Hidden rather than unmounted on mobile so there is only
             one source of truth for the link list. */}
         <nav aria-label="Main" className="hidden items-center justify-center gap-[calc(var(--mc-unit)*0.5)] min-[1320px]:flex">
-          <NavLink href="/" label="Home" />
+          <NavLink href="/" label="Home" current={isCurrent("/")} />
           {/* Plain text, not <BlockButton>. These open modals rather than
               navigating, but a bevelled panel around two of seven nav items
               made them read as the only real controls up here — the raised
               chrome was carrying meaning it did not have. */}
-          <NavLink label="Events" onClick={onOpenEvents} />
-          <NavLink label="Schedule" onClick={onOpenSchedule} />
-          <NavLink href="/gallery" label="Gallery" />
-          <NavLink href="/about" label="About" />
-          <NavLink href="/contact" label="Contact" />
+          <NavLink label="Events" onClick={onOpenEvents} current={isCurrent("/events")} />
+          <NavLink label="Schedule" onClick={onOpenSchedule} current={isCurrent("/schedule")} />
+          <NavLink href="/gallery" label="Gallery" current={isCurrent("/gallery")} />
+          <NavLink href="/about" label="About" current={isCurrent("/about")} />
+          <NavLink href="/contact" label="Contact" current={isCurrent("/contact")} />
         </nav>
 
         <div className="flex shrink-0 items-center gap-[calc(var(--mc-unit)*0.75)] md:gap-[calc(var(--mc-unit)*1.25)] min-[1320px]:justify-self-end">
@@ -194,6 +207,12 @@ export function SiteNav({ onOpenEvents, onOpenSchedule }: SiteNavProps) {
               modal carries an "Appearance" row that is itself hidden above
               1320px. Someone who needs the light theme on a phone still has it,
               one tap further in. */}
+          {/* The music control stays in the bar at EVERY width, unlike the theme
+              toggle beside it, which moves into the menu below 1320px. Sound
+              that started without being asked for needs its off switch one
+              tap away, not two. */}
+          <MusicToggle />
+
           <ThemeToggle className="hidden min-[1320px]:inline-flex" />
 
           {/* Mobile Account Button (Icon Only) */}
@@ -252,7 +271,7 @@ export function SiteNav({ onOpenEvents, onOpenSchedule }: SiteNavProps) {
             <ThemeToggle />
           </div>
 
-          <MenuLink href="/" label="Home" onNavigate={() => setMenuOpen(false)} />
+          <MenuLink href="/" label="Home" onNavigate={() => setMenuOpen(false)} current={isCurrent("/")} />
           {/* MenuLink, not <BlockButton variant="stone">. Two raised grey slabs
               among six inset dark rows read as the only real controls in the
               menu — exactly the miscue the desktop nav already corrected (see
@@ -261,15 +280,17 @@ export function SiteNav({ onOpenEvents, onOpenSchedule }: SiteNavProps) {
             label="Events"
             onNavigate={() => setMenuOpen(false)}
             onClick={onOpenEvents}
+            current={isCurrent("/events")}
           />
           <MenuLink
             label="Schedule"
             onNavigate={() => setMenuOpen(false)}
             onClick={onOpenSchedule}
+            current={isCurrent("/schedule")}
           />
-          <MenuLink href="/gallery" label="Gallery" onNavigate={() => setMenuOpen(false)} />
-          <MenuLink href="/about" label="About" onNavigate={() => setMenuOpen(false)} />
-          <MenuLink href="/contact" label="Contact" onNavigate={() => setMenuOpen(false)} />
+          <MenuLink href="/gallery" label="Gallery" onNavigate={() => setMenuOpen(false)} current={isCurrent("/gallery")} />
+          <MenuLink href="/about" label="About" onNavigate={() => setMenuOpen(false)} current={isCurrent("/about")} />
+          <MenuLink href="/contact" label="Contact" onNavigate={() => setMenuOpen(false)} current={isCurrent("/contact")} />
           <a
             href={FEST.host.universityUrl}
             target="_blank"
@@ -294,13 +315,27 @@ function NavLink({
   href,
   label,
   onClick,
+  current = false,
 }: {
   href?: string;
   label: string;
   onClick?: () => void;
+  /** This item is the page being viewed. */
+  current?: boolean;
 }) {
-  const className =
-    "bg-transparent px-[var(--mc-unit)] py-[calc(var(--mc-unit)*0.5)] font-pixel text-[10px] uppercase tracking-[0.1em] text-mc-text no-underline transition-colors hover:text-mc-eyebrow";
+  const className = cn(
+    "relative bg-transparent px-[var(--mc-unit)] py-[calc(var(--mc-unit)*0.5)] font-pixel text-[10px] uppercase tracking-[0.1em] text-mc-text no-underline transition-colors hover:text-mc-eyebrow",
+    // The current page's underline. A solid bar the thickness of the site's
+    // bevel rather than `text-decoration`: a text underline is drawn from the
+    // font's own metrics, which in a pixel face lands at an arbitrary sub-pixel
+    // offset and blurs. Inset by the same padding as the text so the bar is
+    // exactly the width of the word, not of the padded hit area.
+    current &&
+      "after:pointer-events-none after:absolute after:bottom-0 after:left-[var(--mc-unit)] after:right-[var(--mc-unit)] after:h-[var(--mc-bevel)] after:bg-mc-accent after:content-['']",
+  );
+  // Only real links take `aria-current`. On the two modal buttons it would tell
+  // a screen reader that pressing the control IS the page, which it is not.
+  const currentAttr = current ? ("page" as const) : undefined;
 
   if (onClick) {
     return (
@@ -323,7 +358,7 @@ function NavLink({
   }
 
   return (
-    <a href={href} className={className}>
+    <a href={href} aria-current={currentAttr} className={className}>
       {label}
     </a>
   );
@@ -343,14 +378,21 @@ function MenuLink({
   label,
   onNavigate,
   onClick,
+  current = false,
 }: {
   href?: string;
   label: string;
   onNavigate: () => void;
   onClick?: () => void;
+  /** This row is the page being viewed. */
+  current?: boolean;
 }) {
-  const className =
-    "block w-full bg-mc-slot px-[calc(var(--mc-unit)*1.5)] py-[calc(var(--mc-unit)*1.25)] text-center font-pixel text-[11px] uppercase tracking-[0.1em] text-mc-text no-underline bevel-inset";
+  const className = cn(
+    "block w-full bg-mc-slot px-[calc(var(--mc-unit)*1.5)] py-[calc(var(--mc-unit)*1.25)] text-center font-pixel text-[11px] uppercase tracking-[0.1em] text-mc-text no-underline bevel-inset",
+    // Same signal as the bar's underline, so the menu and the bar agree on
+    // where you are. Underline on the label itself, not the whole row.
+    current && "text-mc-accent underline decoration-[length:var(--mc-bevel)] underline-offset-[6px]",
+  );
 
   if (onClick) {
     return (
@@ -369,7 +411,7 @@ function MenuLink({
   }
 
   return (
-    <a href={href} onClick={onNavigate} className={className}>
+    <a href={href} onClick={onNavigate} aria-current={current ? "page" : undefined} className={className}>
       {label}
     </a>
   );

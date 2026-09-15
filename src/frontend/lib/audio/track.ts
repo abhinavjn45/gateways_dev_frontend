@@ -24,8 +24,15 @@
 export const MUSIC_TRACK = {
   src: "/audio/parallax-theme.mp3",
 
-  /** Shown in the widget. Mirrors Minecraft's "artist — track" toast. */
-  label: "Now Playing — Parallax Theme",
+  /**
+   * Shown in the widget, VERBATIM. Minecraft's own toast reads "artist - track"
+   * ("C418 - Dry Hands"); this string was given in this order and is not to be
+   * rearranged into that shape on the assumption that it matches.
+   */
+  label: "Works - Aadzy",
+
+  /** The full track, linked from the music panel in the nav. */
+  fullVersionUrl: "https://youtu.be/aSZ4CDA7OGQ",
 
   /**
    * Background music at full scale is startling, and this plays without being

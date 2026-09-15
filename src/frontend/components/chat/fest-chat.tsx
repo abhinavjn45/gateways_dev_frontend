@@ -83,9 +83,11 @@ export function FestChat() {
     logRef.current?.scrollTo({ top: logRef.current.scrollHeight });
   }, [turns, busy]);
 
-  // Hide the widget entirely on dashboard, admin, and authentication pages.
+  // Hide the widget entirely on dashboard, admin, authentication pages, and the
+  // 3D campus — a full-screen view where a floating launcher sits over the game.
   if (
     pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/world") ||
     pathname.startsWith("/admin") ||
     pathname === "/login" ||
     pathname === "/register" ||

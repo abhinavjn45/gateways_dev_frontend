@@ -5,7 +5,7 @@ const CSS = `
 .mc-world-root { position: absolute; inset: 0; overflow: hidden; touch-action: none; background: #8fc0f0; }
 .mc-world-root canvas { display: block; width: 100%; height: 100%; }
 
-.mc-hud, .mc-hud * { font-family: var(--font-press-start), ui-monospace, monospace; }
+.mc-hud, .mc-hud * { font-family: var(--font-press-start, ui-monospace), monospace; }
 .mc-hud {
   position: absolute; inset: 0; pointer-events: none;
   color: #fff; text-shadow: 2px 2px 0 rgba(0,0,0,0.45); z-index: 5;
@@ -97,6 +97,52 @@ const CSS = `
   .mc-crosshair { opacity: 0.5; }
   .mc-capture { display: none; }
   .mc-hint { bottom: 96px; padding: 14px 18px; }
+}
+.mc-activities { position: absolute; inset: 0; pointer-events: none; font-size: 9px; line-height: 1.7; }
+.mc-activities [hidden] { display: none !important; }
+.mc-activities button { color: #f0f6ee; background: #233532; border: 2px solid #526b61; min-height: 38px; padding: 8px 10px; font-size: 9px; cursor: pointer; box-shadow: inset 0 -3px #101d1b; }
+.mc-activities button:hover { background: #395449; border-color: #b8d697; }
+.mc-activities button:focus-visible { outline: 3px solid #ffdf87; outline-offset: 2px; }
+.mc-activities button:disabled { opacity: .4; cursor: default; }
+.mc-activity-nav { position: absolute; top: 12px; right: 12px; display: flex; gap: 6px; }
+.mc-quest { position: absolute; top: 64px; right: 12px; display: grid; gap: 7px; width: min(350px, 85vw); padding: 15px; background: #112724e8; border: 2px solid #53675c; box-shadow: 5px 5px #0003; }
+.mc-quest strong { color: #8effe6; font-size: 11px; }
+.mc-quest span:last-child { color: #c3d5c2; font-size: 8px; }
+.mc-buildbar { position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%); width: min(550px, 96vw); padding: 12px; background: #15231fee; border: 2px solid #728064; text-align: center; }
+.mc-build-info { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
+.mc-build-info strong { color: #ffdf87; }
+.mc-build-info span { font-size: 7px; color: #c3d5c2; }
+.mc-materials { display: grid; grid-template-columns: repeat(9, 1fr); gap: 4px; margin-bottom: 7px; }
+.mc-materials button { position: relative; padding: 5px; height: 46px; min-width: 0; background: #303932; }
+.mc-materials button[aria-pressed=true] { border-color: #ffdf87; background: #66744d; transform: translateY(-3px); }
+.mc-materials i { display: block; width: 23px; height: 23px; margin: 0 auto; background: var(--block-color); box-shadow: inset 4px 4px #ffffff33, inset -5px -5px #0004; }
+.mc-materials small { position: absolute; bottom: 0; right: 2px; font-size: 7px; }
+.mc-build-tools { display: flex; justify-content: center; gap: 6px; margin: 8px 0; }
+.mc-save { font-size: 7px; color: #c3d5c2; overflow-wrap: anywhere; }
+.mc-uiopen .mc-activities { visibility: hidden; }
+.mc-touch-actions { position: absolute; right: 12px; bottom: 20px; display: flex; gap: 6px; }
+.mc-touch-actions [data-edit], .mc-touch-actions [data-hold=sneak] { display: none; }
+.is-creative .mc-touch-actions [data-edit], .is-creative .mc-touch-actions [data-hold=sneak] { display: block; }
+.mc-hud:has(.mc-buildbar:not([hidden])) .mc-hint { display: none; }
+@media (max-width: 700px) {
+  .mc-activity-nav { top: 8px; right: 8px; max-width: 76%; flex-wrap: wrap; justify-content: flex-end; gap: 4px; }
+  .mc-activity-nav button { font-size: 7px; min-height: 36px; padding: 6px; }
+  .mc-quest { top: 100px; font-size: 8px; width: 260px; padding: 10px; }
+  .mc-build-info { display: grid; justify-content: center; gap: 2px; }
+  .mc-buildbar { bottom: 80px; padding: 8px; }
+  .mc-build-tools button { min-height: 36px; font-size: 8px; padding: 5px; }
+}
+@media (hover: none) and (pointer: coarse) {
+  .mc-buildbar { bottom: 86px; }
+  .mc-touch-actions button { min-height: 48px; touch-action: none; }
+}
+@media (max-height: 500px) and (pointer: coarse) {
+  .mc-buildbar { width: 400px; bottom: 68px; padding: 5px; }
+  .mc-build-info { display: none; }
+  .mc-build-tools { margin: 3px 0; }
+  .mc-materials { margin-bottom: 2px; }
+  .mc-materials button { height: 38px; }
+  .mc-quest { top: 58px; }
 }
 `
 

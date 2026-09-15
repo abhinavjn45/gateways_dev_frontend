@@ -81,6 +81,15 @@ test("more events than rooms spill into overflow, and coming-soon never appears"
   assert.ok(bindings.every((b) => b.interactive));
 });
 
+test("with no spares configured, every leftover room is coming-soon", () => {
+  const { bindings } = bindEventsToRooms(thirteen, rooms, { ...options, spare: [] });
+  assert.deepEqual(
+    bindings.slice(13).map((b) => b.label),
+    ["Coming soon", "Coming soon", "Coming soon"],
+  );
+  assert.ok(bindings.slice(13).every((b) => !b.interactive && b.slug === null));
+});
+
 test("no events at all still signs every room", () => {
   const { bindings } = bindEventsToRooms([], rooms, options);
   assert.equal(bindings.filter((b) => b.label === "Coming soon").length, 13);
