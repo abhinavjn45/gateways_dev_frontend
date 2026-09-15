@@ -26,10 +26,43 @@ export function shouldPlaySplash(): boolean {
   }
 }
 
+/** Fired on `window` the moment the splash stops covering the page. */
+const SPLASH_DONE_EVENT = "parallax:splashdone";
+
+/**
+ * Set in THIS page load. sessionStorage alone cannot answer "has it finished"
+ * where storage is disabled, because `shouldPlaySplash()` then says "play" for
+ * the life of the tab — this flag is what closes that gap.
+ */
+let doneThisLoad = false;
+
 export function markSplashSeen(): void {
+  doneThisLoad = true;
   try {
     sessionStorage.setItem(SPLASH_SEEN_KEY, "true");
   } catch {
     // Nothing to do — the splash simply replays on the next load.
   }
+  if (typeof window !== "undefined") window.dispatchEvent(new Event(SPLASH_DONE_EVENT));
+}
+
+/**
+ * Run `callback` once the splash is out of the way — immediately if it already
+ * is, or will never play. Returns an unsubscribe.
+ *
+ * The immediate path is not an optimisation, it is the correctness case. The
+ * splash drives itself from `useGSAP`, a LAYOUT effect, and layout effects run
+ * before every ordinary effect in the tree. On a repeat visit or with reduced
+ * motion the splash finishes in that first pass — before a subscriber's
+ * `useEffect` has even run — so a listener alone would wait for an event that
+ * has already been and gone.
+ */
+export function onSplashDone(callback: () => void): () => void {
+  if (doneThisLoad || !shouldPlaySplash()) {
+    callback();
+    return () => {};
+  }
+  const handler = () => callback();
+  window.addEventListener(SPLASH_DONE_EVENT, handler, { once: true });
+  return () => window.removeEventListener(SPLASH_DONE_EVENT, handler);
 }

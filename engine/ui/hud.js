@@ -39,13 +39,19 @@ export function createHud ({ container, config, playerName, canvas, isTouch }) {
   }
 
   // -------------------------------------------------------------- panels
+  let previousFocus = null
   const openPanel = html => {
+    if (!panelOpen()) previousFocus = document.activeElement
     panel.innerHTML = html
     overlay.classList.add('show')
+    overlay.setAttribute('role', 'dialog')
+    overlay.setAttribute('aria-modal', 'true')
+    api.onPanelChange?.(true)
     document.exitPointerLock?.()
     panel.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', closePanel))
+    panel.querySelector('button')?.focus()
   }
-  const closePanel = () => { overlay.classList.remove('show'); panel.innerHTML = '' }
+  const closePanel = () => { overlay.classList.remove('show'); panel.innerHTML = ''; api.onPanelChange?.(false); if (previousFocus?.isConnected) previousFocus.focus?.(); previousFocus = null }
   const panelOpen = () => overlay.classList.contains('show')
   overlay.addEventListener('click', e => { if (e.target === overlay) closePanel() })
 
@@ -66,6 +72,14 @@ export function createHud ({ container, config, playerName, canvas, isTouch }) {
   // ------------------------------------------------------------ keyboard
   /** Returns true when the key was consumed by the HUD. */
   const handleKey = e => {
+    if (e.code === 'Tab' && panelOpen()) {
+      const buttons = [...panel.querySelectorAll('button:not(:disabled), a[href], input, select, textarea, [tabindex="0"]')]
+      if (buttons.length) {
+        const index = buttons.indexOf(document.activeElement)
+        buttons[(index + (e.shiftKey ? -1 : 1) + buttons.length) % buttons.length].focus()
+      }
+      e.preventDefault(); return true
+    }
     if (e.code === 'Escape') {
       if (panelOpen()) { closePanel(); return true }
       return false
@@ -79,10 +93,11 @@ export function createHud ({ container, config, playerName, canvas, isTouch }) {
   }
 
   // show the guide on the very first visit only; H brings it back any time
+  let guideTimer = 0
   let seen = false
   try { seen = localStorage.getItem(GUIDE_SEEN_KEY) === '1' } catch { /* private mode */ }
   if (!seen) {
-    setTimeout(() => {
+    guideTimer = setTimeout(() => {
       openPanel(guideHtml())
       try { localStorage.setItem(GUIDE_SEEN_KEY, '1') } catch { /* ignore */ }
     }, 400)
@@ -95,6 +110,7 @@ export function createHud ({ container, config, playerName, canvas, isTouch }) {
     openPanel,
     closePanel,
     panelOpen,
+    root, panel,
     handleKey,
 
     update (pos, nearest) {
@@ -115,6 +131,7 @@ export function createHud ({ container, config, playerName, canvas, isTouch }) {
 
     dispose () {
       clearTimeout(toastTimer)
+      clearTimeout(guideTimer)
       root.remove()
     }
   }

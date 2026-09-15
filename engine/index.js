@@ -5,8 +5,7 @@
  * the 3D view needs it, so the site injects it as a separate versioned script
  * that exposes window.McGateways. Built by scripts/mc/build-engine.mjs.
  *
- * Exploration only. There is no block breaking or placing anywhere in here;
- * the single "use" action opens the event hub of the classroom you stand in.
+ * Campus exploration, a crystal hunt, and a protected personal creative plot.
  */
 import * as THREE from 'three'
 import { Vec3 } from 'vec3'
@@ -25,9 +24,20 @@ import { createPlayer, attachInput } from './player/controller.js'
 import { injectStyles } from './ui/styles.js'
 import { createHud } from './ui/hud.js'
 import { createRoomProps } from './props/rooms.js'
+import { createMonument } from './props/monument.js'
+import { createActivities } from './activities/runtime.js'
 import { createMultiplayer } from './net/multiplayer.js'
 
 const TICK_MS = 50
+/**
+ * Render cap. requestAnimationFrame runs at the display's rate — 120 or 144 Hz
+ * on many laptops and phones — and every extra frame is a full scene draw for
+ * no visible gain in a game that thinks in 50 ms ticks. Holding at 60 keeps the
+ * GPU budget the same on every screen. The 1.5 ms slack stops a 60 Hz display's
+ * own timer jitter from being mistaken for an early frame and halving the rate.
+ */
+const MAX_FPS = 60
+const MIN_FRAME_MS = 1000 / MAX_FPS - 1.5
 const EYE_HEIGHT = 1.62
 // The mesher indexes chunk sections from y = 0, which is only true up to 1.17.
 // Never fall back to anything newer here.
@@ -66,6 +76,17 @@ async function installWorker (base, q, onStatus) {
 /** three.js looks down -Z at yaw 0, so facing (dx, dz) is yaw = atan2(-dx, -dz). */
 const yawToward = (from, to) => Math.atan2(-(to.x - from.x), -(to.z - from.z))
 
+/**
+ * Day and night, as the scene sees them. Everything the theme changes is here
+ * and nowhere else, so "what does night look like" has one answer.
+ *
+ * Night pulls the fog in on purpose: distance should read as darkness, not as
+ * the daytime haze in a darker colour. Ambient goes cool and low so the warm
+ * lantern light has something to contrast with.
+ */
+const DAY = { sky: '#8fc0f0', fog: '#b9d6f2', fogNear: 70, fogFar: 190, ambient: 1.1, ambientColor: 0xcccccc, sun: 0.6 }
+const NIGHT = { sky: '#0b1020', fog: '#141a2e', fogNear: 40, fogFar: 140, ambient: 0.38, ambientColor: 0x9fb0d8, sun: 0.12 }
+
 /** The site's pixel font, if next/font has put it on <html>. */
 function pixelFontFamily () {
   try {
@@ -76,7 +97,7 @@ function pixelFontFamily () {
   }
 }
 
-async function start ({ container, config, playerName, meta: metaIn, bindings, spawnRoom, onOpenEvent, onStatus, onProgress }) {
+async function start ({ theme, container, config, playerName, meta: metaIn, bindings, spawnRoom, onOpenEvent, onStatus, onProgress }) {
   const status = m => { try { onStatus?.(m) } catch { /* ignore */ } }
   const progress = t => { try { onProgress?.(Math.max(0, Math.min(1, t))) } catch { /* ignore */ } }
 
@@ -183,14 +204,44 @@ async function start ({ container, config, playerName, meta: metaIn, bindings, s
       onOpenEvent
     })
     disposers.push(() => props.dispose())
+
+    const monument = createMonument({ scene: viewer.scene, THREE, meta, fontFamily: pixelFontFamily() })
+    disposers.push(() => monument.dispose())
+
+    /**
+     * The site theme is the world's time of day. The scene objects were
+     * created above with the daytime values; this re-points them, and tells
+     * the props that own their own lights.
+     */
+    const applyTheme = (t) => {
+      const night = t === 'dark'
+      const s = night ? NIGHT : DAY
+      viewer.scene.background.set(s.sky)
+      viewer.scene.fog.color.set(s.fog)
+      viewer.scene.fog.near = s.fogNear
+      viewer.scene.fog.far = s.fogFar
+      viewer.ambientLight.intensity = s.ambient
+      viewer.ambientLight.color.set(s.ambientColor)
+      viewer.directionalLight.intensity = s.sun
+      // The CSS behind the canvas, so a resize never flashes blue at night.
+      container.style.background = s.sky
+      props.setNight(night)
+      monument.setNight(night)
+    }
+    applyTheme(theme ?? document.documentElement?.dataset?.theme)
     progress(0.92)
 
     // ----------------------------------------------------------------- HUD
     const hud = createHud({ container, config, playerName, canvas: renderer.domElement, isTouch })
     disposers.push(() => hud.dispose())
 
+    let externalUiOpen = false
+    let resumeFrame = true
+    const paused = () => externalUiOpen || hud.panelOpen() || document.hidden || !document.hasFocus() || (!isTouch && document.pointerLockElement !== renderer.domElement)
+    let activities = null
     const interact = () => {
-      if (hud.panelOpen()) return
+      if (paused()) return
+      if (activities?.interact()) return
       const n = props.nearest()
       if (n) n.open()
     }
@@ -201,9 +252,26 @@ async function start ({ container, config, playerName, meta: metaIn, bindings, s
       canvas: renderer.domElement,
       container,
       onInteract: interact,
-      onKey: e => hud.handleKey(e)
+      onKey: e => hud.handleKey(e) || activities?.key(e),
+      onAction: button => activities?.action(button),
+      onScroll: delta => activities?.scroll(delta),
+      canAct: () => !paused()
     })
     disposers.push(() => input.dispose())
+    hud.onPanelChange = () => { input.clear(); resumeFrame = true }
+    if (meta.activities) {
+      activities = await createActivities({ THREE, Vec3, meta, mcData, world, worldView, viewer, player, hud, isTouch, canAct: () => !paused() })
+      disposers.push(() => activities.dispose())
+    }
+    const resetFrame = () => { input.clear(); resumeFrame = true }
+    for (const event of ['visibilitychange', 'pointerlockchange']) {
+      document.addEventListener(event, resetFrame)
+      disposers.push(() => document.removeEventListener(event, resetFrame))
+    }
+    for (const event of ['focus', 'blur']) {
+      window.addEventListener(event, resetFrame)
+      disposers.push(() => window.removeEventListener(event, resetFrame))
+    }
 
     // -------------------------------------------------------- multiplayer
     const mp = createMultiplayer()
@@ -228,24 +296,43 @@ async function start ({ container, config, playerName, meta: metaIn, bindings, s
     let raf = 0
     let acc = 0
     let last = performance.now()
+    let lastRendered = 0
     let lastChunkUpdate = 0
     let running = true
 
     const frame = now => {
       if (!running) return
       raf = requestAnimationFrame(frame)
-      const dt = Math.min(200, now - last)
+      if (now - lastRendered < MIN_FRAME_MS) return // over the cap: let time accumulate, draw next frame
+      lastRendered = now
+      const elapsed = Math.max(0, now - last)
+      const dt = resumeFrame ? 0 : Math.min(200, elapsed)
       last = now
 
       // fixed 50 ms physics step, matching Minecraft's tick rate
-      acc += dt
+      const isPaused = paused()
+      if (isPaused) { acc = 0; input.clear() }
+      else acc += dt
       let steps = 0
       while (acc >= TICK_MS && steps < 5) { player.tick(); acc -= TICK_MS; steps++ }
+      activities?.update(resumeFrame ? 0 : elapsed, now, isPaused)
+      resumeFrame = paused()
 
       const pos = player.position
       // Upstream's setFirstPersonCamera allocates a fresh TWEEN every frame and
-      // never settles, leaving the camera at the origin. Drive it directly.
-      viewer.camera.position.set(pos.x, pos.y + EYE_HEIGHT, pos.z)
+      // never settles, leaving the camera at the origin. Drive it directly —
+      // and BETWEEN the last two physics ticks, not at the latest one. Physics
+      // moves in 50 ms steps; at 60 fps that is three drawn frames per step,
+      // and pinning the camera to the tick showed hold, hold, jump. `acc` is
+      // how far into the current step we are, so this glides through it, one
+      // tick behind — exactly what Minecraft itself does.
+      const prev = player.prevPosition
+      const alpha = Math.min(1, acc / TICK_MS)
+      viewer.camera.position.set(
+        prev.x + (pos.x - prev.x) * alpha,
+        prev.y + (pos.y - prev.y) * alpha + EYE_HEIGHT,
+        prev.z + (pos.z - prev.z) * alpha
+      )
       viewer.camera.rotation.set(player.pitch, player.yaw, 0, 'ZYX')
       props.update(pos, now)
       mp.update(pos, now, player.yaw, player.pitch)
@@ -267,7 +354,8 @@ async function start ({ container, config, playerName, meta: metaIn, bindings, s
         onGround: player.bot.entity.onGround,
         meshCount: Object.keys(viewer.world.sectionMeshs || {}).length,
         loadedChunks: Object.keys(viewer.world.loadedChunks || {}).length,
-        nearest: props.nearest()?.hint || null
+        nearest: props.nearest()?.hint || null,
+        activities: activities?.debug() || null
       }
     }
     raf = requestAnimationFrame(frame)
@@ -278,11 +366,16 @@ async function start ({ container, config, playerName, meta: metaIn, bindings, s
 
     return {
       dispose () {
+        document.exitPointerLock?.()
+        delete window.__mcDebug
         cleanup()
         container.classList.remove('mc-world-root')
+        container.style.background = ''
       },
       /** A React modal is open: release the mouse and freeze the player. */
       setUiOpen (open) {
+        externalUiOpen = Boolean(open)
+        resumeFrame = true
         input.setEnabled(!open)
         hud.setUiOpen(open)
         if (open) document.exitPointerLock?.()
@@ -290,12 +383,14 @@ async function start ({ container, config, playerName, meta: metaIn, bindings, s
       teleportToRoom (index) {
         const s = roomSpawn(index)
         if (!s) return false
+        player.setFlight(null)
         player.teleport(s.x, s.y, s.z, s.yaw)
         worldView.updatePosition(player.position)
         return true
       },
       setBindings (next) { props.setBindings(next) },
-      toast (text) { hud.toast(text) }
+      toast (text) { hud.toast(text) },
+      setTheme (t) { applyTheme(t) }
     }
   } catch (err) {
     cleanup()

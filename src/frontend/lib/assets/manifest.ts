@@ -171,6 +171,13 @@ export const ART = {
    *   `<PixelImage>`; `image-rendering: pixelated` destroys its curves and
    *   misrepresents someone else's brand. Render it with a plain <img> at a CSS
    *   height. The path still lives here so the no-hardcoded-paths rule holds.
+   * - `gatewaysCrest` / `gatewaysCrestBlack` are served from public/, NOT the
+   *   CDN like the rest of this block: the assets repo does not carry them
+   *   (both 404 there), and the splash slices them into 618 tiles on a first
+   *   visit, so a broken link is a crest that assembles out of nothing. They
+   *   live under /art/splash/, not /art/brand/, because src/proxy.ts answers
+   *   404 to everything under /art/brand/. Move them back to the CDN only
+   *   once they are actually uploaded to it.
    * - `gatewaysCrest` is the full-detail crest at 1254px. Its edges are smooth,
    *   so it must only be pixelated at an integer multiple of its own size —
    *   which in practice means never; render it at a CSS size and leave sampling
@@ -200,8 +207,8 @@ export const ART = {
     gatewaysColoured: { src: "https://cdn.jsdelivr.net/gh/abhinavjn45/gateways2026-assets@main/art/brand/gateways-coloured.svg", w: 300, h: 100, kind: "sprite", note: "Gateways coloured SVG" },
     gatewaysBlackSvg: { src: "https://cdn.jsdelivr.net/gh/abhinavjn45/gateways2026-assets@main/art/brand/gateways-black.svg", w: 300, h: 100, kind: "sprite", note: "Gateways black SVG" },
     gatewaysWhiteSvg: { src: "https://cdn.jsdelivr.net/gh/abhinavjn45/gateways2026-assets@main/art/brand/gateways-white.svg", w: 300, h: 100, kind: "sprite", note: "Gateways white SVG" },
-    gatewaysCrest: { src: "https://cdn.jsdelivr.net/gh/abhinavjn45/gateways2026-assets@main/art/brand/Gateways_Pixel.png", w: 1254, h: 1254, kind: "sprite", note: "Gateways crest, gold" },
-    gatewaysCrestBlack: { src: "https://cdn.jsdelivr.net/gh/abhinavjn45/gateways2026-assets@main/art/brand/gateways_black.png", w: 1254, h: 1254, kind: "sprite", note: "Gateways crest, black — light theme" },
+    gatewaysCrest: { src: "/art/splash/Gateways_Pixel.png", w: 1254, h: 1254, kind: "sprite", note: "Gateways crest, gold" },
+    gatewaysCrestBlack: { src: "/art/splash/gateways_black.png", w: 1254, h: 1254, kind: "sprite", note: "Gateways crest, black — light theme" },
     gatewaysCrestPixel: { src: "https://cdn.jsdelivr.net/gh/abhinavjn45/gateways2026-assets@main/art/brand/gateways-crest-pixel.png", w: 152, h: 152, kind: "sprite", note: "crest, pixel art" },
     gatewaysCrestAperture: { src: "https://cdn.jsdelivr.net/gh/abhinavjn45/gateways2026-assets@main/art/brand/gateways-crest-aperture.png", w: 152, h: 152, kind: "sprite", note: "crest silhouette, CSS mask" },
   }),

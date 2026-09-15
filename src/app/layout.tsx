@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import Script from "next/script";
 import { fontVariables } from "@/frontend/lib/fonts";
 import { PixelSplash } from "@/frontend/components/portal/pixel-splash";
 import { HistoryCursor } from "@/frontend/components/navigation/history-cursor";
@@ -145,13 +144,22 @@ export default function RootLayout({
     <html lang="en" className={`${fontVariables} h-full`} suppressHydrationWarning>
       <head>
         {/* Theme first: it decides what the page looks like, whereas the splash
-            only decides whether an overlay is skipped. */}
-        <Script id="theme-boot" strategy="beforeInteractive">
-          {THEME_BOOT}
-        </Script>
-        <Script id="splash-boot" strategy="beforeInteractive">
-          {SPLASH_BOOT}
-        </Script>
+            only decides whether an overlay is skipped.
+
+            PLAIN <script> TAGS, NOT next/script, and that is the whole fix for
+            two flashes. `<Script strategy="beforeInteractive">` in the App
+            Router does not emit an inline script: it emits
+            `self.__next_s.push(...)`, a queue that Next's client runtime drains
+            only after its JavaScript has downloaded. Both of these ran AFTER
+            first paint. Recorded frame by frame, that was ~200ms of the dark
+            theme on every light-mode load, and a frame of the splash on every
+            repeat visit before the "already seen" rule could hide it.
+
+            An inline script with no `async`/`defer` runs as the parser reaches
+            it, before anything below it is painted — which is the only moment
+            either decision is worth anything. */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} />
+        <script dangerouslySetInnerHTML={{ __html: SPLASH_BOOT }} />
         {/* If JS never runs the splash can never dismiss itself, so it must not
             appear at all. */}
         <noscript>

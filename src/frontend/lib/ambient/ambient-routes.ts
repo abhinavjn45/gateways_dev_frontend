@@ -36,3 +36,19 @@ export function isAmbientRoute(pathname: string | null): boolean {
   if (EXACT.has(path)) return true;
   return PREFIXES.some((p) => path.startsWith(p));
 }
+
+/**
+ * Auth routes that get the floating blocks — but NOT the rock-wall backdrop.
+ *
+ * Kept apart from `EXACT` because these pages differ in two ways the layer has
+ * to know about: they have their own scene background (so `PageBackdrop` must
+ * stay off), and they have no header, `main` or footer to measure a band from.
+ * `/login` is both sign-in and sign-up (`?mode=signup`).
+ */
+const AUTH_EXACT = new Set(["/login"]);
+
+export function isAuthAmbientRoute(pathname: string | null): boolean {
+  if (!pathname) return false;
+  const path = pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname;
+  return AUTH_EXACT.has(path);
+}

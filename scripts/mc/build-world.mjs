@@ -172,9 +172,10 @@ const OX1 = CX1 + CORR + 2                 // east outer wall
 const OZ1 = CZ1 + CORR + 2                 // south outer wall
 if (OX1 - OX0 !== CW + 11 || OZ1 - OZ0 !== CD + 11) throw new Error('ring arithmetic drifted')
 
-const W = OX1 + ROOM + 1 + APRON + 1
+const CAMPUS_W = OX1 + ROOM + 1 + APRON + 1
+const W = CAMPUS_W + 40
 const L = OZ1 + ROOM + 1 + APRON + PORTAL_GAP + 1
-const H = 26
+const H = 36
 const CCX = Math.floor((CX0 + CX1) / 2)    // courtyard centre
 const CCZ = Math.floor((CZ0 + CZ1) / 2)
 
@@ -518,6 +519,7 @@ function buildPortal (cx, pz) {
 // -------------------------------------------------------------- decoration
 function decorate () {
   const busy = (x, z) =>
+    (x >= CAMPUS_W - 2) ||
     (x >= OX0 - ROOM - 2 && x <= OX1 + ROOM + 2 && z >= OZ0 - ROOM - 2 && z <= OZ1 + ROOM + 2) ||
     (Math.abs(x - anchors.pois.portal.x) < 10 && z > OZ1)
   for (let i = 0; i < 160; i++) {
@@ -530,12 +532,45 @@ function decorate () {
   }
 }
 
+function buildActivities () {
+  const x0 = CAMPUS_W + 4, z0 = CZ0 - 5
+  const min = { x: x0, y: FLOOR, z: z0 }
+  const max = { x: x0 + 31, y: FLOOR + 23, z: z0 + 31 }
+  // A protected border, open-air plot and level path around the south wing.
+  g.fill(x0 - 1, GROUND, z0 - 1, max.x + 1, GROUND, max.z + 1, 'sea_lantern')
+  g.fill(x0, GROUND, z0, max.x, GROUND, max.z, 'smooth_stone')
+  for (const x of [x0 - 1, max.x + 1]) {
+    for (const z of [z0 - 1, max.z + 1]) {
+      g.fill(x, FLOOR, z, x, FLOOR + 2, z, 'oak_log', { axis: 'y' })
+      g.set(x, FLOOR + 3, z, 'glowstone')
+    }
+  }
+  const entrance = anchors.pois.entrance
+  const pathZ = OZ1 + ROOM + 3
+  g.fill(Math.floor(entrance.x) - 1, FLOOR, pathZ - 1, x0 - 2, FLOOR + 6, pathZ + 1, 'air')
+  g.fill(Math.floor(entrance.x) - 1, GROUND, pathZ - 1, x0 - 2, GROUND, pathZ + 1, 'stone_bricks')
+  g.fill(x0 - 3, FLOOR, z0 + 14, x0 - 2, FLOOR + 6, pathZ + 1, 'air')
+  g.fill(x0 - 3, GROUND, z0 + 14, x0 - 2, GROUND, pathZ + 1, 'stone_bricks')
+  const crystals = [
+    [CX0 + 8, CZ0 + 5], [CCX - 8, CZ0 + 5], [CCX + 8, CZ0 + 5], [CX1 - 8, CZ0 + 5],
+    [CX0 + 8, CZ1 - 5], [CCX - 8, CZ1 - 5], [CCX + 8, CZ1 - 5], [CX1 - 8, CZ1 - 5],
+    [OX0 + 2, CCZ], [OX1 - 2, CCZ]
+  ].map(([x, z], index) => ({ id: String(index + 1), x: x + 0.5, y: FLOOR, z: z + 0.5 }))
+  const start = { x: CCX + 3.5, y: FLOOR, z: CCZ + 8.5, yaw: 0 }
+  g.set(Math.floor(start.x), GROUND, Math.floor(start.z), 'diamond_block')
+  anchors.activities = {
+    hunt: { start, durationSeconds: 180, crystals },
+    creative: { min, max, entry: { x: x0 - 1.5, y: FLOOR, z: z0 + 15.5, yaw: -Math.PI / 2 }, returnPoint: start }
+  }
+}
+
 // ---------------------------------------------------------------- build all
 buildTerrain()
 buildCorridor()
 buildCourtyard()
 buildWings()
 decorate()
+buildActivities()
 
 // spawn south of the fountain, looking north across it at the classroom wing.
 // three.js looks down -Z at yaw 0, and the engine's physics agrees.

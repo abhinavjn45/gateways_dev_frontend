@@ -67,8 +67,8 @@ export interface RegistrationTier {
 }
 
 const REGISTRATION_TIERS: RegistrationTier[] = [
-  { id: "early_bird", label: "Early bird", amountInr: 200, opensOn: "2026-08-17", closesOn: "2026-09-15" },
-  { id: "standard", label: "Standard", amountInr: 250, opensOn: "2026-09-16", closesOn: "2026-10-07" },
+  { id: "early_bird", label: "Early bird", amountInr: 200, opensOn: "2026-08-17", closesOn: "2026-09-20" },
+  { id: "standard", label: "Standard", amountInr: 250, opensOn: "2026-09-21", closesOn: "2026-10-07" },
   { id: "on_spot", label: "On the spot", amountInr: 300, opensOn: "2026-10-08", closesOn: "2026-10-09" },
   { id: "christite", label: "Christite", amountInr: 200, opensOn: "2026-08-17", closesOn: "2026-10-09", note: "CHRIST students" },
   { id: "international", label: "International", amountInr: 1_000, opensOn: "2026-08-17", closesOn: "2026-10-09", note: "International participants" },
