@@ -10,13 +10,9 @@ import {
   BackLink,
   BlockButton,
   BlockPanel,
-  PixelAvatar,
   ThemeToggle,
-  XpBar,
 } from "@/frontend/components/mc";
 import { useSession } from "@/frontend/components/auth/session-provider";
-import { useAsync } from "@/frontend/hooks/use-async";
-import { repo, xpProgress } from "@/lib/data";
 import { cn } from "@/frontend/lib/utils";
 
 /**
@@ -109,10 +105,6 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     }
   }, [session, pathname, router]);
 
-  const { data: levels } = useAsync(() => repo.reference.levels(), []);
-  const progress =
-    character && levels ? xpProgress(character.totalXp, levels) : null;
-
   async function handleSignOut() {
     await signOut();
     router.push("/");
@@ -141,12 +133,9 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         <div className="flex items-center gap-[calc(var(--mc-unit)*0.75)]">
           <ThemeToggle />
           {character ? (
-            <>
-              <span className="font-pixel text-[10px] text-mc-text">
-                {character.playerName}
-              </span>
-              <PixelAvatar skinId={character.skinId} size={32} />
-            </>
+            <span className="font-pixel text-[10px] text-mc-text">
+              {character.playerName}
+            </span>
           ) : null}
         </div>
       </header>
@@ -213,33 +202,6 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         {/* Main content — the only scrollable region in the shell. pb clears
             the mobile tab bar. */}
         <main className="min-w-0 flex-1 overflow-y-auto p-[calc(var(--mc-unit)*1.5)] pb-[calc(72px+env(safe-area-inset-bottom))] md:pb-[calc(var(--mc-unit)*1.5)]">
-          {character && progress ? (
-            <BlockPanel
-              variant="panel"
-              padded="sm"
-              className="mb-[var(--mc-unit)] flex flex-wrap items-center gap-[calc(var(--mc-unit)*1.5)]"
-            >
-              <div className="flex items-center gap-[var(--mc-unit)]">
-                <PixelAvatar skinId={character.skinId} size={44} />
-                <div>
-                  <p className="font-pixel text-[11px] text-mc-text">
-                    {character.playerName}
-                  </p>
-                  <p className="text-[18px] text-mc-text-dim">
-                    {character.totalXp} XP total
-                  </p>
-                </div>
-              </div>
-              <XpBar
-                className="min-w-[200px] flex-1"
-                current={progress.current}
-                required={progress.required}
-                level={progress.level}
-                title={progress.title}
-              />
-            </BlockPanel>
-          ) : null}
-
           {children}
         </main>
       </div>

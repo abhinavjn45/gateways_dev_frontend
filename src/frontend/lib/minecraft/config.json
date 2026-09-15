@@ -4,14 +4,16 @@
     "version": "1.17.1",
     "schematic": "world.schem",
     "renderDistance": 4,
-    "slots": 16
+    "slots": 13
   },
-  "spare": [
-    { "label": "Sponsors' Pavilion", "lines": ["SPONSORS'", "PAVILION"] },
-    { "label": "Leaderboard", "lines": ["LEADERBOARD"] },
-    { "label": "Help Desk", "lines": ["HELP DESK"] }
-  ],
-  "comingSoon": { "label": "Coming soon", "lines": ["COMING", "SOON"] },
+  "spare": [],
+  "comingSoon": {
+    "label": "Coming soon",
+    "lines": [
+      "COMING",
+      "SOON"
+    ]
+  },
   "credits": "Textures from VoxeLibre (CC BY-SA 4.0). Not affiliated with Mojang Studios.",
   "runtime": {
     "downloading": "Downloading the world engine...",
@@ -29,7 +31,10 @@
       "Tip: Press H any time for the controls",
       "Tip: Esc releases the mouse",
       "Tip: Every classroom is one Gateways event",
-      "Tip: On a phone, the left half of the screen is your joystick"
+      "Tip: On a phone, the left half of the screen is your joystick",
+      "Tip: Try Crystal Hunt \u2014 find 10 crystals before time runs out",
+      "Tip: Your Creative Plot saves in this browser",
+      "Tip: Inside the Creative Plot, press F to fly and 1\u20139 to select blocks"
     ]
   },
   "status": {
@@ -42,18 +47,59 @@
     "ready": "Ready"
   },
   "ui": {
-    "shortcutsHeading": "Walk the campus. Every classroom is an event — step inside and press E.",
+    "shortcutsHeading": "Explore event classrooms, race to find 10 crystals, or build your own world in the Creative Plot.",
     "shortcutsHint": "Press H any time to show or hide this guide.",
-    "hubHint": "Press E — {name}",
-    "hubHintTouch": "Tap here — {name}"
+    "hubHint": "Press E \u2014 {name}",
+    "hubHintTouch": "Tap here \u2014 {name}"
   },
   "controls": [
-    { "keys": "W A S D", "label": "Move" },
-    { "keys": "Space", "label": "Jump; small ledges also auto-jump" },
-    { "keys": "Shift", "label": "Sneak" },
-    { "keys": "Ctrl", "label": "Sprint" },
-    { "keys": "Mouse", "label": "Look around (click to capture, Esc to release)" },
-    { "keys": "E / Enter / Right click", "label": "Open the event hub of the classroom you are in" },
-    { "keys": "H", "label": "Show or hide this guide" }
+    {
+      "keys": "W A S D",
+      "label": "Move"
+    },
+    {
+      "keys": "Space",
+      "label": "Jump; small ledges also auto-jump"
+    },
+    {
+      "keys": "Shift",
+      "label": "Sneak"
+    },
+    {
+      "keys": "Ctrl",
+      "label": "Sprint"
+    },
+    {
+      "keys": "Mouse",
+      "label": "Look around (click to capture, Esc to release)"
+    },
+    {
+      "keys": "E / Enter / Right click",
+      "label": "Open a classroom event; E starts a hunt at its station. Right click places blocks in the creative plot."
+    },
+    {
+      "keys": "H",
+      "label": "Show or hide this guide"
+    },
+    {
+      "keys": "1\u20139 / Scroll",
+      "label": "Select an unlimited creative material"
+    },
+    {
+      "keys": "Left / Right click",
+      "label": "Remove / place a block in the creative plot (6-block reach)"
+    },
+    {
+      "keys": "F \u00b7 Space \u00b7 Shift",
+      "label": "Toggle creative flight \u00b7 rise \u00b7 descend inside the plot"
+    },
+    {
+      "keys": "Ctrl/Cmd Z / Y",
+      "label": "Undo / redo creative edits"
+    },
+    {
+      "keys": "Touch buttons",
+      "label": "Jump, rise, descend, place and remove; tap the hotbar to select a material"
+    }
   ]
 }

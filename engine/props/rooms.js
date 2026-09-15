@@ -11,42 +11,28 @@
  * signage per room:
  *
  *   - a wall sign beside the door (short: the event name)
- *   - a floating label above the doorway that always faces the player
+ *   - a header sign above the doorway: wooden frame, dark panel, the event
+ *     name in gold, chains, and a lantern at each end
  *   - a board inside, on the wall opposite the door (name, kind, date, time,
  *     venue, prizes)
  *
  * Plus a proximity "interactable": stand inside the room (or on its threshold)
  * and the HUD offers "Press E — <event>", which opens the event hub.
+ *
+ * THE HEADER SIGN IS A SOLID OBJECT ON THE WALL, and that is the whole point of
+ * it. Its predecessor was a floating label drawn with `depthTest: false` and a
+ * high `renderOrder`, turned to face the player every frame — which meant every
+ * event name was painted over everything, through every wall, from anywhere on
+ * the map, and hung in the void while the terrain around it was still
+ * streaming in. The sign is depth-tested like any block: walls hide it, and it
+ * appears with the building it is bolted to.
  */
+
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
+import { fitFont, makeCanvas, pixelTexture } from './text.js'
 
 const GOLD = '#ffd94a'
 const GREEN = '#7efc20'
-
-function makeCanvas (w, h) {
-  const c = document.createElement('canvas')
-  c.width = w
-  c.height = h
-  return c
-}
-
-function pixelTexture (THREE, canvas) {
-  const tex = new THREE.CanvasTexture(canvas)
-  tex.magFilter = THREE.NearestFilter
-  tex.minFilter = THREE.LinearMipmapLinearFilter
-  tex.colorSpace = THREE.SRGBColorSpace
-  return tex
-}
-
-/** Fit `text` into `maxWidth` px by shrinking the font, never below `minPx`. */
-function fitFont (g, text, family, startPx, minPx, maxWidth) {
-  let px = startPx
-  for (; px > minPx; px -= 1) {
-    g.font = `${px}px ${family}`
-    if (g.measureText(text).width <= maxWidth) break
-  }
-  g.font = `${px}px ${family}`
-  return px
-}
 
 /** Minecraft-style wall sign: dark plank frame, centred lines. */
 function signTexture (THREE, lines, family) {
@@ -109,17 +95,57 @@ function boardTexture (THREE, { title, lines, accent }, family) {
   return pixelTexture(THREE, c)
 }
 
-/** Floating label above a doorway. */
-function labelTexture (THREE, text, family, color = GOLD) {
-  const c = makeCanvas(512, 96)
+/**
+ * One or two lines for the header sign.
+ *
+ * Not `wrap()`: with a one-line cap that helper drops the overflow silently,
+ * and with two it puts a single word on the second line and drops the rest.
+ * A name that does not fit must SAY it does not fit.
+ */
+function headerLines (text, maxChars = 18) {
+  const str = String(text || '').trim()
+  if (str.length <= maxChars) return [str]
+  const lines = ['']
+  for (const w of str.split(/\s+/)) {
+    const cur = lines[lines.length - 1]
+    const next = cur ? `${cur} ${w}` : w
+    if (next.length <= maxChars) { lines[lines.length - 1] = next; continue }
+    if (lines.length === 2) {
+      lines[1] = cur.slice(0, maxChars - 1) + '…'
+      return lines
+    }
+    lines.push(w.length > maxChars ? w.slice(0, maxChars - 1) + '…' : w)
+  }
+  return lines
+}
+
+/**
+ * The header sign's face: the event name in gold on a transparent canvas, laid
+ * over the dark panel. 1024×256 is a power of two (mipmaps) and ~4:1, the same
+ * shape as the panel, so NearestFilter lands the pixel font on whole texels.
+ */
+function headerTexture (THREE, text, family, color) {
+  const W = 1024, H = 256
+  const c = makeCanvas(W, H)
   const g = c.getContext('2d')
-  g.fillStyle = 'rgba(10,10,14,0.82)'
-  g.fillRect(0, 0, 512, 96)
+  g.clearRect(0, 0, W, H)
   g.fillStyle = color
   g.textAlign = 'center'
   g.textBaseline = 'middle'
-  fitFont(g, text, family, 26, 12, 480)
-  g.fillText(text, 256, 48)
+  const rows = headerLines(text)
+  if (rows.length === 1) {
+    fitFont(g, rows[0], family, 118, 40, W - 84)
+    g.fillText(rows[0], W / 2, H / 2)
+  } else {
+    // Both rows at one size, so the two lines read as one title.
+    const px = Math.min(
+      fitFont(g, rows[0], family, 72, 34, W - 84),
+      fitFont(g, rows[1], family, 72, 34, W - 84)
+    )
+    g.font = `${px}px ${family}`
+    g.fillText(rows[0], W / 2, H / 2 - px * 0.68)
+    g.fillText(rows[1], W / 2, H / 2 + px * 0.68)
+  }
   return pixelTexture(THREE, c)
 }
 
@@ -140,6 +166,138 @@ export function wrap (text, maxChars, maxLines) {
   return out
 }
 
+/**
+ * The header sign, built ONCE and shared by every room.
+ *
+ * The reference design is ~25 meshes: four frame bars, two insets, a panel,
+ * gold trim, ten chain links, two lanterns with glowing cores. Sixteen rooms of
+ * that is ~400 draw calls before a single block is drawn. So the static parts
+ * are merged into one BufferGeometry per material and every room's sign is
+ * seven meshes pointing at those seven geometries — 128 draw calls for the lot,
+ * and a rebuild for a new event list costs nothing but the text.
+ *
+ * Built at the reference's own proportions, then scaled by S once, then
+ * translated so the BACK of the frame is at local z = 0: anchoring a sign at
+ * the wall face is then "flush against the wall" with no per-room arithmetic.
+ *
+ * MeshLambert rather than the reference's MeshStandard: it is what the world's
+ * blocks are lit with, so the wood sits under the same ambient and sun as the
+ * stone around it, and it is a fraction of the shader cost. The gold trim and
+ * the lantern cores are MeshBasic — unlit — so they always read bright.
+ */
+const SIGN_SCALE = 0.75
+const SIGN = { w: 6.4, h: 1.65, d: 0.22, frame: 0.18, frameD: 0.34 }
+
+/**
+ * The lanterns' light. TUNE BY EYE, on the actual wall.
+ *
+ * three ≥ r155 measures point lights in candela and this renderer has no tone
+ * mapping, so there is no roll-off: a lantern hanging 0.3 blocks off the stone
+ * with the reference design's intensity of 5 paints a clipped white disc, not
+ * a warm pool. 1.6 is a starting point that stays inside the range the Lambert
+ * blocks can show. `distance` is the hard cut-off — 4 keeps the glow off the
+ * neighbouring door 9 blocks away.
+ */
+const LANTERN_LIGHT = { color: 0xff9d3c, intensity: 1.6, distance: 4, decay: 2 }
+/** The lantern core, day and night. Unlit, so this IS its brightness. */
+const LANTERN_GLOW = { day: 0xffa31a, night: 0xffc25e }
+/**
+ * How many signs carry real light. Every point light is compiled into every
+ * Lambert shader in the scene — the world's blocks included — so the pool is
+ * fixed: two lights per sign, one sign by day, the four nearest by night.
+ * Unused lights stay invisible and three does not compile for them.
+ */
+const LIT_SIGNS = { day: 1, night: 4 }
+const LIGHT_POOL = LIT_SIGNS.night * 2
+
+function buildSignTemplate (THREE) {
+  const { w, h, d, frame, frameD } = SIGN
+  const parts = { wood: [], darkWood: [], panel: [], gold: [], chain: [], lanternBody: [], lanternGlow: [], lanternHalo: [] }
+  const box = (list, sx, sy, sz, x, y, z, rz = 0) => {
+    const g = new THREE.BoxGeometry(sx, sy, sz)
+    if (rz) g.rotateZ(rz)
+    g.translate(x, y, z)
+    list.push(g)
+  }
+
+  box(parts.panel, w, h, d, 0, 0, 0)
+
+  box(parts.wood, w + frame * 2, frame, frameD, 0, h / 2 + frame / 2, 0)
+  box(parts.wood, w + frame * 2, frame, frameD, 0, -h / 2 - frame / 2, 0)
+  box(parts.wood, frame, h, frameD, -w / 2 - frame / 2, 0, 0)
+  box(parts.wood, frame, h, frameD, w / 2 + frame / 2, 0, 0)
+
+  box(parts.darkWood, w - 0.2, 0.08, 0.28, 0, h / 2 - 0.12, 0.09)
+  box(parts.darkWood, w - 0.2, 0.08, 0.28, 0, -h / 2 + 0.12, 0.09)
+
+  box(parts.gold, 1.7, 0.035, 0.04, -1.7, -0.42, d / 2 + 0.03)
+  box(parts.gold, 1.7, 0.035, 0.04, 1.7, -0.42, d / 2 + 0.03)
+  box(parts.gold, 0.16, 0.16, 0.05, 0, -0.42, d / 2 + 0.04, Math.PI / 4)
+
+  // Chains: five links a side, alternating quarter turns so they read as links
+  // rather than a stack of rings. The cross-section is not square on purpose.
+  for (const x of [-2.3, 2.3]) {
+    for (let i = 0; i < 5; i++) {
+      const g = new THREE.TorusGeometry(0.055, 0.018, 6, 10)
+      g.rotateX(Math.PI / 2)
+      if (i % 2 === 1) g.rotateY(Math.PI / 2)
+      g.translate(x, h / 2 + 0.22 + i * 0.12, 0)
+      parts.chain.push(g)
+    }
+  }
+
+  const lanternAt = []
+  for (const x of [-3.65, 3.65]) {
+    box(parts.lanternBody, 0.34, 0.52, 0.34, x, -0.08, 0.15)
+    box(parts.lanternGlow, 0.23, 0.32, 0.23, x, -0.08, 0.15)
+    // The night halo: a soft additive box around the lantern. Unlit and
+    // shared, so all thirty-two switch on with one material flag.
+    box(parts.lanternHalo, 0.56, 0.78, 0.56, x, -0.08, 0.15)
+    lanternAt.push(new THREE.Vector3(x, -0.08, 0.15))
+  }
+
+  const zBack = frameD / 2
+  const geometries = {}
+  for (const [k, list] of Object.entries(parts)) {
+    const merged = mergeGeometries(list, false)
+    merged.translate(0, 0, zBack)
+    merged.scale(SIGN_SCALE, SIGN_SCALE, SIGN_SCALE)
+    geometries[k] = merged
+    for (const g of list) g.dispose()
+  }
+  // The name's quad, shared too — only its texture differs per room.
+  geometries.text = new THREE.PlaneGeometry(5.2 * SIGN_SCALE, 1.3 * SIGN_SCALE)
+
+  const materials = {
+    wood: new THREE.MeshLambertMaterial({ color: 0x6b3f1f }),
+    darkWood: new THREE.MeshLambertMaterial({ color: 0x3a2111 }),
+    panel: new THREE.MeshLambertMaterial({ color: 0x101010 }),
+    gold: new THREE.MeshBasicMaterial({ color: 0xf4c542 }),
+    chain: new THREE.MeshLambertMaterial({ color: 0x343434 }),
+    lanternBody: new THREE.MeshLambertMaterial({ color: 0x252525 }),
+    lanternGlow: new THREE.MeshBasicMaterial({ color: LANTERN_GLOW.day }),
+    lanternHalo: new THREE.MeshBasicMaterial({
+      color: 0xffb347,
+      transparent: true,
+      opacity: 0.35,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      visible: false // day: off
+    })
+  }
+
+  return {
+    geometries,
+    materials,
+    textZ: (d / 2 + 0.03 + zBack) * SIGN_SCALE,
+    lanternLocal: lanternAt.map(v => v.add(new THREE.Vector3(0, 0, zBack)).multiplyScalar(SIGN_SCALE)),
+    dispose () {
+      for (const g of Object.values(geometries)) g.dispose()
+      for (const m of Object.values(materials)) m.dispose()
+    }
+  }
+}
+
 const FACING_YAW = { south: 0, north: Math.PI, east: Math.PI / 2, west: -Math.PI / 2 }
 const FACING_OFFSET = {
   // a wall sign sits at the back of its own block, flush against the wall
@@ -155,15 +313,37 @@ export function createRoomProps ({ scene, THREE, meta, bindings, config, fontFam
   const hintTemplate = (isTouch ? ui.hubHintTouch : ui.hubHint) || 'Press E — {name}'
 
   let interactables = [] // { bounds, threshold, hint, open() }
-  let billboards = []    // meshes that always face the player
-  let disposables = []
+  let signs = []         // { group, lanterns: [Vector3, Vector3] } in world space
+  let disposables = []   // per-build; thrown away on every rebuild
   const track = obj => { disposables.push(obj); return obj }
+
+  // Built once; survives every rebuild; freed only in dispose().
+  const tpl = buildSignTemplate(THREE)
+
+  /**
+   * Two lanterns' worth of light for the WHOLE campus, moved to whichever sign
+   * the player is nearest. Every point light is compiled into every Lambert
+   * shader in the scene — the world's blocks included — so thirty-two of them
+   * would tax every fragment on screen for a glow nobody is close enough to
+   * see. Two, following the player, put the warm pool on the door being
+   * walked toward, which is the only place it is ever looked at.
+   */
+  const lights = Array.from({ length: LIGHT_POOL }, () => {
+    const l = new THREE.PointLight(LANTERN_LIGHT.color, LANTERN_LIGHT.intensity, LANTERN_LIGHT.distance, LANTERN_LIGHT.decay)
+    l.visible = false
+    scene.add(l)
+    return l
+  })
+  let night = false
+  let litKey = null // which signs currently hold the lights
 
   const clear = () => {
     for (const d of disposables) d.dispose?.()
     disposables = []
     interactables = []
-    billboards = []
+    signs = []
+    litKey = null
+    for (const l of lights) l.visible = false
     while (group.children.length) group.remove(group.children[0])
   }
 
@@ -191,12 +371,34 @@ export function createRoomProps ({ scene, THREE, meta, bindings, config, fontFam
         sign.rotation.y = FACING_YAW[r.sign.facing] ?? 0
       }
 
-      // --------------------------------------------------- floating label
-      if (r.label) {
-        const label = plane(labelTexture(THREE, name, family, b.interactive ? GOLD : '#cfd3da'), 2.2, 0.41, { depthTest: false })
-        label.position.set(r.label.x, r.label.y, r.label.z)
-        label.renderOrder = 10
-        billboards.push(label)
+      // ------------------------------------------------------ header sign
+      if (r.label && r.door) {
+        const sign = new THREE.Group()
+        // Shared geometry and materials: added, never tracked — clear() must
+        // not dispose what the next build is about to reuse.
+        for (const k of Object.keys(tpl.materials)) {
+          sign.add(new THREE.Mesh(tpl.geometries[k], tpl.materials[k]))
+        }
+        // The one thing unique to this room. `depthWrite: false` so the
+        // transparent quad never z-fights the opaque panel 0.03 behind it;
+        // depthTest stays ON — walls still hide it.
+        const tex = track(headerTexture(THREE, name, family, b.interactive ? '#f4c542' : '#cfd3da'))
+        const mat = track(new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false }))
+        const text = new THREE.Mesh(tpl.geometries.text, mat)
+        text.position.z = tpl.textZ
+        sign.add(text)
+
+        // `label` is already the door centre, raised, a hand's width off the
+        // wall face. With the template's back at local z = 0, that is flush.
+        sign.position.set(r.label.x, r.label.y, r.label.z)
+        sign.rotation.y = FACING_YAW[r.door.facing] ?? 0
+        group.add(sign)
+        sign.updateMatrixWorld(true)
+        signs.push({
+          id: b.index,
+          group: sign,
+          lanterns: tpl.lanternLocal.map(v => sign.localToWorld(v.clone()))
+        })
       }
 
       // ------------------------------------------------------------ board
@@ -241,9 +443,24 @@ export function createRoomProps ({ scene, THREE, meta, bindings, config, fontFam
     nearest () { return nearestRef },
 
     update (playerPos) {
-      for (const bb of billboards) {
-        bb.rotation.y = Math.atan2(playerPos.x - bb.position.x, playerPos.z - bb.position.z)
+      // Hand the pool of lights to the nearest signs. Lantern positions were
+      // computed at build time, so a change of sign is a few vector copies.
+      const want = night ? LIT_SIGNS.night : LIT_SIGNS.day
+      const ranked = signs
+        .map(sg => ({ sg, d: (sg.group.position.x - playerPos.x) ** 2 + (sg.group.position.z - playerPos.z) ** 2 }))
+        .sort((a, b) => a.d - b.d)
+        .slice(0, want)
+        .map(r => r.sg)
+      const key = ranked.map(sg => sg.id).join(',')
+      if (key !== litKey) {
+        litKey = key
+        lights.forEach((l, i) => {
+          const sg = ranked[i >> 1]
+          l.visible = Boolean(sg)
+          if (sg) l.position.copy(sg.lanterns[i & 1])
+        })
       }
+
       let best = null
       for (const it of interactables) {
         if (inside(playerPos, it.bounds, 0.4)) { best = it; break }
@@ -256,8 +473,18 @@ export function createRoomProps ({ scene, THREE, meta, bindings, config, fontFam
     /** Rebuild every sign for a new event list (the sheet changed underneath us). */
     setBindings (next) { build(next) },
 
+    /** Night: every lantern glows, and the four nearest doors cast light. */
+    setNight (on) {
+      night = Boolean(on)
+      tpl.materials.lanternHalo.visible = night
+      tpl.materials.lanternGlow.color.set(night ? LANTERN_GLOW.night : LANTERN_GLOW.day)
+      litKey = null // re-deal the lights on the next frame
+    },
+
     dispose () {
       clear()
+      for (const l of lights) { scene.remove(l); l.dispose() }
+      tpl.dispose()
       scene.remove(group)
     }
   }

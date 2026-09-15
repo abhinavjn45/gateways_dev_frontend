@@ -54,18 +54,54 @@ export function createPlayer ({ mcData, world, Block, Physics, PlayerState, spaw
     sneak: false
   }
 
+  let flightBounds = null
+
+  /**
+   * Where the player was at the START of the last physics tick. The renderer
+   * draws the camera between this and the current position, so movement that
+   * happens in 50 ms steps is shown as a glide rather than a hop every third
+   * frame. Reset on teleport so a jump across the map is not smeared.
+   */
+  const prev = bot.entity.position.clone()
+
   return {
     bot,
+    get flying () { return Boolean(flightBounds) },
+    setFlight (bounds) { flightBounds = bounds; bot.entity.velocity.set(0, 0, 0) },
     control,
     physics,
     PlayerState,
 
     get position () { return bot.entity.position },
+    get prevPosition () { return prev },
     get yaw () { return bot.entity.yaw },
     get pitch () { return bot.entity.pitch },
 
     /** One 50 ms physics tick. */
     tick () {
+      prev.update(bot.entity.position)
+      if (flightBounds) {
+        const p = bot.entity.position, yaw = bot.entity.yaw
+        const f = Number(control.forward) - Number(control.back), r = Number(control.right) - Number(control.left)
+        const norm = Math.max(1, Math.hypot(f, r)), speed = control.sprint ? 0.6 : 0.35
+        const delta = { x: (-Math.sin(yaw) * f + Math.cos(yaw) * r) * speed / norm,
+          z: (-Math.cos(yaw) * f - Math.sin(yaw) * r) * speed / norm,
+          y: (Number(control.jump) - Number(control.sneak)) * speed }
+        for (const axis of ['x', 'y', 'z']) {
+          const candidate = p.clone(); candidate[axis] += delta[axis]
+          candidate.x = Math.max(flightBounds.min.x + 0.3, Math.min(flightBounds.max.x + 0.7, candidate.x))
+          candidate.z = Math.max(flightBounds.min.z + 0.3, Math.min(flightBounds.max.z + 0.7, candidate.z))
+          candidate.y = Math.max(flightBounds.min.y, Math.min(flightBounds.max.y + 2, candidate.y))
+          let collision = false
+          for (let x = Math.floor(candidate.x - 0.299); x <= Math.floor(candidate.x + 0.299); x++)
+            for (let z = Math.floor(candidate.z - 0.299); z <= Math.floor(candidate.z + 0.299); z++)
+              for (let y = Math.floor(candidate.y + 0.001); y <= Math.floor(candidate.y + 1.799); y++)
+                if (physicsWorld.getBlock(new Vec3(x, y, z)).shapes.length) collision = true
+          if (!collision) p.update(candidate)
+        }
+        bot.entity.velocity.set(0, 0, 0)
+        return
+      }
       const state = new PlayerState(bot, control)
       physics.simulatePlayer(state, physicsWorld).apply(bot)
       // auto-jump: nudge over single-block ledges while walking into them
@@ -76,6 +112,7 @@ export function createPlayer ({ mcData, world, Block, Physics, PlayerState, spaw
 
     teleport (x, y, z, yaw) {
       bot.entity.position.set(x, y, z)
+      prev.set(x, y, z)
       bot.entity.velocity.set(0, 0, 0)
       if (typeof yaw === 'number') { bot.entity.yaw = yaw; bot.entity.pitch = 0 }
     },
@@ -105,15 +142,13 @@ const isTypingTarget = el => !!(el && el.nodeType === 1 && el.matches(
 /**
  * Attaches keyboard, pointer-lock mouse look and touch controls.
  *
- * There is no break/place: a click only captures the mouse, and the only
- * "use" action is `onInteract`, fired by E, Enter or a right click, which the
- * engine routes to the classroom you are standing in.
+ * The initial click captures the mouse. Captured clicks route to contextual actions.
  *
  * `setEnabled(false)` is what a modal calls: it clears every held key and
  * ignores input until re-enabled, so the player does not keep walking behind
  * an open dialog.
  */
-export function attachInput ({ player, canvas, container, onInteract, onKey }) {
+export function attachInput ({ player, canvas, container, onInteract, onKey, onAction, onScroll, canAct = () => true }) {
   const control = player.control
   const disposers = []
   let enabled = true
@@ -130,6 +165,7 @@ export function attachInput ({ player, canvas, container, onInteract, onKey }) {
     // even H for the guide, which would stack a second overlay on top.
     if (!enabled) return
     if (onKey && onKey(e)) return
+    if (!canAct()) return
     const action = KEY_MAP[e.code]
     if (action) { control[action] = true; e.preventDefault() }
     if (e.code === 'KeyE' || e.code === 'Enter') {
@@ -164,8 +200,12 @@ export function attachInput ({ player, canvas, container, onInteract, onKey }) {
     if (!enabled) return
     if (document.pointerLockElement !== canvas) return
     e.preventDefault()
+    if (!canAct()) return
+    if (onAction?.(e.button)) return
     if (e.button === 2) onInteract?.()
   })
+  on(canvas, 'wheel', e => { if (enabled && canAct() && onScroll?.(e.deltaY)) e.preventDefault() }, { passive: false })
+  on(document, 'pointerlockchange', () => { if (document.pointerLockElement !== canvas) clearControl() })
   on(canvas, 'contextmenu', e => e.preventDefault())
 
   // --------------------------------------------------------------- touch
@@ -206,7 +246,7 @@ export function attachInput ({ player, canvas, container, onInteract, onKey }) {
   const onHud = e => !!(e.target && e.target.closest && e.target.closest('button, a, .mc-panel-overlay'))
 
   on(container, 'touchstart', e => {
-    if (!enabled || onHud(e)) return
+    if (!enabled || !canAct() || onHud(e)) return
     const rect = container.getBoundingClientRect()
     for (const t of e.changedTouches) {
       const left = t.clientX < rect.left + rect.width * 0.45
@@ -224,7 +264,7 @@ export function attachInput ({ player, canvas, container, onInteract, onKey }) {
   }, { passive: true })
 
   on(container, 'touchmove', e => {
-    if (!enabled) return
+    if (!enabled || !canAct()) return
     for (const t of e.changedTouches) {
       if (t.identifier === touch.moveId) {
         setStick(t.clientX - touch.ox, t.clientY - touch.oy)
@@ -246,6 +286,7 @@ export function attachInput ({ player, canvas, container, onInteract, onKey }) {
 
   return {
     isTouch,
+    clear: clearControl,
     setEnabled (next) {
       enabled = Boolean(next)
       if (!enabled) {
