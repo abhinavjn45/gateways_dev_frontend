@@ -92,11 +92,11 @@ export const GALLERY_CHAPTERS: GalleryChapter[] = [
     title: "Inauguration & Opening",
     blurb: "The lamp, the address, and the first walk into the realm.",
     moments: [
-      { edition, image: photo("v1787334924/IMG_9060_p7p5zx.jpg") },
-      { edition, image: photo("v1787334929/IMG_9078_ibkbcy.jpg") },
-      { edition, image: photo("v1787334928/IMG_9127_aq96re.jpg") },
-      { edition, image: photo("v1787334927/IMG_9045_ho1rsr.jpg") },
-      { edition, image: photo("v1787334927/DSC_0205_khvzhk.jpg") },
+      { edition, image: photo("v1789448336/IMG_9060_rkg18t.jpg") },
+      { edition, image: photo("v1789448340/IMG_9045_mxy6jt.jpg") },
+      { edition, image: photo("v1789448341/DSC_0205_fm0mjn.jpg") },
+      { edition, image: photo("v1789448341/IMG_9078_ktu7gz.jpg") },
+      { edition, image: photo("v1789448341/IMG_9127_wunhez.jpg") },
     ],
   },
   {
@@ -104,11 +104,10 @@ export const GALLERY_CHAPTERS: GalleryChapter[] = [
     title: "Events",
     blurb: "Two days of building, quizzing, playing and performing.",
     moments: [
-      { edition, image: photo("v1787334924/IMG20250926093123_lwywsm.jpg") },
-      { edition, image: photo("v1787334923/IMG_2203_kp4ryy.heic") },
-      { edition, image: photo("v1787334923/IMG20250926170629_zsimrc.jpg") },
-      { edition, image: photo("v1787334923/IMG_0617_nkbkfg.heic") },
-      { edition, image: photo("v1787334923/IMG_0653_zz0urj.heic") },
+      { edition, image: photo("v1789448522/IMG_0653_wrf0ly.heic") },
+      { edition, image: photo("v1789448488/IMG20250926093123_u6otka.jpg") },
+      { edition, image: photo("v1789448521/IMG_2203_xqwqzu.heic") },
+      { edition, image: photo("v1789448489/IMG20250926170629_xnfe1d.jpg") },
     ],
   },
   // The remaining two chapters of the arc, kept declared and empty rather than
