@@ -22,7 +22,7 @@
  * large share of the traffic this site gets on fest days.
  */
 export const MUSIC_TRACK = {
-  src: "/audio/parallax-theme.mp3",
+  src: "https://cdn.jsdelivr.net/gh/abhinavjn45/gateways2026-assets@main/audio/parallax-theme.mp3",
 
   /**
    * Shown in the widget, VERBATIM. Minecraft's own toast reads "artist - track"
