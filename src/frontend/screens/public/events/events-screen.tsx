@@ -237,36 +237,35 @@ export function EventsScreen({ basePath = "/events", isDashboard = false }: { ba
         <ul className="grid gap-[var(--mc-unit)] sm:grid-cols-2 lg:grid-cols-3">
           {events.map((e) => (
             <li key={e.slug}>
-              <button
-                type="button"
-                onClick={() => setSelected(e)}
-                // appearance-none for the same reason as the nav's modal
-                // triggers: a native widget repaints on every `color-scheme`
-                // flip, which reads as a flash when the theme is toggled.
-                className="block h-full w-full appearance-none border-0 bg-transparent p-0 text-left"
+              <BlockPanel
+                variant="panel"
+                padded="md"
+                className="flex flex-col justify-between h-full transition-[filter,transform] duration-100 hover:brightness-115 hover:-translate-y-[2px]"
               >
-                <BlockPanel
-                  variant="panel"
-                  padded="md"
-                  className="h-full transition-[filter,transform] duration-100 hover:brightness-115 hover:-translate-y-[2px]"
+                <button
+                  type="button"
+                  onClick={() => setSelected(e)}
+                  className="block h-full w-full appearance-none border-0 bg-transparent p-0 text-left cursor-pointer"
                 >
-                  <p className="font-pixel text-[11px] text-mc-success">{e.name}</p>
-                  {/* The kind, not a tagline: these names are deliberately
-                      cryptic, so this is the only line that tells a visitor
-                      what they would actually be doing. */}
-                  <p className="mt-[calc(var(--mc-unit)*0.5)] text-[18px] text-mc-text-dim">
-                    {e.kind}
-                  </p>
-                  <div className="mt-[var(--mc-unit)] flex flex-col gap-y-[calc(var(--mc-unit)*0.25)]">
-                    <p className="text-[16px] text-mc-text-dim">
-                      {e.date}
+                  <div>
+                    <p className="font-pixel text-[11px] text-mc-success">{e.name}</p>
+                    {/* The kind, not a tagline: these names are deliberately
+                        cryptic, so this is the only line that tells a visitor
+                        what they would actually be doing. */}
+                    <p className="mt-[calc(var(--mc-unit)*0.5)] text-[18px] text-mc-text-dim">
+                      {e.kind}
                     </p>
-                    <p className="text-[17px] text-mc-accent-strong">
-                      {e.participation}
-                    </p>
+                    <div className="mt-[var(--mc-unit)] flex flex-col gap-y-[calc(var(--mc-unit)*0.25)]">
+                      <p className="text-[16px] text-mc-text-dim">
+                        {e.date}
+                      </p>
+                      <p className="text-[17px] text-mc-accent-strong">
+                        {e.participation}
+                      </p>
+                    </div>
                   </div>
-                </BlockPanel>
-              </button>
+                </button>
+              </BlockPanel>
             </li>
           ))}
         </ul>
@@ -284,8 +283,8 @@ export function EventsScreen({ basePath = "/events", isDashboard = false }: { ba
         footer={
           selected ? (
             <div className="flex w-full flex-wrap items-center justify-between gap-[var(--mc-unit)]">
-              <div className="flex items-center">
-                {selected.rulesUrl ? (
+              <div className="flex items-center gap-[var(--mc-unit)] flex-wrap">
+                {selected.rulesUrl && (
                   <a
                     href={selected.rulesUrl}
                     target="_blank"
@@ -294,7 +293,17 @@ export function EventsScreen({ basePath = "/events", isDashboard = false }: { ba
                   >
                     Read the rules ↗
                   </a>
-                ) : <div />}
+                )}
+                {isDashboard && selected.whatsappLink && (
+                  <a
+                    href={selected.whatsappLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={cn(blockButton({ variant: "emerald", size: "sm" }), "no-underline")}
+                  >
+                    Join WhatsApp Group
+                  </a>
+                )}
               </div>
               <div className="flex-1 sm:flex-none sm:min-w-[200px]">
                 <EventRegistrationButton event={selected} />

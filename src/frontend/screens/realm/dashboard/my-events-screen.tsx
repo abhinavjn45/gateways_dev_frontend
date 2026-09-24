@@ -179,11 +179,11 @@ function Group({
 
             return (
               <li key={reg.id}>
-                <button 
-                  onClick={() => onManage(reg, event)}
-                  className="w-full text-left block h-full no-underline cursor-pointer"
-                >
-                  <BlockPanel variant="panel" padded="md" className="h-full hover:brightness-115 flex flex-col justify-between transition-all">
+                <BlockPanel variant="panel" padded="md" className="h-full flex flex-col justify-between transition-all">
+                  <button 
+                    onClick={() => onManage(reg, event)}
+                    className="w-full text-left block h-full no-underline cursor-pointer hover:brightness-115"
+                  >
                     <div>
                       <div className="flex items-start justify-between gap-2">
                         <p className="font-pixel text-[11px] text-mc-success leading-tight">{event.name}</p>
@@ -211,8 +211,18 @@ function Group({
                         </p>
                       </div>
                     )}
-                  </BlockPanel>
-                </button>
+                  </button>
+
+                  {event.whatsappLink && (
+                    <div className="mt-[calc(var(--mc-unit)*0.5)] pt-[calc(var(--mc-unit)*0.5)] border-t border-mc-border/20">
+                      <a href={event.whatsappLink} target="_blank" rel="noopener noreferrer" className="block no-underline">
+                        <BlockButton variant="emerald" size="sm" className="w-full text-[14px] whitespace-nowrap">
+                          Join WhatsApp Group
+                        </BlockButton>
+                      </a>
+                    </div>
+                  )}
+                </BlockPanel>
               </li>
             );
           })}
