@@ -257,7 +257,7 @@ export function ParticipantDetailsModal({
           <BlockInput
             label="Your College Name"
             placeholder="e.g. CHRIST (Deemed to be University), Bangalore Central Campus"
-            hint="Please write the Full Official Name of the Institute/College/University with a comma and city/campus."
+            hint="Write the full official name with a comma and city/campus. It will be added to the college list for everyone."
             error={errors.customCollegeName?.message}
             wrapperClassName="mb-[calc(var(--mc-unit)*1.5)]"
             disabled={isPaymentVerified}

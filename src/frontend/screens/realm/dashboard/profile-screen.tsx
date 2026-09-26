@@ -28,7 +28,7 @@ export function ProfileScreen() {
   const [nameBusy, setNameBusy] = useState(false);
   const [nameError, setNameError] = useState<string | null>(null);
 
-  const { data: colleges } = useAsync(() => repo.reference.colleges(), []);
+  const { data: colleges, reload: reloadColleges } = useAsync(() => repo.reference.colleges(), []);
   /**
    * The participant record the registration flow reads. Surfacing it here is
    * the point of this panel: the details used to be reachable only by pressing
@@ -187,6 +187,8 @@ export function ProfileScreen() {
             profile={profile ?? null}
             character={character}
             onSaved={async () => {
+              // A newly typed college is now a real list entry with a new id.
+              reloadColleges();
               await reloadProfile();
               await refresh();
               setDetailsOpen(false);
