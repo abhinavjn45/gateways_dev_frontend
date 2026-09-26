@@ -15,6 +15,7 @@ export interface FestEvent {
   track: EventTrack;
   description: string;
   participation: string;
+  minTeamSize: number | null;
   maxTeamSize: number | null;
   date: string;
   venue: string;
@@ -66,6 +67,7 @@ export async function fetchFestEvents(): Promise<FestEvent[]> {
               track,
               description: row["Event Description"] || "",
               participation: row["Participation Type"] || "",
+              minTeamSize: row["Min Team Size"] ? parseInt(row["Min Team Size"], 10) : null,
               maxTeamSize: row["Max Team Size"] ? parseInt(row["Max Team Size"], 10) : null,
               date: row["Date"] || "",
               venue: row["Venue"] || "",

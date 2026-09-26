@@ -162,16 +162,8 @@ function Group({
       ) : (
         <ul className="mt-[var(--mc-unit)] grid gap-[var(--mc-unit)] sm:grid-cols-2">
           {rows.map(({ reg, event }) => {
-            const pType = (event.participation || "").toLowerCase();
-            let maxTeamSize = 1;
-            if (pType.includes("-")) {
-              const match = pType.match(/-(\d+)/);
-              if (match) maxTeamSize = parseInt(match[1], 10);
-            } else if (pType.includes("team")) {
-              const match = pType.match(/team of (\d+)/);
-              if (match) maxTeamSize = parseInt(match[1], 10);
-              else maxTeamSize = 2;
-            }
+            const minTeamSize = event.minTeamSize || 1;
+            const maxTeamSize = event.maxTeamSize || 1;
             
             const isTeam = maxTeamSize > 1;
             const memberCount = reg.teamMemberCount || 1;
