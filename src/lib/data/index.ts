@@ -47,7 +47,7 @@ export const repo = new Proxy({} as Repository, {
             userId: data.userId,
             email: email,
             roles: ["player"], // Defaults to player for now
-            expiresAt: new Date(Date.now() + 3600000).toISOString()
+            expiresAt: new Date(Date.now() + 259200000).toISOString()
           };
         },
         signUp: async (email: string, password: string, username: string) => {
@@ -87,7 +87,7 @@ export const repo = new Proxy({} as Repository, {
             userId: data.userId || 'new-user',
             email: email,
             roles: ["player"],
-            expiresAt: new Date(Date.now() + 3600000).toISOString()
+            expiresAt: new Date(Date.now() + 259200000).toISOString()
           };
           
           return session;
