@@ -30,6 +30,9 @@ export function EventDetails({ event }: { event: FestEvent }) {
           <Fact label="Venue" value={event.venue} />
           <Fact label="Prizes" value={event.prizes} />
           <Fact label="Prize pool" value={event.prizePool} />
+          {event.prize1 ? <Fact label="1st Prize" value={event.prize1} /> : null}
+          {event.prize2 ? <Fact label="2nd Prize" value={event.prize2} /> : null}
+          {event.prize3 ? <Fact label="3rd Prize" value={event.prize3} /> : null}
           {event.maxSlots ? <Fact label="Maximum Slots" value={event.maxSlots} /> : null}
         </dl>
       </BlockPanel>

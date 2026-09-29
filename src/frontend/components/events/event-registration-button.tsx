@@ -144,22 +144,33 @@ export function EventRegistrationButton({ event, inline = false }: { event: Fest
       );
     }
 
-    if (!userId) {
-      return (
-        <Link href={`/login?next=/dashboard/explore`} className="w-full no-underline">
-          <BlockButton variant="gold" className="w-full">
-            Register Now
-          </BlockButton>
-        </Link>
-      );
-    }
-
-    if (isAlreadyRegistered) {
+    if (userId && isAlreadyRegistered) {
       const btnLabel = isIndividual ? "View Registration" : "View Team Details";
       return (
         <Link href="/dashboard/events" className="w-full no-underline">
           <BlockButton variant="emerald" className="w-full">
             {btnLabel}
+          </BlockButton>
+        </Link>
+      );
+    }
+
+    if (event.registrationDeadline) {
+      const deadlineDate = new Date(`${event.registrationDeadline.trim()}:00+05:30`);
+      if (!isNaN(deadlineDate.getTime()) && Date.now() > deadlineDate.getTime()) {
+        return (
+          <BlockButton variant="stone" disabled className="w-full">
+            Registration for this event has closed.
+          </BlockButton>
+        );
+      }
+    }
+
+    if (!userId) {
+      return (
+        <Link href={`/login?next=/dashboard/explore`} className="w-full no-underline">
+          <BlockButton variant="gold" className="w-full">
+            Register Now
           </BlockButton>
         </Link>
       );

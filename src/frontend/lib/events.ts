@@ -26,6 +26,10 @@ export interface FestEvent {
   maxSlots: string | null;
   rulesUrl?: string;
   whatsappLink?: string;
+  registrationDeadline?: string;
+  prize1?: string;
+  prize2?: string;
+  prize3?: string;
 }
 
 function slugify(text: string): string {
@@ -78,6 +82,10 @@ export async function fetchFestEvents(): Promise<FestEvent[]> {
               maxSlots: row["Maximum Slots"] || null,
               rulesUrl: row["Rules & Regulations"] || undefined,
               whatsappLink: row["WhatsApp Group Link"] || undefined,
+              registrationDeadline: row["Registration Deadline"] || undefined,
+              prize1: row["1st Prize"] || undefined,
+              prize2: row["2nd Prize"] || undefined,
+              prize3: row["3rd Prize"] || undefined,
             };
           });
         resolve(events);
