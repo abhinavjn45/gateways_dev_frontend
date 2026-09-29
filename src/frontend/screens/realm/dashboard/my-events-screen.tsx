@@ -201,6 +201,16 @@ function Group({
                         <p className={cn("text-[16px] mt-1", isComplete ? "text-mc-emerald-light" : "text-mc-gold")}>
                           {isComplete ? "Status: Complete" : `Status: Incomplete (${memberCount}/${maxTeamSize} members)`}
                         </p>
+                        {!isComplete && memberCount >= minTeamSize && (
+                          <p className="text-[13px] text-mc-text-dim mt-2 leading-tight">
+                            Your team has {maxTeamSize - memberCount} spot{maxTeamSize - memberCount > 1 ? "s" : ""} available. However, since you meet the minimum requirement of {minTeamSize} members, your team is fully eligible to participate.
+                          </p>
+                        )}
+                        {!isComplete && memberCount < minTeamSize && (
+                          <p className="text-[13px] text-mc-error mt-2 leading-tight">
+                            Your team needs at least {minTeamSize - memberCount} more member{minTeamSize - memberCount > 1 ? "s" : ""} to be eligible to participate.
+                          </p>
+                        )}
                       </div>
                     )}
                   </button>
@@ -257,6 +267,10 @@ function ManageRegistrationModal({ reg, event, userId, onClose }: { reg: Registr
   const myMemberInfo = members?.find(m => m.userId === userId);
   const isLeader = myMemberInfo?.role === 'leader';
   const memberCount = members?.length || 1;
+  
+  const minTeamSize = event.minTeamSize || 1;
+  const maxTeamSize = event.maxTeamSize || 1;
+  const isComplete = memberCount >= maxTeamSize;
 
   const copyCode = () => {
     if (reg.teamCode) {
@@ -354,6 +368,23 @@ function ManageRegistrationModal({ reg, event, userId, onClose }: { reg: Registr
           <div className="bg-mc-panel p-4 mb-[calc(var(--mc-unit)*2)] rounded-md">
             <p className="text-[16px] text-mc-text-dim mb-2 uppercase font-pixel tracking-wider">Team Details</p>
             <p className="text-[18px] text-mc-text mb-4">Team: <strong className="text-mc-gold">{reg.teamName}</strong></p>
+            
+            <div className="mb-6 bg-mc-block border border-mc-border p-3 rounded-md">
+              <p className={cn("text-[16px]", isComplete ? "text-mc-emerald-light" : "text-mc-gold")}>
+                {isComplete ? "Status: Complete" : `Status: Incomplete (${memberCount}/${maxTeamSize} members)`}
+              </p>
+              {!isComplete && memberCount >= minTeamSize && (
+                <p className="text-[14px] text-mc-text-dim mt-2 leading-tight">
+                  Your team has {maxTeamSize - memberCount} spot{maxTeamSize - memberCount > 1 ? "s" : ""} available. However, since you meet the minimum requirement of {minTeamSize} members, your team is fully eligible to participate.
+                </p>
+              )}
+              {!isComplete && memberCount < minTeamSize && (
+                <p className="text-[14px] text-mc-error mt-2 leading-tight">
+                  Your team needs at least {minTeamSize - memberCount} more member{minTeamSize - memberCount > 1 ? "s" : ""} to be eligible to participate.
+                </p>
+              )}
+            </div>
+
             <div className="flex items-center gap-4">
               <div className="flex-1">
                 <p className="text-[12px] text-mc-text-dim uppercase font-bold tracking-widest mb-1">Invite Code</p>
