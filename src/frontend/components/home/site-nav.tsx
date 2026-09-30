@@ -6,6 +6,7 @@ import { Menu, User, LogIn } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { BlockButton, BlockModal, ThemeToggle } from "@/frontend/components/mc";
 import { MusicToggle } from "@/frontend/components/audio/music-toggle";
+import { AnnouncementMarquee } from "@/frontend/components/home/announcement-marquee";
 import { ART } from "@/frontend/lib/assets/manifest";
 import { FEST } from "@/frontend/lib/fest";
 import { cn } from "@/frontend/lib/utils";
@@ -101,6 +102,15 @@ export function SiteNav({ onOpenEvents, onOpenSchedule }: SiteNavProps) {
           : "border-b-[length:var(--mc-bevel)] border-transparent bg-transparent",
       )}
     >
+      {/* Above the logo/link row rather than below it, and inside this same
+          sticky header rather than a second sticky element of its own — a
+          status change worth a warning strip is worth keeping on screen for
+          as long as the nav itself is, on every page, not only while at the
+          top of one. Its own background is solid regardless of `scrolled`;
+          an announcement that fades into a transparent hero would defeat the
+          point of pinning it here at all. */}
+      <AnnouncementMarquee />
+
       <div className="flex w-full items-center justify-between gap-[var(--mc-unit)] px-[calc(var(--mc-unit)*1.5)] py-[calc(var(--mc-unit)*0.75)] md:px-[calc(var(--mc-unit)*2)] md:py-[var(--mc-unit)] min-[1320px]:grid min-[1320px]:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] min-[1320px]:gap-[calc(var(--mc-unit)*2)]">
         {/* Crest and wordmark are one link, not two adjacent ones — they are a
             single lockup, and two targets to the same anchor would just give a
