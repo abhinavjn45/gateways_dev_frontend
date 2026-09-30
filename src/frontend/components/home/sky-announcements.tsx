@@ -177,11 +177,11 @@ export function SkyAnnouncements() {
       // meant for the hero beneath it.
       className="pointer-events-none absolute inset-0 z-0 m-0 list-none p-0"
     >
-      {FEST.announcements.map((text, i) => {
+      {FEST.announcements.map((a, i) => {
         const slot = SLOTS[i % SLOTS.length];
         return (
           <li
-            key={text}
+            key={a.text}
             className={cn("absolute animate-sky-float", GATES[slot.gate])}
             style={{
               top: slot.top,
@@ -190,7 +190,7 @@ export function SkyAnnouncements() {
               animationDelay: `${slot.delay}s`,
             }}
           >
-            <SkyCloud text={text} shape={slot.shape} />
+            <SkyCloud text={a.text} shape={slot.shape} alert={a.alert} />
           </li>
         );
       })}
@@ -198,14 +198,37 @@ export function SkyAnnouncements() {
   );
 }
 
-function SkyCloud({ text, shape }: { text: string; shape: number }) {
+function SkyCloud({ text, shape, alert }: { text: string; shape: number; alert?: boolean }) {
   const { bumps, nubs } = SHAPES[shape % SHAPES.length];
 
   return (
     // A fixed width rather than shrink-to-fit: four clouds sized to their own
     // text would range from tiny to enormous and stop reading as one family.
     // The text wraps inside instead.
-    <div className="relative w-[min(44vw,190px)] md:w-[min(26vw,236px)]">
+    //
+    // `alert` reassigns the three cloud-material custom properties to the
+    // redstone palette right here, on the ancestor every face and bump reads
+    // its colour from — so the recolour needs no theme-aware branch of its
+    // own and no second copy of the shape markup. `animate-pulse` (a second,
+    // independent animation on an element the float animation never touches)
+    // is what keeps this cloud from reading as "just red" once the eye has
+    // adjusted to it.
+    <div
+      className={cn(
+        "relative w-[min(44vw,190px)] md:w-[min(26vw,236px)]",
+        alert && "animate-pulse",
+      )}
+      style={
+        alert
+          ? ({
+              "--cloud-lit": "var(--color-mc-redstone-light)",
+              "--cloud-face": "var(--color-mc-redstone)",
+              "--cloud-shade": "var(--color-mc-redstone-dark)",
+              "--cloud-ink": "var(--color-mc-cloud-light)",
+            } as React.CSSProperties)
+          : undefined
+      }
+    >
       {/* Bumps riding on top. They carry the lit face colour so the cloud's
           whole upper silhouette is a single tone. */}
       {bumps.map((b, i) => (
@@ -237,9 +260,10 @@ function SkyCloud({ text, shape }: { text: string; shape: number }) {
           because the bumps must line up flush with the lit face. */}
       <div className="relative border-b-[length:var(--mc-unit)] border-t-[length:var(--mc-unit)] border-b-[var(--cloud-shade)] border-t-[var(--cloud-lit)] bg-[var(--cloud-face)] px-[calc(var(--mc-unit)*1.25)] py-[calc(var(--mc-unit)*0.75)]">
         {/* text-balance so the lines come out even lengths. Without it the
-            greedy line-breaker leaves orphans and splits mid-date
-            ("hackathon begins 30 / september 2026"), which in a 2–3 line block at
-            this size is the difference between a caption and a ransom note. */}
+            greedy line-breaker leaves orphans and splits mid-phrase
+            ("hackathon registration is / closed"), which in a 2–3 line block
+            at this size is the difference between a caption and a ransom
+            note. */}
         <span className="block text-balance text-center font-pixel text-[7px] uppercase leading-[1.9] tracking-[0.06em] text-[var(--cloud-ink)] md:text-[9px]">
           {text}
         </span>
