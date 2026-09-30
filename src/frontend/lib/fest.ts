@@ -273,11 +273,18 @@ export const FEST = {
     { label: "YouTube", href: "https://www.youtube.com/@gateways-2024" },
   ] as FestSocial[],
 
-  /** The rolling announcement bar. TODO — confirm the copy each time it changes. */
+  /**
+   * The rolling announcement bar. TODO — confirm the copy each time it
+   * changes.
+   *
+   * `alert` recolours that one cloud redstone-red and gives it a pulse, so a
+   * status change (open → closed) reads as a warning rather than blending
+   * into the same grey/white cloud material as routine facts.
+   */
   announcements: [
-    "Registrations are open",
-    `Prize pool ${inr(PRIZE_POOL_INR)}`,
-    `Hackathon begins ${HACKATHON_DATE_LABEL}`,
-    "One reality. Two vantage points.",
-  ],
+    { text: "Registrations are open" },
+    { text: `Prize pool ${inr(PRIZE_POOL_INR)}` },
+    { text: "Hackathon registration is closed", alert: true },
+    { text: "One reality. Two vantage points." },
+  ] as { text: string; alert?: boolean }[],
 } as const;
