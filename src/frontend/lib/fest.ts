@@ -274,8 +274,8 @@ export const FEST = {
   ] as FestSocial[],
 
   /**
-   * The rolling announcement bar. TODO — confirm the copy each time it
-   * changes.
+   * Announcements drifting in the homepage hero's sky (see
+   * `sky-announcements.tsx`). TODO — confirm the copy each time it changes.
    *
    * `alert` recolours that one cloud redstone-red and gives it a pulse, so a
    * status change (open → closed) reads as a warning rather than blending
@@ -286,5 +286,16 @@ export const FEST = {
     { text: `Prize pool ${inr(PRIZE_POOL_INR)}` },
     { text: "Hackathon registration is closed", alert: true },
     { text: "One reality. Two vantage points." },
+  ] as { text: string; alert?: boolean }[],
+
+  /**
+   * The marquee strip pinned above the nav, on every page — not only the
+   * homepage hero the sky clouds above belong to. Add or remove items here;
+   * the bar itself does not care how many there are. `alert` gives an item
+   * the same redstone warning treatment as an alert sky cloud, for a status
+   * change worth flagging rather than routine news.
+   */
+  marqueeAnnouncements: [
+    { text: "Hackathon registration is now closed", alert: true },
   ] as { text: string; alert?: boolean }[],
 } as const;

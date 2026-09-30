@@ -192,6 +192,13 @@
      snapping left the bar looking half-empty. */
   --animate-sky-float: sky-float 13s ease-in-out infinite;
   --animate-scroll-hint: scroll-hint 1.8s ease-in-out infinite;
+  /* The nav's announcement strip. Unlike `sky-float` above, this loop's end
+     state is a -50% translate, not the origin — the very thing that comment
+     warns snaps to a half-empty bar under reduced motion. That is safe here
+     ONLY because `.marquee-track` gets an explicit `animation: none` in the
+     reduced-motion query below rather than relying on the snap; do not remove
+     one without the other. */
+  --animate-marquee: marquee 22s linear infinite;
 }
 
 /* ---- Bevel shadow presets --------------------------------------------------
@@ -858,6 +865,17 @@ textarea,
   50%      { transform: translateY(calc(var(--mc-unit) * 1.1)); }
 }
 
+/* The nav announcement strip scrolls two back-to-back copies of the same
+   track and travels exactly one copy's width (-50%), so the moment the first
+   copy scrolls fully out of view the second is sitting exactly where the
+   first started — the loop has no seam regardless of how much text is in the
+   track, unlike a fixed-pixel translate that would need retuning every time
+   an announcement is added or removed. */
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
 /* ============================================================================
    Crest splash (see components/portal/pixel-splash.tsx)
    ========================================================================= */
@@ -1093,6 +1111,13 @@ html[data-theme="light"] .splash-ring {
     opacity: 1 !important;
     transform: none !important;
   }
+
+  /* The generic override above only shortens this loop's duration to 0.01ms;
+     it still ends on the -50% frame from the `marquee` keyframes comment, so
+     it is disabled outright rather than left to snap there. */
+  .marquee-track {
+    animation: none;
+  }
 }
 
 /* Same escape hatch for the in-app toggle, which sets data-reduce-motion on
@@ -1103,6 +1128,13 @@ html[data-reduce-motion="true"] *::after {
   animation-duration: 0.01ms !important;
   animation-iteration-count: 1 !important;
   transition-duration: 0.01ms !important;
+}
+
+/* Same reasoning as the `.marquee-track` rule in the OS-level media query
+   above — the in-app toggle needs the same explicit disable, not just the
+   shortened duration the generic `*` override gives it. */
+html[data-reduce-motion="true"] .marquee-track {
+  animation: none;
 }
 
 html[data-reduce-motion="true"] .gsap-hidden {
