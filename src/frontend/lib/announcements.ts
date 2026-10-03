@@ -4,6 +4,8 @@ export interface Announcement {
   id: string;
   targetAudience: string;
   content: string;
+  badgeCategory?: string;
+  badgeContent?: string;
   expiryDate: string;
   isExpired: boolean;
 }
@@ -25,10 +27,28 @@ export function extractEventSlugFromAudience(audience: string): string | null {
   
   // Assumes format "{Event Name} Participants"
   const match = aud.match(/(.+)\s+Participants/i);
+  let slug = "";
   if (match) {
-    return slugify(match[1].trim());
+    slug = slugify(match[1].trim());
+  } else {
+    slug = slugify(aud);
   }
-  return slugify(aud);
+  
+  // Map common mistypes or topic names to the official event slugs
+  const aliases: Record<string, string> = {
+    'hackathon': '24-shift',
+    'prompt-engineering': 'promptx',
+    'ui-ux': 'pixel-paradox',
+    'treasure-hunt': 'twin-protocol',
+    'photography': 'pixel-quest',
+    'surprise-event': 'mystery-block',
+    'gaming': 'arcadia-x',
+    'it-manager': 'the-twin-directive',
+    'quiz': 'brainwaves',
+    'coding': 'code-golf',
+  };
+
+  return aliases[slug] || slug;
 }
 
 export async function fetchAnnouncements(): Promise<Announcement[]> {
@@ -56,7 +76,7 @@ export async function fetchAnnouncements(): Promise<Announcement[]> {
             let isExpired = false;
             
             if (expiryStr) {
-              const [month, day, year] = expiryStr.split('/');
+              const [day, month, year] = expiryStr.split('/');
               if (month && day && year) {
                 const expiry = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
                 if (expiry < now) {
@@ -69,6 +89,8 @@ export async function fetchAnnouncements(): Promise<Announcement[]> {
               id: row["Sr. No."] || String(index),
               targetAudience: row["Announcement For"] || "Everyone",
               content: row["Announcement Content"] || "",
+              badgeCategory: row["Announcement Badge"] || "",
+              badgeContent: row["Badge Content"] || "",
               expiryDate: expiryStr || "",
               isExpired
             };

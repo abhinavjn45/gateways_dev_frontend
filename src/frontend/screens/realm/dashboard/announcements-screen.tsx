@@ -1,5 +1,7 @@
 "use client";
 
+import { Megaphone, AlertCircle, PartyPopper, TriangleAlert } from "lucide-react";
+
 import { useSession } from "@/frontend/components/auth/session-provider";
 import { BlockPanel, LoadingBlocks } from "@/frontend/components/mc";
 import { useAsync } from "@/frontend/hooks/use-async";
@@ -60,20 +62,45 @@ export function AnnouncementsScreen() {
         </BlockPanel>
       ) : (
         <ul className="flex flex-col gap-[var(--mc-unit)]">
-          {filteredAnnouncements.map((a) => (
-            <li key={a.id}>
-              <BlockPanel variant="panel" padded="lg" className="flex flex-col gap-2">
-                <div className="flex justify-between items-baseline">
-                  <h3 className="font-pixel text-[12px] uppercase tracking-wide text-mc-gold">
-                    {a.targetAudience}
-                  </h3>
-                </div>
-                <p className="text-[16px] text-mc-text font-body leading-relaxed whitespace-pre-wrap">
-                  {a.content}
-                </p>
-              </BlockPanel>
-            </li>
-          ))}
+          {filteredAnnouncements.map((a) => {
+            const category = a.badgeCategory?.trim().toLowerCase();
+            const badgeText = a.badgeContent?.trim();
+            
+            let Icon = Megaphone;
+            let badgeColor = "bg-mc-lapis text-mc-cloud-light";
+            
+            if (category === 'danger') {
+              Icon = AlertCircle;
+              badgeColor = "bg-mc-redstone-dark text-mc-gold-light";
+            } else if (category === 'success') {
+              Icon = PartyPopper;
+              badgeColor = "bg-mc-emerald text-mc-obsidian";
+            } else if (category === 'warning') {
+              Icon = TriangleAlert;
+              badgeColor = "bg-mc-gold text-mc-obsidian";
+            }
+
+            return (
+              <li key={a.id}>
+                <BlockPanel variant="panel" padded="lg" className="flex flex-col gap-3">
+                  <div className="flex justify-between items-start gap-4">
+                    <h3 className="font-pixel text-[12px] uppercase tracking-wide text-mc-gold">
+                      {a.targetAudience}
+                    </h3>
+                    {badgeText && (
+                      <span className={`flex shrink-0 items-center gap-[calc(var(--mc-unit)*0.5)] rounded-sm px-[calc(var(--mc-unit)*0.8)] py-[calc(var(--mc-unit)*0.4)] font-pixel text-[9px] uppercase tracking-wider ${badgeColor}`}>
+                        <Icon size={12} strokeWidth={2.5} />
+                        {badgeText}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[16px] text-mc-text font-body leading-relaxed whitespace-pre-wrap">
+                    {a.content}
+                  </p>
+                </BlockPanel>
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>

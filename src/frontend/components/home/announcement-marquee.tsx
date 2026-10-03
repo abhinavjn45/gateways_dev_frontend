@@ -1,8 +1,11 @@
 "use client";
 
-import { Megaphone } from "lucide-react";
+import React from "react";
+import { Megaphone, AlertCircle, PartyPopper, TriangleAlert } from "lucide-react";
 import { ART } from "@/frontend/lib/assets/manifest";
 import { FEST } from "@/frontend/lib/fest";
+import { useAsync } from "@/frontend/hooks/use-async";
+import { fetchAnnouncements } from "@/frontend/lib/announcements";
 
 /**
  * The scrolling strip pinned above the nav, on every page.
@@ -31,7 +34,39 @@ import { FEST } from "@/frontend/lib/fest";
  * change, not routine news, wherever it appears.
  */
 export function AnnouncementMarquee() {
-  const items = FEST.marqueeAnnouncements;
+  const { data: allAnnouncements } = useAsync(fetchAnnouncements, []);
+  
+  const { items, duration } = React.useMemo(() => {
+    if (!allAnnouncements) return { items: [], duration: "22s" };
+    
+    const fetched = allAnnouncements
+      .filter((a) => a.targetAudience.trim() === "Frontend Announcements")
+      .map((a) => ({
+        text: a.content,
+        category: a.badgeCategory?.trim().toLowerCase(),
+        badge: a.badgeContent?.trim()
+      }));
+
+    if (fetched.length === 0) return { items: [], duration: "22s" };
+
+    // Duplicate items so the track is guaranteed to be wider than the screen (e.g. 4K monitors)
+    const COPIES = 20;
+    const repeated = [];
+    for (let i = 0; i < COPIES; i++) {
+      repeated.push(...fetched);
+    }
+
+    // Calculate a comfortable constant reading speed regardless of text length
+    const totalChars = fetched.reduce((sum, item) => sum + item.text.length, 0) * COPIES;
+    // 8 characters per second is a slower, very comfortable reading pace
+    const calcDuration = Math.max(10, Math.floor(totalChars / 8));
+
+    return { 
+      items: repeated, 
+      duration: `${calcDuration}s` 
+    };
+  }, [allAnnouncements]);
+
   if (items.length === 0) return null;
 
   return (
@@ -40,20 +75,6 @@ export function AnnouncementMarquee() {
       aria-label="Announcements"
       className="group flex w-full items-stretch overflow-hidden border-b-[length:var(--mc-bevel)] border-mc-redstone-dark bg-mc-redstone"
     >
-      {/* The pinned tag. A slot of the accent material, not the strip's own
-          redstone — the whole point is that it reads as a label ON the
-          announcement, the way a "NEW" sticker sits on a box rather than
-          being painted the same colour as it.
-
-          Below `sm` this is the crest alone, not "Announcement" in a pixel
-          font: at phone width the label was competing with the one thing
-          actually worth the space, the scrolling message, for a word the
-          redstone strip itself already implies. The crest still marks the
-          strip as belonging to the fest, just without spending a whole word
-          on it. Always the BLACK crest, not the theme-paired pair the nav
-          itself swaps between — this chip's own background is the constant
-          gold token in both themes, so the ink that reads on it doesn't
-          change with the theme either, only the page around it does. */}
       <span className="flex shrink-0 items-center gap-[calc(var(--mc-unit)*0.6)] bg-mc-gold px-[calc(var(--mc-unit)*0.85)] py-[calc(var(--mc-unit)*0.5)] sm:px-[calc(var(--mc-unit)*1.25)] sm:py-[calc(var(--mc-unit)*0.6)]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
@@ -68,11 +89,9 @@ export function AnnouncementMarquee() {
         </span>
       </span>
 
-      {/* `group-hover:[animation-play-state:paused]` lets anyone stop the
-          scroll to read a longer item, without a separate pause control. */}
       <div className="relative flex flex-1 overflow-hidden">
-        <MarqueeTrack items={items} />
-        <MarqueeTrack items={items} hidden />
+        <MarqueeTrack items={items} duration={duration} />
+        <MarqueeTrack items={items} duration={duration} hidden />
       </div>
     </div>
   );
@@ -80,34 +99,49 @@ export function AnnouncementMarquee() {
 
 function MarqueeTrack({
   items,
+  duration,
   hidden = false,
 }: {
-  items: { text: string; alert?: boolean }[];
+  items: { text: string; category?: string; badge?: string }[];
+  duration: string;
   hidden?: boolean;
 }) {
   return (
     <div
       aria-hidden={hidden}
+      style={{ animationDuration: duration }}
       className="marquee-track flex w-max shrink-0 animate-marquee items-center whitespace-nowrap py-[calc(var(--mc-unit)*0.6)] [animation-play-state:running] group-hover:[animation-play-state:paused]"
     >
-      {items.map((item, i) => (
-        <span
-          key={i}
-          className="flex items-center gap-[calc(var(--mc-unit)*0.6)] px-[calc(var(--mc-unit)*2)] font-pixel text-[9px] uppercase tracking-[0.08em] text-mc-cloud-light md:text-[10px]"
-        >
-          {/* The alert chip. A second, smaller badge inside the item rather
-              than recolouring the whole strip when even one item is an
-              alert — with only one item today that would be the same thing,
-              but the strip must still read correctly once a routine item
-              (e.g. the prize pool) sits next to this one. */}
-          {item.alert ? (
-            <span className="rounded-none bg-mc-redstone-dark px-[calc(var(--mc-unit)*0.6)] py-[calc(var(--mc-unit)*0.2)] text-mc-gold-light">
-              Closed
-            </span>
-          ) : null}
-          {item.text}
-        </span>
-      ))}
+      {items.map((item, i) => {
+        let Icon = Megaphone;
+        let badgeColor = "bg-mc-lapis text-mc-cloud-light"; // Default to info
+        
+        if (item.category === 'danger') {
+          Icon = AlertCircle;
+          badgeColor = "bg-mc-redstone-dark text-mc-gold-light";
+        } else if (item.category === 'success') {
+          Icon = PartyPopper;
+          badgeColor = "bg-mc-emerald text-mc-obsidian";
+        } else if (item.category === 'warning') {
+          Icon = TriangleAlert;
+          badgeColor = "bg-mc-gold text-mc-obsidian";
+        }
+
+        return (
+          <span
+            key={i}
+            className="flex items-center gap-[calc(var(--mc-unit)*0.6)] px-[calc(var(--mc-unit)*2)] font-pixel text-[9px] uppercase tracking-[0.08em] text-mc-cloud-light md:text-[10px]"
+          >
+            {item.badge ? (
+              <span className={`flex items-center gap-[calc(var(--mc-unit)*0.4)] rounded-none px-[calc(var(--mc-unit)*0.6)] py-[calc(var(--mc-unit)*0.2)] ${badgeColor}`}>
+                <Icon size={12} strokeWidth={2.5} />
+                {item.badge}
+              </span>
+            ) : null}
+            {item.text}
+          </span>
+        );
+      })}
     </div>
   );
 }

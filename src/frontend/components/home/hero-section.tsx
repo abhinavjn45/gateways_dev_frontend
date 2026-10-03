@@ -164,7 +164,7 @@ export function HeroSection() {
           <BlockButton
             size="lg"
             variant="stone"
-            onClick={() => window.open("https://heyzine.com/flip-book/26e7f069c1.html", "_blank")}
+            onClick={() => window.open("https://heyzine.com/flip-book/de3b0c3b26.html", "_blank")}
           >
             Read Brochure
           </BlockButton>

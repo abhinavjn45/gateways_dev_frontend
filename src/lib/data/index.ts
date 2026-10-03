@@ -298,6 +298,7 @@ export const repo = new Proxy({} as Repository, {
             teamMemberCount: r.team_member_count,
             teamCode: r.team_code,
             status: r.status,
+            checkedInAt: r.checked_in_at,
             createdAt: r.created_at
           }));
         },

@@ -13,6 +13,8 @@ import {
   ThemeToggle,
 } from "@/frontend/components/mc";
 import { useSession } from "@/frontend/components/auth/session-provider";
+import { useAsync } from "@/frontend/hooks/use-async";
+import { repo } from "@/lib/data";
 import { cn } from "@/frontend/lib/utils";
 
 /**
@@ -37,6 +39,7 @@ const NAV = [
   { href: "/dashboard/schedule", label: "Schedule", icon: "◷" },
   { href: "/dashboard/events", label: "My Events", icon: "▤" },
   { href: "/dashboard/announcements", label: "Announcements", icon: "◈" },
+  { href: "/dashboard/certificates", label: "Certificates", icon: "⎗" },
   { href: "/dashboard/settings", label: "Settings", icon: "⚙" },
 ] as const;
 
@@ -85,6 +88,18 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
    */
   const [worldHintDismissed, setWorldHintDismissed] = useState(false);
 
+  const { data: registrations } = useAsync(
+    async () => (session?.userId ? repo.registrations.listForUser(session.userId) : []),
+    [session?.userId]
+  );
+  
+  const { data: teams } = useAsync(
+    async () => (session?.userId ? repo.teams.listForUser(session.userId) : []),
+    [session?.userId]
+  );
+
+  const hasRegistrations = (registrations && registrations.length > 0) || (teams && teams.length > 0);
+
   // Auto-redirect if locked out
   useEffect(() => {
     if (session && (!session.isProfileComplete || !session.isPaymentVerified)) {
@@ -102,6 +117,8 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       if (pathname.startsWith("/dashboard") && !allowedPaths.includes(pathname)) {
         router.replace("/dashboard/profile");
       }
+    } else if (session && pathname === "/dashboard/certificates" && !hasRegistrations) {
+      router.replace("/dashboard/explore");
     }
   }, [session, pathname, router]);
 
@@ -155,6 +172,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             session={session}
             worldHintDismissed={worldHintDismissed}
             onDismissWorldHint={() => setWorldHintDismissed(true)}
+            hasRegistrations={!!hasRegistrations}
           />
         </aside>
 
@@ -193,6 +211,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                   session={session}
                   worldHintDismissed={worldHintDismissed}
                   onDismissWorldHint={() => setWorldHintDismissed(true)}
+                  hasRegistrations={!!hasRegistrations}
                 />
               </motion.aside>
             </>
@@ -218,6 +237,7 @@ function SidebarContent({
   session,
   worldHintDismissed,
   onDismissWorldHint,
+  hasRegistrations,
 }: {
   pathname: string;
   onNavigate: () => void;
@@ -225,6 +245,7 @@ function SidebarContent({
   session: any;
   worldHintDismissed: boolean;
   onDismissWorldHint: () => void;
+  hasRegistrations: boolean;
 }) {
   /**
    * What each destination needs before it opens.
@@ -246,11 +267,14 @@ function SidebarContent({
     "/dashboard/explore",
   ];
 
-  function lockFor(href: string): "profile" | "payment" | null {
+  function lockFor(href: string): "profile" | "payment" | "registration" | null {
     if (!session || ALWAYS_OPEN.includes(href)) return null;
     if (!session.isProfileComplete) return "profile";
     if (href === WORLD_HREF) return null; // details are the whole price of entry
     if (!session.isPaymentVerified) return "payment";
+    
+    if (href === "/dashboard/certificates" && !hasRegistrations) return "registration";
+    
     return null;
   }
 
