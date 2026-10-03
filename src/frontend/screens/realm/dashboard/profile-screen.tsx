@@ -297,19 +297,21 @@ export function ProfileScreen() {
           </div>
         ) : (
           <dl className="grid gap-[var(--mc-unit)] sm:grid-cols-2">
+            <Detail label="Participant ID" value={profile?.participantId} />
             <Detail label="Full name" value={profile?.fullName} />
             <Detail label="Mobile" value={profile?.phone} />
+            <Detail label="Email" value={profile?.email} />
             <Detail label="College" value={detailCollege?.name} />
             <Detail label="Department" value={detailDepartment?.name} />
             <Detail label="Year of study" value={profile?.yearOfStudy ? `${profile.yearOfStudy} Year` : null} />
             <Detail label="Date of birth" value={formatDate(profile?.dateOfBirth)} />
             <Detail label="Gender" value={profile?.gender} />
-            <Detail label="T-shirt" value={profile?.tshirtSize} />
+            <Detail label="T-shirt size" value={profile?.tshirtSize} />
             <Detail label="Dietary" value={profile?.dietaryPref} />
             <Detail label="Emergency contact" value={profile?.emergencyName} />
             <Detail label="Emergency number" value={profile?.emergencyPhone} />
             {profile?.referredBy ? (
-              <Detail label="Referred by" value={profile.referredBy} />
+              <Detail label="Referred by" value={`${profile.referredBy}${profile.referredByName ? ` (${profile.referredByName})` : ''}`} />
             ) : null}
           </dl>
         )}

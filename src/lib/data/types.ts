@@ -111,6 +111,7 @@ export type DietaryPref = "Vegeterian" | "Non-Vegeterian";
  */
 export interface Profile {
   id: string;
+  participantId?: string | null;
   email: string;
   fullName: string | null;
   phone: string | null;
@@ -126,6 +127,7 @@ export interface Profile {
   emergencyPhone: string | null;
   dietaryPref: DietaryPref | null;
   referredBy: string | null;
+  referredByName?: string | null;
   isBanned: boolean;
   createdAt: string;
   updatedAt: string;
