@@ -5,6 +5,7 @@ import { HistoryCursor } from "@/frontend/components/navigation/history-cursor";
 import { FestChat } from "@/frontend/components/chat/fest-chat";
 import { MusicPlayer } from "@/frontend/components/audio/music-player";
 import { AmbientBlocks, PageBackdrop } from "@/frontend/components/ambient";
+import { ResultsFab } from "@/frontend/components/navigation/results-fab";
 import { SPLASH_SEEN_KEY } from "@/frontend/lib/animation/splash-store";
 // From theme-store, NOT use-theme: the latter is a "use client" module, and a
 // value imported from one of those into this server component arrives as a
@@ -193,6 +194,7 @@ export default function RootLayout({
             also the only layout wrapping the (portal) group, which has no
             SiteShell and no toaster of its own. */}
         <MusicPlayer />
+        <ResultsFab />
         <PixelSplash />
       </body>
     </html>
