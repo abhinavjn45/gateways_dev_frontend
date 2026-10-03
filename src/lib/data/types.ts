@@ -337,6 +337,7 @@ export interface Registration {
   overrideReason?: string | null;
   confirmedAt?: string | null;
   waitlistPosition?: number | null;
+  checkedInAt?: string | null;
 }
 
 export interface Team {
