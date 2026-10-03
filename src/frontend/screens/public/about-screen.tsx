@@ -136,32 +136,27 @@ function MemberPortrait({ member, size }: { member: TeamMember; size: number }) 
     return <PixelAvatar skinId={skinFor(member.name)} size={size} alt="" />;
   }
 
+  // Students are loaded from the students directory. They need their top 
+  // headroom cropped out (-15%). Faculty look best anchored at the top (0).
+  const isStudent = member.image.includes("our-team/students");
+  const topOffset = isStudent ? "-35%" : "0";
+
   return (
     <span
       className={cn(
-        "inline-grid shrink-0 place-items-center overflow-hidden",
-        // A hard border rather than the `bevel-inset` well this used to wear.
-        // The inset bevel draws its two edges OVER the content, so on a photo
-        // it reads as a scuff along the top-left of someone's face; a real
-        // border sits outside the image and frames it. Width in --mc-bevel so
-        // it thickens with --mc-scale like every other edge in the UI.
+        "relative inline-block shrink-0 overflow-hidden",
         "border-[length:var(--mc-bevel)] border-mc-portrait-frame bg-mc-slot",
       )}
       style={{ width: size, height: size }}
     >
-      {/* A plain <img> is deliberate — see the component doc comment. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={member.image}
         alt={member.name}
-        width={size}
-        height={size}
         onError={() => setFailed(true)}
-        // object-top, not the default centre: the faculty photographs are 2:3
-        // portraits and the frame is a square, so a centred crop takes the
-        // middle third and slices the top of the head off. Anchoring to the top
-        // keeps the face in frame, which is the whole point of the portrait.
-        className="h-full w-full object-cover object-top"
+        className="absolute left-0 w-full h-auto max-w-none"
+        // Students are pushed up to crop top headroom; faculty are top-aligned.
+        style={{ top: topOffset }}
       />
     </span>
   );

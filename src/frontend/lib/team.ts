@@ -86,16 +86,16 @@ export const FACULTY_COORDINATORS: TeamMember[] = [
  */
 export const CORE_COMMITTEE: TeamMember[] = [
   { name: "Shambhavi Sinha", subtitle: "4 MCA A (2547151)", blurb: "Decorations, Marketing & PR, Documentation", image: `${GITHUB_ASSETS}/our-team/students/2547151_Shambhavi Sinha.jpg` },
-  { name: "Joshua Joby", subtitle: "4 MCA A (2547125)", blurb: "Hospitality, Sponsorship, Culturals, Finance & Accounts", image: `${GITHUB_ASSETS}/our-team/students/2547125_Joshua Joby.jpg` },
   { name: "Aimee Susan Joseph", subtitle: "4 MCA B (2547204)", blurb: "Logistics, Technical, Registrations", image: `${GITHUB_ASSETS}/our-team/students/2547204_Aimee Susan Joseph.JPG` },
-  { name: "Abhinav Jain", subtitle: "4 MCA B (2547203)", blurb: "Events, Logistics, Infobahn", image: `${GITHUB_ASSETS}/our-team/students/2547203_Abhinav Jain.jpg` },
   { name: "Smitha M", subtitle: "4 MSC AIML (2548556)", blurb: "Social Media, Media, Registrations, Finance & Accounts", image: `${GITHUB_ASSETS}/our-team/students/2548556_Smitha M.jpg` },
+  { name: "Joshua Joby", subtitle: "4 MCA A (2547125)", blurb: "Hospitality, Sponsorship, Culturals, Finance & Accounts", image: `${GITHUB_ASSETS}/our-team/students/2547125_Joshua Joby.jpg` },
+  { name: "Abhinav Jain", subtitle: "4 MCA B (2547203)", blurb: "Events, Logistics, Infobahn", image: `${GITHUB_ASSETS}/our-team/students/2547203_Abhinav Jain.jpg` },
   { name: "Hitesh Kumar", subtitle: "4 MSC AIML (2548525)", blurb: "Design & Graphics, Events, Culturals", image: `${GITHUB_ASSETS}/our-team/students/2548525_Hitesh Kumar.jpg` },
   { name: "Anooja Sreenivasan", subtitle: "1 MCA A (2647114)", blurb: "Decorations, Marketing & PR, Documentation", image: `${GITHUB_ASSETS}/our-team/students/2647114_Anooja Sreenivasan.jpg` },
-  { name: "Iwin Jose", subtitle: "1 MCA A (2647126)", blurb: "Logistics, Technical, Registrations", image: `${GITHUB_ASSETS}/our-team/students/2647126_Iwin Jose.jpg` },
   { name: "Haniya Zehra Mody", subtitle: "1 MCA B (2647225)", blurb: "Events, Logistics, Infobahn", image: `${GITHUB_ASSETS}/our-team/students/2647225_Haniya.jpg` },
-  { name: "Shiva A Karthik", subtitle: "1 MCA B (2647247)", blurb: "Social Media, Media, Registrations, Finance & Accounts", image: `${GITHUB_ASSETS}/our-team/students/2647247_Shiva A Karthik.jpg` },
   { name: "Joseph Alicia Elias", subtitle: "1 MSC AIML (2648525)", blurb: "Hospitality, Sponsorship, Culturals, Finance & Accounts", image: `${GITHUB_ASSETS}/our-team/students/2648525_Joseph Alicia Elias.jpg` },
+  { name: "Iwin Jose", subtitle: "1 MCA A (2647126)", blurb: "Logistics, Technical, Registrations", image: `${GITHUB_ASSETS}/our-team/students/2647126_Iwin Jose.jpg` },
+  { name: "Shiva A Karthik", subtitle: "1 MCA B (2647247)", blurb: "Social Media, Media, Registrations, Finance & Accounts", image: `${GITHUB_ASSETS}/our-team/students/2647247_Shiva A Karthik.jpg` },
   { name: "Ronith Tharun Joshi", subtitle: "1 MSC AIML (2648545)", blurb: "Design & Graphics, Events, Culturals", image: `${GITHUB_ASSETS}/our-team/students/2648545_Ronith Tharun Joshi.jpg` },
 ];
 
