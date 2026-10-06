@@ -135,3 +135,44 @@ export function eventTimeOrTba(event: FestEvent): string {
   const time = eventTime(event);
   return /^tba$/i.test(time) ? "To be announced" : time;
 }
+
+export interface EventResult {
+  slug: string;
+  name: string;
+  kind: string;
+  firstPosition?: string;
+  secondPosition?: string;
+  thirdPosition?: string;
+}
+
+export async function fetchFestResults(): Promise<EventResult[]> {
+  const url = `https://docs.google.com/spreadsheets/d/e/2PACX-1vTVdl4RgUOu2FZ5ku6FW9pqARwbORf5pUZIySfgjq5d-VD9AQR48D4U7K9oHi9hjjfZlxst2LcOQTIS/pub?output=csv&single=true&gid=127695123&t=${Date.now()}`;
+  
+  const response = await fetch(url, { cache: "no-store" });
+  if (!response.ok) {
+    throw new Error(`Failed to fetch results: ${response.statusText}`);
+  }
+  
+  const csvText = await response.text();
+  
+  return new Promise((resolve, reject) => {
+    Papa.parse(csvText, {
+      header: true,
+      skipEmptyLines: true,
+      complete: (results) => {
+        const announcedResults: EventResult[] = results.data
+          .filter((row: any) => row["Status"] && row["Status"].trim().toLowerCase() === "announced")
+          .map((row: any) => ({
+            slug: slugify(row["Name of Event"] || row["Event"]),
+            name: row["Name of Event"] || "",
+            kind: row["Event"] || "",
+            firstPosition: row["1st Position"] || undefined,
+            secondPosition: row["2nd Position"] || undefined,
+            thirdPosition: row["3rd Position"] || undefined,
+          }));
+        resolve(announcedResults);
+      },
+      error: (error: any) => reject(error)
+    });
+  });
+}

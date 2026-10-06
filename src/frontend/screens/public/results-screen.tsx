@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { BackLink, BlockPanel } from "@/frontend/components/mc";
+import { BackLink, BlockPanel, LoadingBlocks } from "@/frontend/components/mc";
 import { cn } from "@/frontend/lib/utils";
-import { Trophy, Star } from "lucide-react";
+import { useAsync } from "@/frontend/hooks/use-async";
+import { fetchFestResults, EventResult } from "@/frontend/lib/events";
+import { Trophy, Medal, Star } from "lucide-react";
 
 export function ResultsScreen() {
   const [activeTab, setActiveTab] = useState<"results" | "leaderboard">("results");
@@ -54,14 +56,77 @@ export function ResultsScreen() {
 }
 
 function ResultsTab() {
+  const { data: results, loading } = useAsync(() => fetchFestResults(), []);
+
+  if (loading) {
+    return (
+      <BlockPanel variant="slot">
+        <LoadingBlocks label="Loading event results" />
+      </BlockPanel>
+    );
+  }
+
+  if (!results || results.length === 0) {
+    return (
+      <BlockPanel variant="slot" className="text-center py-[calc(var(--mc-unit)*6)] flex flex-col items-center justify-center">
+        <Trophy size={48} className="text-mc-gold mb-4 opacity-50" />
+        <h2 className="font-pixel text-mc-gold text-base md:text-lg uppercase">Updating Soon</h2>
+        <p className="mt-4 text-mc-text-dim text-[16px] md:text-[18px] max-w-md mx-auto">
+          Event results will be revealed here as they are announced. Stay tuned!
+        </p>
+      </BlockPanel>
+    );
+  }
+
   return (
-    <BlockPanel variant="slot" className="text-center py-[calc(var(--mc-unit)*6)] flex flex-col items-center justify-center">
-      <Trophy size={48} className="text-mc-gold mb-4 opacity-50" />
-      <h2 className="font-pixel text-mc-gold text-base md:text-lg uppercase">Updating Soon</h2>
-      <p className="mt-4 text-mc-text-dim text-[16px] md:text-[18px] max-w-md mx-auto">
-        Event results will be revealed here as the fest progresses. Stay tuned!
-      </p>
-    </BlockPanel>
+    <div className="grid gap-[var(--mc-unit)] sm:grid-cols-2 lg:grid-cols-2">
+      {results.map((result) => (
+        <BlockPanel key={result.slug} variant="panel" padded="sm" className="flex flex-col gap-2">
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <h3 className="font-pixel text-[12px] uppercase text-mc-gold leading-snug">{result.name}</h3>
+              <p className="text-[14px] text-mc-text-dim font-pixel">{result.kind}</p>
+            </div>
+          </div>
+          
+          <div className="mt-3 flex flex-col gap-2 border-t-[2px] border-mc-border pt-3">
+            {result.firstPosition && (
+              <div className="flex items-start gap-2 text-mc-text">
+                <Trophy size={16} className="text-mc-gold shrink-0 mt-1" />
+                <div className="flex-1">
+                  <p className="font-pixel text-[9px] uppercase text-mc-text-dim">1st Place</p>
+                  <p className="text-[16px] break-words whitespace-pre-wrap leading-tight">{result.firstPosition}</p>
+                </div>
+              </div>
+            )}
+            
+            {result.secondPosition && (
+              <div className="flex items-start gap-2 text-mc-text">
+                <Medal size={16} className="text-[#C0C0C0] shrink-0 mt-1" />
+                <div className="flex-1">
+                  <p className="font-pixel text-[9px] uppercase text-mc-text-dim">2nd Place</p>
+                  <p className="text-[16px] break-words whitespace-pre-wrap leading-tight">{result.secondPosition}</p>
+                </div>
+              </div>
+            )}
+            
+            {result.thirdPosition && (
+              <div className="flex items-start gap-2 text-mc-text">
+                <Medal size={16} className="text-[#CD7F32] shrink-0 mt-1" />
+                <div className="flex-1">
+                  <p className="font-pixel text-[9px] uppercase text-mc-text-dim">3rd Place</p>
+                  <p className="text-[16px] break-words whitespace-pre-wrap leading-tight">{result.thirdPosition}</p>
+                </div>
+              </div>
+            )}
+            
+            {!result.firstPosition && !result.secondPosition && !result.thirdPosition && (
+              <p className="text-sm text-mc-text-dim italic">Details not yet updated.</p>
+            )}
+          </div>
+        </BlockPanel>
+      ))}
+    </div>
   );
 }
 
