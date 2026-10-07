@@ -208,7 +208,7 @@ export const COMMITTEE_HEADS: CommitteeHead[] = [
 export const TECHNICAL_COMMITTEE: TeamMember[] = [
   { name: "Yanish Rai", subtitle: "5 MCA A (2547158)", image: `${GITHUB_ASSETS}/our-team/students/2547158_Yanish Rai.jpg` },
   { name: "Kartik Dewnani", subtitle: "5 MCA A (2547128)", image: `${GITHUB_ASSETS}/our-team/students/2547128_Kartik Dewnani.jpg` },
-  { name: "Darshan Heble K", subtitle: "5 MCA A (2547119)", image: `${GITHUB_ASSETS}/our-team/students/2547119_Darshan Heble K.jpg` },
+  { name: "Darshan Heble", subtitle: "5 MCA A (2547119)", image: `${GITHUB_ASSETS}/our-team/students/2547119_Darshan Heble K.jpg` },
   { name: "Vishal B G", subtitle: "2 MCA A (2647158)", image: `${GITHUB_ASSETS}/our-team/students/2647158_Vishal B G.jpg` },
   { name: "Gerard Nicholas Paul M", subtitle: "2 MCA A (2647122)", image: `${GITHUB_ASSETS}/our-team/students/2647122_Gerard Nicholas Paul M.JPG` },
   { name: "S Anand", subtitle: "2 MCA A (2647145)", image: `${GITHUB_ASSETS}/our-team/students/2647145_S Anand.jpg` },
