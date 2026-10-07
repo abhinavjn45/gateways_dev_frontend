@@ -108,6 +108,47 @@ export function eventTime(event: FestEvent): string {
   return `${timeFrom} – ${timeTo}`;
 }
 
+/**
+ * The sheet's "Registration Deadline" as a moment in time. The sheet writes
+ * it as "2026-10-08 10:00" (24h, IST, hour sometimes unpadded), which `Date`
+ * parses inconsistently across browsers, so it is read by hand. Null when the
+ * cell is empty or not in that shape.
+ */
+export function parseRegistrationDeadline(event: FestEvent): Date | null {
+  const m = event.registrationDeadline
+    ?.trim()
+    .match(/^(\d{4})-(\d{1,2})-(\d{1,2})[T\s]+(\d{1,2}):(\d{2})/);
+  if (!m) return null;
+  const [year, month, day, hour, minute] = m.slice(1).map(Number);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const date = new Date(
+    `${year}-${pad(month)}-${pad(day)}T${pad(hour)}:${pad(minute)}:00+05:30`,
+  );
+  return isNaN(date.getTime()) ? null : date;
+}
+
+const MONTHS = [
+  "January", "February", "March", "April", "May", "June", "July",
+  "August", "September", "October", "November", "December",
+];
+
+/** The deadline for display, e.g. "8th October 2026, 10:00 AM". Empty if unset. */
+export function eventRegistrationDeadline(event: FestEvent): string {
+  const deadline = parseRegistrationDeadline(event);
+  if (!deadline) return "";
+  // Read the wall-clock fields back in IST so the text matches the sheet no
+  // matter where the visitor's browser is.
+  const ist = new Date(deadline.getTime() + 5.5 * 3600 * 1000);
+  const day = ist.getUTCDate();
+  const suffix =
+    day % 100 >= 11 && day % 100 <= 13
+      ? "th"
+      : ({ 1: "st", 2: "nd", 3: "rd" } as Record<number, string>)[day % 10] ?? "th";
+  const hour = ist.getUTCHours();
+  const minute = String(ist.getUTCMinutes()).padStart(2, "0");
+  return `${day}${suffix} ${MONTHS[ist.getUTCMonth()]} ${ist.getUTCFullYear()}, ${hour % 12 || 12}:${minute} ${hour < 12 ? "AM" : "PM"}`;
+}
+
 export interface ScheduleDay {
   date: string;
   label: string;

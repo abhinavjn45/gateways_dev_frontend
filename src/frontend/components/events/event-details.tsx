@@ -2,7 +2,7 @@
 "use client";
 
 import { BlockPanel } from "@/frontend/components/mc";
-import { eventTime, type FestEvent } from "@/frontend/lib/events";
+import { eventRegistrationDeadline, eventTime, type FestEvent } from "@/frontend/lib/events";
 import { EventRegistrationButton } from "./event-registration-button";
 
 /**
@@ -28,6 +28,7 @@ export function EventDetails({ event }: { event: FestEvent }) {
           <Fact label="Date" value={event.date} />
           <Fact label="Time" value={eventTime(event)} />
           <Fact label="Venue" value={event.venue} />
+          <Fact label="Registration Deadline" value={eventRegistrationDeadline(event)} />
           <Fact label="Prizes" value={event.prizes} />
           <Fact label="Prize pool" value={event.prizePool} />
           {event.prize1 ? <Fact label="1st Prize" value={event.prize1} /> : null}
