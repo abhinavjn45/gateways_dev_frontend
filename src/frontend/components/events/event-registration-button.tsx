@@ -6,7 +6,7 @@ import { BlockButton, BlockModal, showToast } from "@/frontend/components/mc";
 import { useSession } from "@/frontend/components/auth/session-provider";
 import { useAsync } from "@/frontend/hooks/use-async";
 import { repo } from "@/lib/data";
-import type { FestEvent } from "@/frontend/lib/events";
+import { parseRegistrationDeadline, type FestEvent } from "@/frontend/lib/events";
 import { cn } from "@/frontend/lib/utils";
 import { CheckCircle, Copy, Share2 } from "lucide-react";
 
@@ -155,15 +155,13 @@ export function EventRegistrationButton({ event, inline = false }: { event: Fest
       );
     }
 
-    if (event.registrationDeadline) {
-      const deadlineDate = new Date(`${event.registrationDeadline.trim()}:00+05:30`);
-      if (!isNaN(deadlineDate.getTime()) && Date.now() > deadlineDate.getTime()) {
-        return (
-          <BlockButton variant="stone" disabled className="w-full">
-            Registration for this event has closed.
-          </BlockButton>
-        );
-      }
+    const deadlineDate = parseRegistrationDeadline(event);
+    if (deadlineDate && Date.now() > deadlineDate.getTime()) {
+      return (
+        <BlockButton variant="stone" disabled className="w-full">
+          Registration for this event has closed.
+        </BlockButton>
+      );
     }
 
     if (!userId) {
