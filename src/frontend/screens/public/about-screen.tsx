@@ -16,7 +16,7 @@ import {
 
 /**
  * The people behind the fest — faculty coordinators, the core committee,
- * committee heads, and the technical committee. A standalone page rather than a
+ * the technical committee, and committee heads. A standalone page rather than a
  * homepage section: this is the credits list you link directly, not
  * something a first-time visitor needs mid-pitch.
  */
@@ -35,8 +35,8 @@ export function AboutScreen() {
       <TeamSection title="Advisory Committee" members={ADVISORY_COMMITTEE} />
       <TeamSection title="Faculty Coordinators" members={FACULTY_COORDINATORS} />
       <TeamSection title="Core Committee" members={CORE_COMMITTEE} />
-      <CommitteeHeadsSection />
       <TeamSection title="Technical Committee" members={TECHNICAL_COMMITTEE} />
+      <CommitteeHeadsSection />
     </div>
   );
 }

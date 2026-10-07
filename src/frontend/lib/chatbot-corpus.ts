@@ -267,8 +267,8 @@ function teamSection(question: string): string {
     membersBlock("Advisory committee", ADVISORY_COMMITTEE),
     membersBlock("Faculty coordinators", FACULTY_COORDINATORS),
     membersBlock("Core committee", CORE_COMMITTEE),
-    `Committee heads:\n${heads}\n`,
     membersBlock("Technical committee (website and application)", TECHNICAL_COMMITTEE),
+    `Committee heads:\n${heads}\n`,
   ]
     .filter(Boolean)
     .join("\n");
