@@ -25,6 +25,7 @@ const EXACT = new Set([
   "/leaderboard",
   "/schedule",
   "/sponsors",
+  "/results",
 ]);
 
 const PREFIXES = ["/events/"];

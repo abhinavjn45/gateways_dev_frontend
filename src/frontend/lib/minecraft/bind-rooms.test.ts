@@ -34,6 +34,8 @@ function event(i: number, track: FestEvent["track"]): FestEvent {
     prizes: "",
     prizePool: "₹10,000",
     maxSlots: null,
+    minTeamSize: null,
+    maxTeamSize: null,
   };
 }
 
