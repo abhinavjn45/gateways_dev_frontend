@@ -40,11 +40,26 @@ export function CertificatesScreen() {
   async function downloadCertificate(eventId: string, eventTitle: string) {
     setDownloading(eventId);
     try {
-      // Simulate download for now
-      await new Promise(r => setTimeout(r, 1000));
-      showToast({ title: "Coming Soon", body: "Certificate generation is disabled until the base design is provided.", severity: "info" });
-    } catch (e) {
-      showToast({ title: "Error", body: "Failed to download certificate", severity: "critical" });
+      const response = await fetch(`/api/v1/certificates/${encodeURIComponent(eventId)}`, {
+        credentials: "include",
+      });
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to download certificate.");
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const safeTitle = eventTitle.replace(/[^a-zA-Z0-9]/g, "_");
+      a.download = `Gateways2026_Certificate_${safeTitle}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      showToast({ title: "Downloaded", body: "Certificate downloaded successfully!", severity: "success" });
+    } catch (e: any) {
+      showToast({ title: "Error", body: e?.message || "Failed to download certificate", severity: "critical" });
     } finally {
       setDownloading(null);
     }
