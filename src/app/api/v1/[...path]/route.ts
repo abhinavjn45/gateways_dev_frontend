@@ -144,7 +144,8 @@ async function forward(request: Request) {
    * signal for this one route; it needs the same room as a mutation.
    */
   const isOAuthCallback = target.pathname.startsWith("/api/v1/auth/callback/");
-  const isRead = (request.method === "GET" || request.method === "HEAD") && !isOAuthCallback;
+  const isCertificate = target.pathname.startsWith("/api/v1/certificates");
+  const isRead = (request.method === "GET" || request.method === "HEAD") && !isOAuthCallback && !isCertificate;
   const init: RequestInit = {
     method: request.method,
     headers,

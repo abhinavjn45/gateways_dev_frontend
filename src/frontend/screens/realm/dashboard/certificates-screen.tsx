@@ -45,7 +45,11 @@ export function CertificatesScreen() {
       });
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Failed to download certificate.");
+        const message =
+          errorData.error?.message ||
+          errorData.message ||
+          "Failed to download certificate.";
+        throw new Error(message);
       }
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
