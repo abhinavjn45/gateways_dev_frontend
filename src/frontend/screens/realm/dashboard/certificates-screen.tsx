@@ -17,10 +17,18 @@ export function CertificatesScreen() {
     [userId]
   );
 
+  const { data: profile, loading: profileLoading } = useAsync(
+    async () => (userId ? repo.profiles.get(userId) : null),
+    [userId]
+  );
+
   const { data: eventsList, loading: eventsLoading } = useAsync(fetchFestEvents, []);
 
-  const loading = regsLoading || eventsLoading;
+  const loading = regsLoading || eventsLoading || profileLoading;
   const [downloading, setDownloading] = useState<string | null>(null);
+
+  // Check offline fest attendance (profiles.fest_attendance and profiles.fest_checked_in_at)
+  const hasFestAttendance = Boolean(profile?.festAttendance && profile?.festCheckedInAt);
 
   // Combine unique events the user has registered for and checked in
   const userEventIds = new Set<string>();
@@ -36,6 +44,8 @@ export function CertificatesScreen() {
     const event = eventsList?.find(e => e.slug === id);
     return event || { slug: id, name: id, teamSizeMin: 1 };
   });
+
+  const hasAnyCertificate = hasFestAttendance || events.length > 0;
 
   async function downloadCertificate(eventId: string, eventTitle: string) {
     setDownloading(eventId);
@@ -81,16 +91,48 @@ export function CertificatesScreen() {
 
       {loading ? (
         <BlockPanel variant="slot"><LoadingBlocks label="Loading certificates" /></BlockPanel>
-      ) : events.length === 0 ? (
+      ) : !hasAnyCertificate ? (
         <BlockPanel variant="slot" className="text-center">
           <p className="text-mc-text-dim text-[15px]">
             {hasActiveRegistration 
-              ? "You must attend at least one event to access certificates."
+              ? "You must attend the fest or at least one event to access certificates."
               : "You must register for at least one event to access certificates."}
           </p>
         </BlockPanel>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-[var(--mc-unit)]">
+          {hasFestAttendance && (
+            <BlockPanel
+              variant="panel"
+              padded="lg"
+              className="flex flex-col justify-between gap-4 border border-mc-gold/40 bg-mc-gold/5"
+            >
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-[10px] font-pixel text-mc-accent uppercase tracking-wider bg-mc-accent/15 px-2 py-0.5 rounded">
+                    Fest Attendance
+                  </span>
+                </div>
+                <h3 className="font-pixel text-[13px] uppercase tracking-wide text-mc-gold">
+                  Gateways 2026 - Parallax
+                </h3>
+                <p className="text-mc-text-dim text-[14px] mt-2">
+                  Overall Fest Participation Certificate
+                </p>
+              </div>
+
+              <BlockButton
+                variant="primary"
+                onClick={() => downloadCertificate("overall", "Gateways 2026 Parallax Fest Participation")}
+                disabled={downloading === "overall"}
+                className="w-full flex items-center justify-center gap-[calc(var(--mc-unit)*0.75)]"
+              >
+                <Download size={16} />
+                {downloading === "overall" ? "Generating..." : "Download PDF"}
+              </BlockButton>
+            </BlockPanel>
+          )}
+
           {events.map((event) => (
             <BlockPanel key={event.slug} variant="panel" padded="lg" className="flex flex-col justify-between gap-4">
               <div>

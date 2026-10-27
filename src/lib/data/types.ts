@@ -129,6 +129,8 @@ export interface Profile {
   referredBy: string | null;
   referredByName?: string | null;
   isBanned: boolean;
+  festAttendance?: boolean | null;
+  festCheckedInAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }
